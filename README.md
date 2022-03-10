@@ -1,8 +1,7 @@
 # L2 AAVE rewards
 
-This project aims to provide a bridge for staticATokens such that the rewards
-for the token can be collected on Starknet and the tokens themselves can be
-bought and sold without having to pay the high gas cost on Ethereum.
+A staticAToken bridge to Starknet for cheap AAVE rewards collection and token
+exchange.
 
 ## Architecture
 

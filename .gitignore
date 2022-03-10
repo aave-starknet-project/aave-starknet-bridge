@@ -1,0 +1,14 @@
+node_modules
+
+#Hardhat files
+cache
+artifacts
+
+#Python artifacts
+.venv
+__pycache__
+.pytest_cache
+
+#Starknet plugin
+starknet-artifacts
+

@@ -1,0 +1,28 @@
+import { HardhatUserConfig } from "hardhat/types";
+import "@shardlabs/starknet-hardhat-plugin";
+import "@nomiclabs/hardhat-ethers";
+
+/**
+ * @type import('hardhat/config').HardhatUserConfig
+ */
+const config: HardhatUserConfig = {
+  solidity: '0.6.12',
+  starknet: {
+    dockerizedVersion: "0.7.1",
+    network: "devnet",
+    wallets: {
+      OpenZeppelin: {
+        accountName: "OpenZeppelin",
+        modulePath: "starkware.starknet.wallets.open_zeppelin.OpenZeppelinAccount",
+        accountPath: "~/.starknet_accounts"
+      }
+    }
+  },
+  networks: {
+    devnet: {
+      url: "http://localhost:5001"
+    },
+  },
+};
+
+export default config;

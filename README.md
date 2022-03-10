@@ -21,7 +21,7 @@ yarn global add ganache
 
 python3.7 -m venv .venv
 source .venv/bin/activate
-pip install starknet-devnet
+pip install cairo-lang starknet-devnet
 ```
 
 ### Start the testnets
@@ -34,6 +34,11 @@ ganache
 
 ```bash
 starknet-devnet
+```
+### Build the cairo files
+
+```bash
+yarn hardhat starknet-compile
 ```
 
 ### Run the tests

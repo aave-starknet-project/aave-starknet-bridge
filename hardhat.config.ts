@@ -8,7 +8,7 @@ import "@nomiclabs/hardhat-ethers";
 const config: HardhatUserConfig = {
   solidity: '0.6.12',
   starknet: {
-    dockerizedVersion: "0.7.1",
+    venv: ".venv",
     network: "devnet",
     wallets: {
       OpenZeppelin: {
@@ -20,7 +20,7 @@ const config: HardhatUserConfig = {
   },
   networks: {
     devnet: {
-      url: "http://localhost:5001"
+      url: "http://localhost:5000"
     },
   },
 };

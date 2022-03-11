@@ -6,11 +6,11 @@ pragma solidity ^0.6.12;
   contract.
 */
 
-import "./MockStarknetMessaging.sol";
+import "@joriksch/sg-contracts/src/starkware/starknet/eth/StarknetMessaging.sol";
 
 contract L1L2Example {
     // The StarkNet core contract.
-    MockStarknetMessaging starknetCore;
+    StarknetMessaging starknetCore;
 
     mapping(uint256 => uint256) public userBalances;
 
@@ -23,7 +23,7 @@ contract L1L2Example {
     /**
       Initializes the contract state.
     */
-    constructor(MockStarknetMessaging starknetCore_) public {
+    constructor(StarknetMessaging starknetCore_) public {
         starknetCore = starknetCore_;
     }
 

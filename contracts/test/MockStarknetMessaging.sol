@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0.
 pragma solidity ^0.6.12;
 
-import "./StarknetMessaging.sol";
+import "@joriksch/sg-contracts/src/starkware/starknet/eth/StarknetMessaging.sol";
 
 contract MockStarknetMessaging is StarknetMessaging {
     /**

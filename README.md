@@ -17,6 +17,8 @@ hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin),
 ### Prerequisites
 
 ```bash
+nvm install 16
+
 yarn global add ganache
 
 python3.7 -m venv .venv

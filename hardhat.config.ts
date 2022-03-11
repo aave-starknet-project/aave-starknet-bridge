@@ -6,7 +6,16 @@ import "@nomiclabs/hardhat-ethers";
  * @type import('hardhat/config').HardhatUserConfig
  */
 const config: HardhatUserConfig = {
-  solidity: '0.6.12',
+  solidity: {
+    compilers: [
+      {
+        version: '0.6.12',
+      },
+      {
+        version: '0.8.9',
+      },
+    ],
+  },
   starknet: {
     venv: ".venv",
     network: "devnet",

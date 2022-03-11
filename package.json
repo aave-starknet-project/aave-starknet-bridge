@@ -6,7 +6,8 @@
   "scripts": {
     "test": "hardhat --network localhost test",
     "compile": "hardhat starknet-compile",
-    "compile:starkgate": "hardhat starknet-compile --cairo-path 'starkgate-contracts/src' starkgate-contracts"
+    "compile:starkgate": "hardhat starknet-compile --cairo-path 'starkgate-contracts/src' starkgate-contracts",
+    "compile:fossil": "hardhat starknet-compile node_modules/@joriksch/fossil/contracts --cairo-path node_modules/@joriksch/fossil/contracts"
   },
   "author": "AAVE",
   "license": "Apache-2.0",
@@ -23,6 +24,7 @@
     "typescript": "^4.5.2"
   },
   "dependencies": {
+    "@joriksch/fossil": "^0.0.1",
     "@joriksch/sg-contracts": "^0.0.2",
     "@toruslabs/starkware-crypto": "^1.0.0",
     "hardhat": "2.9.0"

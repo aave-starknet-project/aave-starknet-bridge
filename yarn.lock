@@ -423,6 +423,11 @@
     "@ethersproject/properties" "^5.5.0"
     "@ethersproject/strings" "^5.5.0"
 
+"@joriksch/fossil@^0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@joriksch/fossil/-/fossil-0.0.1.tgz#1d95dfdb739f39eeb362f55ea742dbf3336a6d6f"
+  integrity sha512-MO3ScoGHllFH4+BKrWHkmZBkONc+2/7J1qiHHBOVcquwcs08aCNLHhvzrpgY2wh+9oh1jVoUwS3V+zN3Nmb8Ug==
+
 "@joriksch/sg-contracts@^0.0.2":
   version "0.0.2"
   resolved "https://registry.yarnpkg.com/@joriksch/sg-contracts/-/sg-contracts-0.0.2.tgz#65cdd9560b0349cdd7c0e86af12fb4e5cfa34f2d"

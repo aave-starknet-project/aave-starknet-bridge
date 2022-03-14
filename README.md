@@ -19,8 +19,6 @@ hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin),
 ```bash
 nvm install 16
 
-yarn global add ganache
-
 python3.7 -m venv .venv
 source .venv/bin/activate
 pip install cairo-lang starknet-devnet
@@ -31,7 +29,7 @@ pip install cairo-lang starknet-devnet
 It's wise to do this in two separate shells
 
 ```bash
-ganache
+yarn hardhat node
 ```
 
 ```bash

@@ -10,14 +10,15 @@ exchange.
 ## Testing
 
 The project is tested using [hardhat](https://hardhat.org/), the [starknet
-hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin),
-[starknet-devnet](https://github.com/Shard-Labs/starknet-devnet), and
-[ganache](https://trufflesuite.com/ganache/index.html).
+hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin) and
+[starknet-devnet](https://github.com/Shard-Labs/starknet-devnet).
 
 ### Prerequisites
 
 ```bash
 nvm install 16
+
+yarn
 
 python3.7 -m venv .venv
 source .venv/bin/activate
@@ -35,6 +36,7 @@ yarn hardhat node
 ```bash
 starknet-devnet
 ```
+
 ### Build the cairo files
 
 ```bash

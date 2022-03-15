@@ -16,6 +16,13 @@ hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin),
 
 ### Prerequisites
 
+Before installing cairo you'll need to install GMP
+
+```bash
+sudo apt install -y libgmp3-dev # linux
+brew install gmp # mac
+```
+
 ```bash
 nvm install 16
 

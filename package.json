@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "hardhat --network localhost test",
-    "compile": "hardhat starknet-compile",
+    "compile": "hardhat starknet-compile --cairo-path 'node_modules/@joriksch/oz-cairo'",
     "compile:starkgate": "hardhat starknet-compile --cairo-path 'starkgate-contracts/src' starkgate-contracts",
-    "compile:fossil": "hardhat starknet-compile node_modules/@joriksch/fossil/contracts --cairo-path node_modules/@joriksch/fossil/contracts"
+    "compile:fossil": "hardhat starknet-compile node_modules/@joriksch/fossil/contracts --cairo-path node_modules/@joriksch/fossil/contracts",
+    "compile:openzeppelin": "yarn hardhat starknet-compile node_modules/@joriksch/oz-cairo --cairo-path node_modules/@joriksch/oz-cairo/"
   },
   "author": "AAVE",
   "license": "Apache-2.0",
@@ -25,6 +26,7 @@
   },
   "dependencies": {
     "@joriksch/fossil": "^0.0.1",
+    "@joriksch/oz-cairo": "^1.0.0",
     "@joriksch/sg-contracts": "^0.0.2",
     "@toruslabs/starkware-crypto": "^1.0.0",
     "hardhat": "2.9.0"

@@ -37,6 +37,7 @@ describe('TokenBridge', function() {
   this.timeout(TIMEOUT);
 
   const user = 1;
+  const GOVERNOR_ADDRESS = 2;
   const networkUrl: string = (network.config as HttpNetworkConfig).url;
   console.log(networkUrl)
   let L2contractFactory: StarknetContractFactory;
@@ -56,6 +57,9 @@ describe('TokenBridge', function() {
     L2contractFactory = await starknet.getContractFactory('l1l2');
     l2contract = await L2contractFactory.deploy();
 
+    TokenBridgeL2 = await starknet.getContractFactory('token_bridge');
+    tokenBridgeL2 = await TokenBridgeL2.deploy({ governor_address: GOVERNOR_ADDRESS });
+
     // L1 deployments
 
     const signers = await ethers.getSigners();
@@ -72,28 +76,26 @@ describe('TokenBridge', function() {
   });
 
   it('should deploy the messaging contract', async () => {
-    // const {
-    //   address: deployedTo,
-    //   l1_provider: L1Provider,
-    // } = await starknet.devnet.loadL1MessagingContract(networkUrl);
+    const {
+      address: deployedTo,
+      l1_provider: L1Provider,
+    } = await starknet.devnet.loadL1MessagingContract(networkUrl);
 
-    // expect(deployedTo).not.to.be.undefined;
-    // expect(L1Provider).to.equal(networkUrl);
-
-    // const resp = await starknet.devnet.loadL1MessagingContract(networkUrl);
+    expect(deployedTo).not.to.be.undefined;
+    expect(L1Provider).to.equal(networkUrl);    
 });
 
-//   it('should load the already deployed contract if the address is provided', async () => {
+  it('should load the already deployed contract if the address is provided', async () => {
 
-//     const {
-//       address: loadedFrom,
-//     } = await starknet.devnet.loadL1MessagingContract(
-//       networkUrl,
-//       messagingContractAddress,
-//     );
+    const {
+      address: loadedFrom,
+    } = await starknet.devnet.loadL1MessagingContract(
+      networkUrl,
+      messagingContractAddress,
+    );
 
-//     expect(messagingContractAddress).to.equal(loadedFrom);
-//   });
+    expect(messagingContractAddress).to.equal(loadedFrom);
+  });
 
 //   it('should exchange messages between L1 and L2', async () => {
 //     /**

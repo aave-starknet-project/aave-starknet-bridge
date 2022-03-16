@@ -21,7 +21,7 @@ contract TokenBridge is
     IStarknetMessaging public messagingContract;
     uint256 l2TokenBridge;
 
-    constructor() internal GenericGovernance("AAVE_BRIDGE_GOVERNANCE") {}
+    constructor() public GenericGovernance("AAVE_BRIDGE_GOVERNANCE") {}
 
     function isInitialized() internal view override returns (bool) {
         return messagingContract != IStarknetMessaging(0);

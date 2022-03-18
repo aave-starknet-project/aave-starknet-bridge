@@ -1,12 +1,11 @@
-# L2 AAVE rewards
+# Starknet AAVE rewards
 
 A staticAToken bridge to Starknet for cheap AAVE rewards collection and token
 exchange.
 
 ## Architecture
 
-<!-- insert architecture image -->
-
+![Starknet AAVE rewards architectural diagram](resources/architecture.png)
 ## Testing
 
 The project is tested using [hardhat](https://hardhat.org/), the [starknet
@@ -55,3 +54,9 @@ yarn hardhat starknet-compile
 ```
 yarn test
 ```
+
+### Notes
+
+When transferring the token across the bridge the unclaimed rewards to date
+will still be associated with the owners account on L1. These old rewards can
+not be claimed on Starknet.

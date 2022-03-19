@@ -36,7 +36,17 @@
     "ts-node": "^10.4.0",
     "typescript": "^4.5.2"
   },
+<<<<<<< HEAD
   "husky": {
     "hooks": {}
+=======
+  "dependencies": {
+    "@joriksch/fossil": "^0.0.1",
+    "@joriksch/oz-cairo": "^1.0.0",
+    "@joriksch/sg-contracts": "^0.0.2",
+    "@openzeppelin/contracts": "^4.5.0",
+    "@toruslabs/starkware-crypto": "^1.0.0",
+    "hardhat": "2.9.0"
+>>>>>>> f1627eb... Basic implementation of staticAToken and rewards collection
   }
 }

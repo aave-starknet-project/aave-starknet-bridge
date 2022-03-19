@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 import { StarknetContract, StarknetContractFactory, Account } from 'hardhat/types';
+=======
+import { StarknetContract, StarknetContractFactory, Account } from "hardhat/types/runtime";
+
+>>>>>>> f1627eb... Basic implementation of staticAToken and rewards collection
 import {starknet} from 'hardhat';
 import {TIMEOUT} from './constants';
 import {expect} from 'chai';
 
+<<<<<<< HEAD
 describe('ETHStaticAToken', function () {
   this.timeout(TIMEOUT);
 
@@ -30,11 +36,37 @@ describe('ETHStaticAToken', function () {
   it('allows owner to mint', async () => {
     await owner.invoke(tokenContract, 'mint', {
       recipient: BigInt(user1.starknetContract.address),
+=======
+describe.only('ETHStaticAToken', function () {
+  this.timeout(TIMEOUT);
+
+  let l2TokenContract: StarknetContract;
+  before(async () => {
+    const tokenContractFactory = await starknet.getContractFactory("ETHstaticAToken");
+    console.log("Started deployment");
+    l2TokenContract = await tokenContractFactory.deploy({
+      name: 666,
+      symbol: 666,
+      decimals: 4,
+      initial_supply: {high: 0, low: 1000000000},
+      recipient: 1,
+      owner: 0,
+      controller: 0,
+    });
+    console.log("Deployed at", l2TokenContract.address);
+
+  });
+
+  it("should be able to mint", async () => {
+    const ohoh = await l2TokenContract.invoke("mint", {
+      recipient: 1n,
+>>>>>>> f1627eb... Basic implementation of staticAToken and rewards collection
       amount: {
         high: 0n,
         low: 100n,
       },
     });
+<<<<<<< HEAD
 
     const {totalSupply} = await tokenContract.call('totalSupply');
     expect(totalSupply).to.deep.equal({high: 0n, low: 100n});
@@ -122,5 +154,11 @@ describe('ETHStaticAToken', function () {
 
   it('tracks unclaimed rewards', async () => {
     expect.fail("not implemented yet")
+=======
+    console.log(ohoh)
+
+    const {totalSupply} = await l2TokenContract.call("totalSupply");
+    expect(totalSupply).to.deep.equal({high: 0n, low:  1000000100n});
+>>>>>>> f1627eb... Basic implementation of staticAToken and rewards collection
   });
 })

@@ -1,15 +1,20 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
+import console from 'console';
 import { BigNumber, Contract, ContractFactory } from 'ethers';
-import { starknet, network, ethers } from 'hardhat';
+import { AbiCoder } from 'ethers/lib/utils';
+import hre, { starknet, network, ethers } from 'hardhat';
 import {
   StarknetContractFactory,
   StarknetContract,
-  HttpNetworkConfig
+  HttpNetworkConfig,
+  Account
 } from 'hardhat/types';
-import { Account } from "hardhat/types/runtime";
 
 import { TIMEOUT } from './constants';
+
+const abiCoder = new ethers.utils.AbiCoder();
+const MAX_UINT256 = hre.ethers.constants.MaxInt256;
 
 /**
  * Receives a hex address, converts it to bigint, converts it back to hex.
@@ -19,6 +24,12 @@ import { TIMEOUT } from './constants';
  */
 function adaptAddress(address: string) {
   return "0x" + BigInt(address).toString(16);
+}
+
+function toSplitUint(a: number) {
+  const low = a & ((1 << 128) - 1);
+  const high = a >> 128;
+  return { low, high };
 }
 
 /**
@@ -37,9 +48,10 @@ function expectAddressEquality(actual: string, expected: string) {
  */
 describe('TokenBridge', async function() {
   this.timeout(TIMEOUT);
-
-  let l1user = 1;
+ 
+  let l1user: SignerWithAddress;
   let l2user: Account;
+  let signer: SignerWithAddress;
   const networkUrl: string = (network.config as HttpNetworkConfig).url;
   console.log(networkUrl)
   // L2
@@ -49,19 +61,20 @@ describe('TokenBridge', async function() {
   let TokenBridgeL2: StarknetContractFactory;
   let tokenBridgeL2: StarknetContract;
   // L1
+  let MockStarknetMessaging: ContractFactory;
+  let mockStarknetMessaging: Contract;
   let L1TokenFactory: ContractFactory;
   let l1tokenA: Contract;
   let l1tokenB: Contract;
   let TokenBridgeL1: ContractFactory;
   let tokenBridgeL1: Contract;
   let messagingContractAddress: string;
-  let signer: SignerWithAddress;
 
   before(async function () {
 
     // L2 deployments
 
-    l2user = await (starknet as any).deployAccount("OpenZeppelin");
+    l2user = await starknet.deployAccount("OpenZeppelin");
 
     L2TokenFactory = await starknet.getContractFactory('L2Token');
     l2tokenA = await L2TokenFactory.deploy(
@@ -74,18 +87,22 @@ describe('TokenBridge', async function() {
 
     // L1 deployments
 
-    const signers = await ethers.getSigners();
-    signer = signers[0];
+    [signer, l1user] = await ethers.getSigners();
 
-    L1TokenFactory = await ethers.getContractFactory('L1Token', signer,);
-    l1tokenA = await L1TokenFactory.deploy(100);
-    l1tokenB = await L1TokenFactory.deploy(200);
+    MockStarknetMessaging = await ethers.getContractFactory(
+      'MockStarknetMessaging',
+      signer,
+    );
+    mockStarknetMessaging = await MockStarknetMessaging.deploy();
+    await mockStarknetMessaging.deployed();
+
+    L1TokenFactory = await ethers.getContractFactory('L1Token', signer);
+    l1tokenA = await L1TokenFactory.deploy(1000);
+    l1tokenB = await L1TokenFactory.deploy(1000);
 
     TokenBridgeL1 = await ethers.getContractFactory('TokenBridge', signer);
     tokenBridgeL1 = await TokenBridgeL1.deploy();
     await tokenBridgeL1.deployed();
-    messagingContractAddress = await tokenBridgeL1.messagingContract();
-
   });
 
   // it('should deploy the messaging contract', async () => {
@@ -93,12 +110,17 @@ describe('TokenBridge', async function() {
   //     address: deployedTo,
   //     l1_provider: L1Provider,
   //   } = await starknet.devnet.loadL1MessagingContract(networkUrl);
-
   //   expect(deployedTo).not.to.be.undefined;
   //   expect(L1Provider).to.equal(networkUrl);    
   // });
 
   // it('should load the already deployed contract if the address is provided', async () => {
+  //   const {
+  //     address: deployedTo,
+  //   } = await starknet.devnet.loadL1MessagingContract(networkUrl);
+
+  //   await tokenBridgeL1.initializeWithoutProxy(abiCoder.encode([ "string", "string" ], [tokenBridgeL2.address, deployedTo]));
+  //   messagingContractAddress = await tokenBridgeL1.messagingContract();
 
   //   const {
   //     address: loadedFrom,
@@ -106,31 +128,46 @@ describe('TokenBridge', async function() {
   //     networkUrl,
   //     messagingContractAddress,
   //   );
-
   //   expect(messagingContractAddress).to.equal(loadedFrom);
   // });
 
   it('should exchange messages between L1 and L2', async () => {
+
+    // on L1: send 200 tokens A and 300 tokens B to l1user
+    await l1tokenA.transfer(l1user.address, 200);
+    await l1tokenB.transfer(l1user.address, 300);
+    expect(await l1tokenA.balanceOf(l1user.address)).to.equal(200);
+    expect(await l1tokenB.balanceOf(l1user.address)).to.equal(300);    
+
+    // load messaging contract
+    await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarknetMessaging.address);
+
+    // this should initialize governance, set messaging contract address and L2 token bridge address
+    // TODO: implement proper encoding
+    // await tokenBridgeL1.initializeWithoutProxy(abiCoder.encode([ "string", "string" ], [tokenBridgeL2.address, mockStarknetMessaging.address]));
+    await tokenBridgeL1.initializeWithoutProxy(tokenBridgeL2.address, mockStarknetMessaging.address);
+
+    // map L2 tokens to L1 tokens on L1 bridge
+    await tokenBridgeL1.approveBridge(l1tokenA.address, l2tokenA.address);
+    await tokenBridgeL1.approveBridge(l1tokenB.address, l2tokenB.address);
 
     // set L1 token bridge from L2 bridge 
     await l2user.invoke(tokenBridgeL2, 'set_l1_token_bridge', { l1_bridge_address: BigInt(tokenBridgeL1.address) });
 
     // map L1 tokens to L2 tokens on L2 bridge
     await l2user.invoke(tokenBridgeL2, 'approve_bridge', { l1_token: BigInt(l1tokenA.address), l2_token: BigInt(l2tokenA.address) });
-    await l2user.invoke(tokenBridgeL2, 'approve_bridge', { l1_token: BigInt(l1tokenA.address), l2_token: BigInt(l2tokenA.address) });
+    await l2user.invoke(tokenBridgeL2, 'approve_bridge', { l1_token: BigInt(l1tokenB.address), l2_token: BigInt(l2tokenB.address) });
 
-    // /**
-    //  * Load the mock messaging contract
-    //  */
+    // approve bridge with max uint256 amount
+    await l1tokenA.connect(l1user).approve(tokenBridgeL1.address, MAX_UINT256);
+    await l1tokenB.connect(l1user).approve(tokenBridgeL1.address, MAX_UINT256);
 
-    // await starknet.devnet.loadL1MessagingContract(
-    //   networkUrl,
-    //   messagingContractAddress,
-    // );
+    // l1user deposits 30 tokens A and 50 tokens B on L1 for l2user on L2
+    await tokenBridgeL1.connect(l1user).deposit(l1tokenA.address, BigInt(l2user.starknetContract.address), 30);
+    await tokenBridgeL1.connect(l1user).deposit(l1tokenB.address, BigInt(l2user.starknetContract.address), 40);
+    expect(await l1tokenA.balanceOf(l1user.address)).to.equal(170);
+    expect(await l1tokenB.balanceOf(l1user.address)).to.equal(260);    
 
-    // /**
-    //  * Increase the L2 contract balance to 100 and withdraw 10 from it.
-    //  */
 
     // await l2contract.invoke('increase_balance', {
     //   user,

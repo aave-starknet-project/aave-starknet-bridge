@@ -142,7 +142,7 @@ end
 
 @l1_handler
 func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        from_address : felt, account : felt, l2_token_low: felt, l2_token_high: felt, amount_low : felt, amount_high : felt):
+        from_address : felt, l2_recipient : felt, amount_low: felt, amount_high: felt, amount_low : felt, amount_high : felt):
     # The amount is validated (i.e. amount_low, amount_high < 2**128) by an inner call to
     # IMintableToken permissionedMint function.
 
@@ -153,13 +153,13 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     let amount : Uint256 = cast((low=amount_low, high=amount_high), Uint256)
 
     # Call mint on l2_token contract.
-    let l2_token_address = l2_token_high * 2**128 + l2_token_low
+    let l2_token_address = amount_high * 2**128 + amount_low
 
     assert_not_zero(l2_token_address)
 
     let (contract_address) = get_caller_address()
     IERC20.transferFrom(
-        contract_address=l2_token_address, sender=contract_address, recipient=account, amount=amount)
+        contract_address=l2_token_address, sender=contract_address, recipient=l2_recipient, amount=amount)
 
     return ()
 end

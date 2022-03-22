@@ -5,8 +5,13 @@ import "@joriksch/sg-contracts/src/starkware/contracts/components/GenericGoverna
 import "@joriksch/sg-contracts/src/starkware/contracts/interfaces/ContractInitializer.sol";
 import "@joriksch/sg-contracts/src/starkware/contracts/interfaces/ProxySupport.sol";
 import "@joriksch/sg-contracts/src/starkware/cairo/eth/CairoConstants.sol";
-import "@joriksch/sg-contracts/src/starkware/starknet/eth/IStarknetMessaging.sol";
-import "@joriksch/sg-contracts/src/starkware/contracts/tokens/ERC20/IERC20.sol";
+import "@joriksch/sg-contracts/src/starkware/starknet/eth/StarknetMessaging.sol";
+
+interface IL1Token {
+    function approve(address, uint256) external returns (bool);
+    function balanceOf(address) external view returns (uint256);
+    function transferFrom(address, address, uint256) external returns (bool);    
+}
 
 contract TokenBridge is
     GenericGovernance,
@@ -18,13 +23,23 @@ contract TokenBridge is
     event LogBridgeAdded(address l1Token, uint256 l2Token);
 
     mapping(address => uint256) public l1TokentoL2Token;
-    IStarknetMessaging public messagingContract;
+    StarknetMessaging public messagingContract;
     uint256 l2TokenBridge;
 
     constructor() public GenericGovernance("AAVE_BRIDGE_GOVERNANCE") {}
 
+    function both(bool x, bool y) internal pure returns (bool z) {
+        assembly{ z := and(x, y)}
+    }
+
+    function toSplitUint(uint256 value) internal pure returns (uint256, uint256) {
+      uint256 low = value & ((1 << 128) - 1);
+      uint256 high = value >> 128;
+      return (low, high);
+    }
+
     function isInitialized() internal view override returns (bool) {
-        return messagingContract != IStarknetMessaging(0);
+        return messagingContract != StarknetMessaging(0);
     }
 
     function numOfSubContracts() internal pure override returns (uint256) {
@@ -32,15 +47,15 @@ contract TokenBridge is
     }
 
     function validateInitData(bytes calldata data) internal pure override {
-        require(data.length == 64, "ILLEGAL_DATA_SIZE");
+        // 288 because address type (32) is replaced by uint256 type (256)
+        require(data.length == 288, "ILLEGAL_DATA_SIZE");
     }
 
     function processSubContractAddresses(bytes calldata subContractAddresses) internal override {}
 
     modifier isApprovedToken(address token) {
         uint256 l2TokenAddress = l1TokentoL2Token[token];
-        require(l2TokenAddress != 0, "L2_ADDRESS_OUT_OF_RANGE");
-        require(l2TokenAddress < CairoConstants.FIELD_PRIME, "L2_ADDRESS_OUT_OF_RANGE"); 
+        require(both(l2TokenAddress != 0, l2TokenAddress < CairoConstants.FIELD_PRIME), "L2_TOKEN_HAS_NOT_BEEN_APPROVED");
         _;
     }
 
@@ -49,29 +64,43 @@ contract TokenBridge is
       and sets the storage slot accordingly.
     */
     function initializeContractState(bytes calldata data) internal override {
-        (IStarknetMessaging messagingContract_, uint256 l2TokenBridge_) = abi.decode(
+        (uint256 l2TokenBridge_, StarknetMessaging messagingContract_) = abi.decode(
             data,
-            (IStarknetMessaging, uint256)
+            (uint256, StarknetMessaging)
         );
 
-        require(l2TokenBridge_ != 0, "L2_ADDRESS_OUT_OF_RANGE");
-        require(l2TokenBridge_ < CairoConstants.FIELD_PRIME, "L2_ADDRESS_OUT_OF_RANGE");
+        require(both(l2TokenBridge_ != 0, l2TokenBridge_ < CairoConstants.FIELD_PRIME), "L2_ADDRESS_OUT_OF_RANGE");
 
         messagingContract = messagingContract_;
         l2TokenBridge = l2TokenBridge_;
     }
 
-    // The selector of the deposit handler in L2.
+    // TODO: implement proper encoding on js side
+    // function initializeWithoutProxy(bytes calldata data) public {
+    function initializeWithoutProxy(uint256 l2TokenBridge_, StarknetMessaging messagingContract_) public {
+        // following code initialize the state like`initialize()` function of ProxySupport contract
+        // validateInitData(data);
+        initGovernance();
+
+        // this part corresponds to `initializeContractState()` function of StarknetTokenBridge contract
+        // (uint256 l2TokenBridge_, StarknetMessaging messagingContract_) = abi.decode(
+        //     data,
+        //     (uint256, StarknetMessaging)
+        // );
+        require(both(l2TokenBridge_ != 0, l2TokenBridge_ < CairoConstants.FIELD_PRIME), "L2_ADDRESS_OUT_OF_RANGE");
+        messagingContract = messagingContract_;
+        l2TokenBridge = l2TokenBridge_;
+    }
+
+
+    // The selector of the "handle_deposit" l1_handler on L2.
     // TODO: Recompute hash when the signature is decided
     uint256 constant DEPOSIT_HANDLER =
         1285101517810983806491589552491143496277809242732141897358598292095611420389;
     uint256 constant TRANSFER_FROM_STARKNET = 0;
-    uint256 constant UINT256_PART_SIZE_BITS = 128;
-    uint256 constant UINT256_PART_SIZE = 2**UINT256_PART_SIZE_BITS;
 
     modifier isValidL2Address(uint256 l2Address) {
-        require(l2Address != 0, "L2_ADDRESS_OUT_OF_RANGE");
-        require(l2Address < CairoConstants.FIELD_PRIME, "L2_ADDRESS_OUT_OF_RANGE");
+        require(both(l2Address != 0, l2Address < CairoConstants.FIELD_PRIME), "L2_ADDRESS_OUT_OF_RANGE");
         _;
     }
 
@@ -100,10 +129,8 @@ contract TokenBridge is
 
         uint256[] memory payload = new uint256[](5);
         payload[0] = l2Recipient;
-        payload[1] = l2TokenAddress & (UINT256_PART_SIZE - 1);
-        payload[2] = l2TokenAddress >> (UINT256_PART_SIZE_BITS);
-        payload[3] = amount & (UINT256_PART_SIZE - 1);
-        payload[4] = amount >> UINT256_PART_SIZE_BITS;
+        (payload[1], payload[2]) = toSplitUint(l2TokenAddress);
+        (payload[3], payload[4]) = toSplitUint(amount);
 
         messagingContract.sendMessageToL2(l2TokenBridge, DEPOSIT_HANDLER, payload);
     }
@@ -114,26 +141,23 @@ contract TokenBridge is
         uint256[] memory payload = new uint256[](5);
         payload[0] = TRANSFER_FROM_STARKNET;
         payload[1] = uint256(l1Token);
-        payload[1] = uint256(recipient);
-        payload[2] = amount & (UINT256_PART_SIZE - 1);
-        payload[3] = amount >> UINT256_PART_SIZE_BITS;
+        payload[2] = uint256(recipient);
+        (payload[3], payload[4]) = toSplitUint(amount);
 
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
 
-    // TODO - USE MINT AND BURN FROM ERC20
     function deposit(address l1Token_, uint256 l2Recipient, uint256 amount) external {
-        IERC20 l1Token = IERC20(l1Token_);
-        l1Token.transfer(address(this), amount);
+        IL1Token l1Token = IL1Token(l1Token_);
+        l1Token.transferFrom(msg.sender, address(this), amount);
         sendMessage(l1Token_, l2Recipient, amount);
     }
-
+    
     function withdraw(address l1Token_, address recipient, uint256 amount) isApprovedToken(l1Token_) external {
         consumeMessage(l1Token_, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
-        IERC20 l1Token = IERC20(l1Token_);
-
+        IL1Token l1Token = IL1Token(l1Token_);
         require(l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender), "UNDERFLOW");
-        l1Token.transfer(recipient, amount);
+        l1Token.transferFrom(address(this), recipient, amount);
     }
 }

@@ -1,6 +1,10 @@
 import { HardhatUserConfig } from "hardhat/types";
 import "@shardlabs/starknet-hardhat-plugin";
 import "@nomiclabs/hardhat-ethers";
+import chai from "chai";
+import { solidity } from "ethereum-waffle";
+
+chai.use(solidity);
 
 /**
  * @type import('hardhat/config').HardhatUserConfig

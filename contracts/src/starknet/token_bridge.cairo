@@ -7,10 +7,19 @@ from starkware.cairo.common.uint256 import Uint256
 from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address, get_contract_address
 
-from src.starknet.IERC20 import IERC20
-
 const WITHDRAW_MESSAGE = 0
 const ETH_ADDRESS_BOUND = 2 ** 160
+
+# Interface
+
+@contract_interface
+namespace IL2Token:
+    func permissionedMint(recipient : felt, amount : Uint256) -> (success : felt):
+    end
+
+    func permissionedBurn(account : felt, amount : Uint256) -> (success : felt):
+    end
+end
 
 # Storage.
 
@@ -97,8 +106,6 @@ func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     return ()
 end
 
-# TODO USE ERC20 MINT and BURN
-
 @external
 func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         l2_token: felt, l1_recipient : felt, amount : Uint256):
@@ -124,8 +131,7 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     let (caller_address) = get_caller_address()
     let (contract_address) = get_contract_address()
 
-    IERC20.transferFrom(
-        contract_address=l2_token, sender=caller_address, recipient=contract_address, amount=amount)
+    IL2Token.permissionedBurn(contract_address=l2_token, account=caller_address, amount=amount)
 
     # Send the message.
     let (message_payload : felt*) = alloc()
@@ -142,7 +148,7 @@ end
 
 @l1_handler
 func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        from_address : felt, l2_recipient : felt, amount_low: felt, amount_high: felt, amount_low : felt, amount_high : felt):
+        from_address : felt, l2_recipient : felt, l2_token_low: felt, l2_token_high: felt, amount_low: felt, amount_high: felt):
     # The amount is validated (i.e. amount_low, amount_high < 2**128) by an inner call to
     # IMintableToken permissionedMint function.
 
@@ -153,13 +159,12 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     let amount : Uint256 = cast((low=amount_low, high=amount_high), Uint256)
 
     # Call mint on l2_token contract.
-    let l2_token_address = amount_high * 2**128 + amount_low
+    let l2_token_address = l2_token_high * 2**128 + l2_token_low
 
     assert_not_zero(l2_token_address)
 
-    let (contract_address) = get_caller_address()
-    IERC20.transferFrom(
-        contract_address=l2_token_address, sender=contract_address, recipient=l2_recipient, amount=amount)
+    # let (contract_address) = get_caller_address()
+    IL2Token.permissionedMint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
 
     return ()
 end

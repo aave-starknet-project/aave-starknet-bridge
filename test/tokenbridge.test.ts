@@ -153,6 +153,7 @@ describe('TokenBridge', async function() {
 
     // set L1 token bridge from L2 bridge 
     await l2user.invoke(tokenBridgeL2, 'set_l1_token_bridge', { l1_bridge_address: BigInt(tokenBridgeL1.address) });
+    // expect(await tokenBridgeL2.invoke('get_l1_token_bridge', {})).to.equal(tokenBridgeL1.address);
 
     // map L1 tokens to L2 tokens on L2 bridge
     await l2user.invoke(tokenBridgeL2, 'approve_bridge', { l1_token: BigInt(l1tokenA.address), l2_token: BigInt(l2tokenA.address) });
@@ -162,12 +163,39 @@ describe('TokenBridge', async function() {
     await l1tokenA.connect(l1user).approve(tokenBridgeL1.address, MAX_UINT256);
     await l1tokenB.connect(l1user).approve(tokenBridgeL1.address, MAX_UINT256);
 
-    // l1user deposits 30 tokens A and 50 tokens B on L1 for l2user on L2
+    // // l1user deposits 30 tokens A and 50 tokens B on L1 for l2user on L2
     await tokenBridgeL1.connect(l1user).deposit(l1tokenA.address, BigInt(l2user.starknetContract.address), 30);
     await tokenBridgeL1.connect(l1user).deposit(l1tokenB.address, BigInt(l2user.starknetContract.address), 40);
     expect(await l1tokenA.balanceOf(l1user.address)).to.equal(170);
     expect(await l1tokenB.balanceOf(l1user.address)).to.equal(260);    
 
+    // check balance of L2 tokens
+    expect(await l2tokenA.invoke('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({high: 0n, low:  30n});
+    expect(await l2tokenB.invoke('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({high: 0n, low:  40n});
+
+    // approve bridge with enough tokens
+    await l2tokenA.invoke('approve', { spender: BigInt(tokenBridgeL2.address), amount: toSplitUint(20) });
+    await l2tokenB.invoke('approve', { spender: BigInt(tokenBridgeL2.address), amount: toSplitUint(20) });    
+
+    // withdraw some tokens from L2
+    await tokenBridgeL2.invoke('initiate_withdraw', { l2_token: BigInt(l2tokenA.address), l1_recipient: BigInt(l1user.address), amount: toSplitUint(5) });
+    await tokenBridgeL2.invoke('initiate_withdraw', { l2_token: BigInt(l2tokenB.address), l1_recipient: BigInt(l1user.address), amount: toSplitUint(10) });
+
+    // flush L1 messages to be consumed by L2
+    // const flushL1Response = await starknet.devnet.flush();
+    // const flushL1Messages = flushL1Response.consumed_messages.from_l1;
+    // expect(flushL1Response.consumed_messages.from_l2).to.be.empty;
+    // expect(flushL1Messages).to.have.a.lengthOf(1);
+    // console.log("OOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+    // console.log(flushL1Messages[0].args.from_address);
+    // console.log(tokenBridgeL1.address);
+    // console.log("OOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+
+    // expectAddressEquality(flushL1Messages[0].args.from_address, tokenBridgeL1.address);
+    // expectAddressEquality(flushL1Messages[0].args.to_address, tokenBridgeL2.address);
+    // expectAddressEquality(flushL1Messages[0].address, mockStarknetMessaging.address);
+
+    // check that tokens are available on L2
 
     // await l2contract.invoke('increase_balance', {
     //   user,

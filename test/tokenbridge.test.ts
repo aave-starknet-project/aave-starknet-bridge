@@ -1,8 +1,7 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import console from 'console';
-import { BigNumber, Contract, ContractFactory } from 'ethers';
-import { AbiCoder } from 'ethers/lib/utils';
+import { Contract, ContractFactory } from 'ethers';
 import hre, { starknet, network, ethers } from 'hardhat';
 import {
   StarknetContractFactory,
@@ -13,7 +12,6 @@ import {
 
 import { TIMEOUT } from './constants';
 
-const abiCoder = new ethers.utils.AbiCoder();
 const MAX_UINT256 = hre.ethers.constants.MaxInt256;
 
 /**
@@ -70,7 +68,7 @@ describe('TokenBridge', async function() {
 
     l2user = await starknet.deployAccount("OpenZeppelin");
 
-    L2TokenFactory = await starknet.getContractFactory('L2Token');
+    L2TokenFactory = await starknet.getContractFactory('l2_token');
     l2tokenA = await L2TokenFactory.deploy(
         { name: 1234, symbol: 123, decimals: 18, minter_address: BigInt(l2user.starknetContract.address) });
     l2tokenB = await L2TokenFactory.deploy(
@@ -99,31 +97,31 @@ describe('TokenBridge', async function() {
     await tokenBridgeL1.deployed();
   });
 
-  // it('should deploy the messaging contract', async () => {
-  //   const {
-  //     address: deployedTo,
-  //     l1_provider: L1Provider,
-  //   } = await starknet.devnet.loadL1MessagingContract(networkUrl);
-  //   expect(deployedTo).not.to.be.undefined;
-  //   expect(L1Provider).to.equal(networkUrl);    
-  // });
+  it('should deploy the messaging contract', async () => {
+    const {
+      address: deployedTo,
+      l1_provider: L1Provider,
+    } = await starknet.devnet.loadL1MessagingContract(networkUrl);
+    expect(deployedTo).not.to.be.undefined;
+    expect(L1Provider).to.equal(networkUrl);    
+  });
 
-  // it('should load the already deployed contract if the address is provided', async () => {
-  //   const {
-  //     address: deployedTo,
-  //   } = await starknet.devnet.loadL1MessagingContract(networkUrl);
+  it('should load the already deployed contract if the address is provided', async () => {
+    const {
+      address: deployedTo,
+    } = await starknet.devnet.loadL1MessagingContract(networkUrl);
 
-  //   await tokenBridgeL1.initializeWithoutProxy(abiCoder.encode([ "string", "string" ], [tokenBridgeL2.address, deployedTo]));
-  //   messagingContractAddress = await tokenBridgeL1.messagingContract();
+    await tokenBridgeL1.initializeWithoutProxy(tokenBridgeL2.address, deployedTo);
+    messagingContractAddress = await tokenBridgeL1.messagingContract();
 
-  //   const {
-  //     address: loadedFrom,
-  //   } = await starknet.devnet.loadL1MessagingContract(
-  //     networkUrl,
-  //     messagingContractAddress,
-  //   );
-  //   expect(messagingContractAddress).to.equal(loadedFrom);
-  // });
+    const {
+      address: loadedFrom,
+    } = await starknet.devnet.loadL1MessagingContract(
+      networkUrl,
+      messagingContractAddress,
+    );
+    expect(messagingContractAddress).to.equal(loadedFrom);
+  });
 
   it('should exchange messages between L1 and L2', async () => {
 

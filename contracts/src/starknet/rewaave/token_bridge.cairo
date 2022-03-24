@@ -185,5 +185,6 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     # Call mint on l2_token contract.
     IL2Token.mint(contract_address=l2_token, recipient=l2_recipient, amount=amount)
     deposit_handled.emit(l2_token, l2_recipient, amount)
+
     return ()
 end

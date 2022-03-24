@@ -18,7 +18,10 @@
     "@joriksch/oz-cairo": "^1.0.0",
     "@joriksch/sg-contracts": "^0.0.2",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
+<<<<<<< HEAD
     "@nomiclabs/hardhat-waffle": "^2.0.3",
+=======
+>>>>>>> e1ebfe9... Formatting
     "@openzeppelin/contracts": "^4.5.0",
     "@shardlabs/starknet-hardhat-plugin": "^0.5.1",
     "@toruslabs/starkware-crypto": "^1.0.0",
@@ -36,12 +39,7 @@
     "ts-node": "^10.4.0",
     "typescript": "^4.5.2"
   },
-  "dependencies": {
-    "@joriksch/fossil": "^0.0.1",
-    "@joriksch/oz-cairo": "^1.0.0",
-    "@joriksch/sg-contracts": "^0.0.2",
-    "@openzeppelin/contracts": "^4.5.0",
-    "@toruslabs/starkware-crypto": "^1.0.0",
-    "hardhat": "2.9.0"
+  "husky": {
+    "hooks": {}
   }
 }

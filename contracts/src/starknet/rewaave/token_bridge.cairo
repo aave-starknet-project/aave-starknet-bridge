@@ -152,11 +152,7 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     # Call burn on l2_token contract.
     let (caller_address) = get_caller_address()
 
-    IERC20.transferFrom(
-        contract_address=l2_token,
-        sender=caller_address,
-        recipient=contract_address,
-        amount=amount)
+    IL2Token.burn(contract_address=l2_token, account=caller_address, amount=amount)
 
     # Send the message.
     let (message_payload : felt*) = alloc()

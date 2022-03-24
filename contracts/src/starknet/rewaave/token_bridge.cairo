@@ -8,8 +8,10 @@ from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address, get_contract_address
 
 from rewaave.tokens.IERC20 import IERC20
+from rewaave.tokens.IETHStaticAToken import IETHStaticAToken
 
 const WITHDRAW_MESSAGE = 0
+const BRIDGE_REWARD_MESSAGE = 1
 const ETH_ADDRESS_BOUND = 2 ** 160
 
 # Interface
@@ -164,6 +166,29 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
 
     send_message_to_l1(to_address=to_address, payload_size=5, payload=message_payload)
     withdraw_initiated.emit(l2_token, l1_recipient, amount, caller_address)
+    return ()
+end
+
+@external
+func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    l1_token : felt, l1_recipient : felt, amount : Uint256):
+    let (token_owner) = get_caller_address()
+
+    let (bridge_address) = get_contract_address()
+
+    let (reward_token) = IETHStaticAToken.get_REWARD_TOKEN(contract_address=l1_token)
+
+    # BURN REWARD TOKEN
+    IERC20.transferFrom(contract_address=reward_token, sender=token_owner, recipient=bridge_address, amount=amount)
+
+    # Send message for bridging tokens
+    let (message_payload : felt*) = alloc()
+    assert message_payload[0] = BRIDGE_REWARD_MESSAGE
+    assert message_payload[1] = l1_token
+    assert message_payload[2] = l1_recipient
+    assert message_payload[3] = amount.low
+    assert message_payload[4] = amount.high
+
     return ()
 end
 

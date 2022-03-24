@@ -18,12 +18,17 @@ from rewaave.tokens.claimable import (
     claimable_claim_rewards, claimable_push_acc_rewards_per_token, claimable_before_token_transfer,
     claimable_get_acc_rewards_per_token)
 
+@storage_var
+func REWARD_TOKEN() -> (token: felt):
+end
+
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         name : felt, symbol : felt, decimals : felt, initial_supply : Uint256, recipient : felt,
         controller : felt):
     ERC20_initializer(name, symbol, decimals)
     ERC20_mint(recipient, initial_supply)
+    # TODO Init reward token from controller
     Ownable_initializer(controller)
     # TODO we either need to configure the last_update here, or pause the contract
     # until the first update somehow.
@@ -40,7 +45,16 @@ end
 #
 
 @view
-func name{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (name : felt):
+func get_REWARD_TOKEN{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (token: felt):
+    return REWARD_TOKEN.read()
+end
+
+@view
+func name{
+        syscall_ptr : felt*,
+        pedersen_ptr : HashBuiltin*,
+        range_check_ptr
+    }() -> (name: felt):
     let (name) = ERC20_name()
     return (name)
 end

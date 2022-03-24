@@ -31,7 +31,11 @@ namespace IERC20:
     func approve(spender : felt, amount : Uint256) -> (success : felt):
     end
 <<<<<<< HEAD
+<<<<<<< HEAD
 end
 =======
 end
 >>>>>>> f1627eb... Basic implementation of staticAToken and rewards collection
+=======
+end
+>>>>>>> e1ebfe9... Formatting

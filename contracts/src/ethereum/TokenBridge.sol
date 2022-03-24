@@ -10,6 +10,7 @@ import "@joriksch/sg-contracts/src/starkware/starknet/eth/StarknetMessaging.sol"
 interface IL1Token {
     function approve(address, uint256) external returns (bool);
     function balanceOf(address) external view returns (uint256);
+    function transfer(address, uint256) external returns (bool);    
     function transferFrom(address, address, uint256) external returns (bool);    
 }
 
@@ -127,10 +128,10 @@ contract TokenBridge is
 
         uint256 l2TokenAddress = l1TokentoL2Token[l1Token];
 
-        uint256[] memory payload = new uint256[](5);
+        uint256[] memory payload = new uint256[](4);
         payload[0] = l2Recipient;
-        (payload[1], payload[2]) = toSplitUint(l2TokenAddress);
-        (payload[3], payload[4]) = toSplitUint(amount);
+        payload[1] = l2TokenAddress;
+        (payload[2], payload[3]) = toSplitUint(amount);
 
         messagingContract.sendMessageToL2(l2TokenBridge, DEPOSIT_HANDLER, payload);
     }
@@ -144,11 +145,14 @@ contract TokenBridge is
         payload[2] = uint256(recipient);
         (payload[3], payload[4]) = toSplitUint(amount);
 
+        // Consume the message from the StarkNet core contract.
+        // This will revert the (Ethereum) transaction if the message does not exist.        
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
 
     function deposit(address l1Token_, uint256 l2Recipient, uint256 amount) external {
         IL1Token l1Token = IL1Token(l1Token_);
+        // l1Token.approve(address(this), amount);
         l1Token.transferFrom(msg.sender, address(this), amount);
         sendMessage(l1Token_, l2Recipient, amount);
     }
@@ -158,6 +162,6 @@ contract TokenBridge is
         require(recipient != address(0x0), "INVALID_RECIPIENT");
         IL1Token l1Token = IL1Token(l1Token_);
         require(l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender), "UNDERFLOW");
-        l1Token.transferFrom(address(this), recipient, amount);
+        l1Token.transfer(recipient, amount);
     }
 }

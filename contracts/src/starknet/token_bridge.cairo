@@ -14,10 +14,13 @@ const ETH_ADDRESS_BOUND = 2 ** 160
 
 @contract_interface
 namespace IL2Token:
-    func permissionedMint(recipient : felt, amount : Uint256) -> (success : felt):
+    func mint(recipient : felt, amount : Uint256):
     end
 
-    func permissionedBurn(account : felt, amount : Uint256) -> (success : felt):
+    func burn(account : felt, amount : Uint256):
+    end
+
+    func approve(spender : felt, amount : Uint256) -> (success : felt):
     end
 end
 
@@ -131,7 +134,9 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     let (caller_address) = get_caller_address()
     let (contract_address) = get_contract_address()
 
-    IL2Token.permissionedBurn(contract_address=l2_token, account=caller_address, amount=amount)
+    IL2Token.approve(contract_address=l2_token, spender=contract_address, amount=amount)
+    IL2Token.burn(contract_address=l2_token, account=caller_address, amount=amount)
+    # IL2Token.permissionedBurn(contract_address=l2_token, account=caller_address, amount=amount)
 
     # Send the message.
     let (message_payload : felt*) = alloc()
@@ -148,7 +153,8 @@ end
 
 @l1_handler
 func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        from_address : felt, l2_recipient : felt, l2_token_low: felt, l2_token_high: felt, amount_low: felt, amount_high: felt):
+        from_address : felt, l2_recipient : felt, l2_token_address: felt, amount_low: felt, amount_high: felt):
+        # from_address : felt, l2_recipient : felt, l2_token_low: felt, l2_token_high: felt, amount_low: felt, amount_high: felt):
     # The amount is validated (i.e. amount_low, amount_high < 2**128) by an inner call to
     # IMintableToken permissionedMint function.
 
@@ -158,13 +164,12 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     end
     let amount : Uint256 = cast((low=amount_low, high=amount_high), Uint256)
 
-    # Call mint on l2_token contract.
-    let l2_token_address = l2_token_high * 2**128 + l2_token_low
-
     assert_not_zero(l2_token_address)
 
+    # Call mint on l2_token contract.
     # let (contract_address) = get_caller_address()
-    IL2Token.permissionedMint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
+    # IL2Token.permissionedMint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
+    IL2Token.mint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
 
     return ()
 end

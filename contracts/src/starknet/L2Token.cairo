@@ -113,6 +113,17 @@ func permissionedMint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
 end
 
 @external
+func mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        recipient : felt, amount : Uint256):
+    alloc_locals
+    local syscall_ptr : felt* = syscall_ptr
+
+    ERC20_mint(recipient=recipient, amount=amount)
+
+    return ()
+end
+
+@external
 func permissionedBurn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         account : felt, amount : Uint256):
     alloc_locals
@@ -123,3 +134,15 @@ func permissionedBurn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
 
     return ()
 end
+
+@external
+func burn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        account : felt, amount : Uint256):
+    alloc_locals
+    local syscall_ptr : felt* = syscall_ptr
+
+    ERC20_burn(account=account, amount=amount)
+
+    return ()
+end
+

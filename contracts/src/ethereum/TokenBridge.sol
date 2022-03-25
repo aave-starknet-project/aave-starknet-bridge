@@ -157,7 +157,10 @@ contract TokenBridge is
         consumeBridgeRewardMessage(l1Token, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
         
-        IERC20 rewardToken = IStaticATokenLM(l1Token).REWARD_TOKEN();
+        IStaticATokenLM staticAToken =  IStaticATokenLM(l1Token);
+        staticAToken.claimRewardsToSelf(true);
+
+        IERC20 rewardToken = staticAToken.REWARD_TOKEN();
         rewardToken.transfer(recipient, amount);
     }
 }

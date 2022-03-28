@@ -16,37 +16,37 @@ end
 
 # user => accRewardsPerToken at last interaction (in RAYs)
 @storage_var
-func userSnapshotRewardsPerToken(user : felt) -> (accRewardsPerToken : Uint256):
+func user_snapshot_rewards_per_token(user : felt) -> (accRewardsPerToken : Uint256):
 end
-# user => unclaimedRewards (in RAYs)
+# user => unclaimed_rewards (in RAYs)
 @storage_var
-func unclaimedRewards(user : felt) -> (unclaimed : Uint256):
+func unclaimed_rewards(user : felt) -> (unclaimed : Uint256):
 end
 
-func updateUserSnapshotRewardsPerToken{
+func update_user_snapshot_rewards_per_token{
         syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt):
     let (accRewardsPerToken_) = accRewardsPerToken.read()
-    userSnapshotRewardsPerToken.write(user, accRewardsPerToken_)
+    user_snapshot_rewards_per_token.write(user, accRewardsPerToken_)
     return ()
 end
 
-func updateUser{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt):
+func update_user{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt):
     alloc_locals
     let (balance) = ERC20_balanceOf(user)
     if balance.high + balance.low == 0:
-        updateUserSnapshotRewardsPerToken(user)
+        update_user_snapshot_rewards_per_token(user)
     else:
-        let (pending) = getPendingRewards(user)
-        let (unclaimed) = unclaimedRewards.read(user)
+        let (pending) = get_pending_rewards(user)
+        let (unclaimed) = unclaimed_rewards.read(user)
         let (unclaimed, overflow) = uint256_add(unclaimed, pending)
         assert overflow = 0
-        unclaimedRewards.write(user, unclaimed)
-        updateUserSnapshotRewardsPerToken(user)
+        unclaimed_rewards.write(user, unclaimed)
+        update_user_snapshot_rewards_per_token(user)
     end
     return ()
 end
 
-func ERC20_claimable_beforeTokenTransfer{
+func ERC20_claimable_before_token_transfer{
         syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(from_ : felt, to : felt):
     alloc_locals
     if from_ == 0:
@@ -55,7 +55,7 @@ func ERC20_claimable_beforeTokenTransfer{
         tempvar pedersen_ptr = pedersen_ptr
         tempvar range_check_ptr = range_check_ptr
     else:
-        updateUser(from_)
+        update_user(from_)
         tempvar syscall_ptr = syscall_ptr
         tempvar pedersen_ptr = pedersen_ptr
         tempvar range_check_ptr = range_check_ptr
@@ -63,52 +63,52 @@ func ERC20_claimable_beforeTokenTransfer{
     if to == 0:
         # do nothing
     else:
-        updateUser(to)
+        update_user(to)
     end
     return ()
 end
 
-func getPendingRewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func get_pending_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         user : felt) -> (pendingRewards : Uint256):
     alloc_locals
     let (balance) = ERC20_balanceOf(user)
     let (supply) = ERC20_totalSupply()
     let (accRewardsPerToken_) = accRewardsPerToken.read()
-    let (userSnapshotRewardsPerToken_) = userSnapshotRewardsPerToken.read(user)
+    let (user_snapshot_rewards_per_token_) = user_snapshot_rewards_per_token.read(user)
     let (accruedRewardPerTokenSinceLastInteraction) = uint256_sub(
-        accRewardsPerToken_, userSnapshotRewardsPerToken_)
+        accRewardsPerToken_, user_snapshot_rewards_per_token_)
     let (pendingRewards) = rayMulNoRounding(accruedRewardPerTokenSinceLastInteraction, balance)
     return (pendingRewards)
 end
 
-func getClaimableRewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func get_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         user : felt) -> (claimableRewards : Uint256):
     alloc_locals
-    let (unclaimedRewards_) = unclaimedRewards.read(user)
-    let (pending) = getPendingRewards(user)
-    let (claimableRewards, overflow) = uint256_add(unclaimedRewards_, pending)
+    let (unclaimed_rewards_) = unclaimed_rewards.read(user)
+    let (pending) = get_pending_rewards(user)
+    let (claimableRewards, overflow) = uint256_add(unclaimed_rewards_, pending)
     assert overflow = 0
     let (claimableRewards) = rayToWadNoRounding(claimableRewards)
     return (claimableRewards)
 end
 
-func ERC20_claimable_claimRewards{
+func ERC20_claimable_claim_rewards{
         syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         user : felt, recipient : felt) -> (claimed : Uint256):
-    let (claimed) = getClaimableRewards(user)
+    let (claimed) = get_claimable_rewards(user)
     let (rewardsController_) = Ownable_get_owner()
 
-    unclaimedRewards.write(user, Uint256(0, 0))
+    unclaimed_rewards.write(user, Uint256(0, 0))
 
     if claimed.high + claimed.low == 0:
         return (Uint256(0, 0))
     else:
-        updateUserSnapshotRewardsPerToken(user)
+        update_user_snapshot_rewards_per_token(user)
         return (claimed)
     end
 end
 
-func ERC20_claimable_pushAccRewardsPerToken{
+func ERC20_claimable_push_accRewardsPerToken{
         syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(accRewardsPerToken_ : Uint256):
     alloc_locals
     accRewardsPerToken.write(accRewardsPerToken_)

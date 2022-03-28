@@ -41,17 +41,32 @@ from starkware.cairo.common.uint256 import Uint256
 from starkware.starknet.common.syscalls import get_caller_address
 
 from openzeppelin.token.erc20.library import (
-    ERC20_name, ERC20_symbol, ERC20_totalSupply, ERC20_decimals, ERC20_balanceOf, ERC20_allowance,
-    ERC20_initializer, ERC20_approve, ERC20_increaseAllowance, ERC20_decreaseAllowance,
-    ERC20_transfer, ERC20_transferFrom, ERC20_mint)
+    ERC20_name,
+    ERC20_symbol,
+    ERC20_totalSupply,
+    ERC20_decimals,
+    ERC20_balanceOf,
+    ERC20_allowance,
+    ERC20_initializer,
+    ERC20_approve,
+    ERC20_increaseAllowance,
+    ERC20_decreaseAllowance,
+    ERC20_transfer,
+    ERC20_transferFrom,
+    ERC20_mint
+)
 
-from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner, Ownable_get_owner
+from openzeppelin.access.ownable import (
+    Ownable_initializer,
+    Ownable_only_owner,
+    Ownable_get_owner
+)
 
 from openzeppelin.utils.constants import TRUE
 
 from rewaave.tokens.erc20.claimable.library import (
-    ERC20_claimable_claimRewards, ERC20_claimable_increaseLifetimeRewards,
-    ERC20_claimable_beforeTokenTransfer)
+    ERC20_claimable_claim_rewards, ERC20_claimable_push_accRewardsPerToken,
+    ERC20_claimable_before_token_transfer)
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -212,8 +227,12 @@ func transfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
         recipient : felt, amount : Uint256) -> (success : felt):
 >>>>>>> e1ebfe9... Formatting
     let (from_) = get_caller_address()
+<<<<<<< HEAD
     ERC20_claimable_beforeTokenTransfer(from_, recipient)
 >>>>>>> f1627eb... Basic implementation of staticAToken and rewards collection
+=======
+    ERC20_claimable_before_token_transfer(from_, recipient)
+>>>>>>> 44b0dab... Church of snakecase
     ERC20_transfer(recipient, amount)
     return (TRUE)
 end
@@ -223,6 +242,7 @@ end
 <<<<<<< HEAD
 func transferFrom{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         sender : felt, recipient : felt, amount : Uint256) -> (success : felt):
+<<<<<<< HEAD
     claimable_before_token_transfer(sender, recipient)
 =======
 func transferFrom{
@@ -240,6 +260,9 @@ func transferFrom{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
 >>>>>>> e1ebfe9... Formatting
     ERC20_claimable_beforeTokenTransfer(sender, recipient)
 >>>>>>> f1627eb... Basic implementation of staticAToken and rewards collection
+=======
+    ERC20_claimable_before_token_transfer(sender, recipient)
+>>>>>>> 44b0dab... Church of snakecase
     ERC20_transferFrom(sender, recipient, amount)
     return (TRUE)
 end
@@ -322,8 +345,12 @@ func mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         recipient : felt, amount : Uint256):
 >>>>>>> e1ebfe9... Formatting
     Ownable_only_owner()
+<<<<<<< HEAD
     ERC20_claimable_beforeTokenTransfer(0, recipient)
 >>>>>>> f1627eb... Basic implementation of staticAToken and rewards collection
+=======
+    ERC20_claimable_before_token_transfer(0, recipient)
+>>>>>>> 44b0dab... Church of snakecase
     ERC20_mint(recipient, amount)
     return ()
 end
@@ -376,15 +403,19 @@ func claimRewards{
 func claimRewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         user : felt, recipient : felt) -> (claimed : Uint256):
     Ownable_only_owner()
+<<<<<<< HEAD
     return ERC20_claimable_claimRewards(user, recipient)
 >>>>>>> e1ebfe9... Formatting
+=======
+    return ERC20_claimable_claim_rewards(user, recipient)
+>>>>>>> 44b0dab... Church of snakecase
 end
 
 @external
-func pushAccRewardsPerToken{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func push_accRewardsPerToken{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         amount : Uint256):
     Ownable_only_owner()
-    ERC20_claimable_pushAccRewardsPerToken(amount)
+    ERC20_claimable_push_accRewardsPerToken(amount)
     return ()
 end
 <<<<<<< HEAD

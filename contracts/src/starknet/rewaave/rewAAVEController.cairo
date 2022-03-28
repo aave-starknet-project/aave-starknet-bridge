@@ -1,6 +1,6 @@
 %lang starknet
 
-struct StorageSlot:
+struct storage_slot:
     member word_1 : felt
     member word_2 : felt
     member word_3 : felt
@@ -12,7 +12,7 @@ namespace IFossil:
     func get_storage(
         block: felt,
         account_160: felt,
-        slot: StorageSlot,
+        slot: storage_slot,
         proof_sizes_bytes_len : felt,
         proof_sizes_bytes : felt*,
         proof_sizes_words_len : felt,
@@ -29,7 +29,7 @@ end
 
 @contract_interface
 namespace IETHStaticAToken:
-    func pushAccRewardsPerToken(amount: Uint256):
+    func push_accRewardsPerToken(amount: Uint256):
     end
 end
 
@@ -71,7 +71,7 @@ func push_asset_update{
 
   # convert res to Uint256
   let amount = bytes_to_uint256(res)
-  IETHStaticAToken.pushAccRewardsPerToken(
+  IETHStaticAToken.push_accRewardsPerToken(
     l2_token,
     amount
   )

@@ -381,10 +381,10 @@ func claimRewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
 end
 
 @external
-func increaseLifetimeRewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func pushAccRewardsPerToken{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         amount : Uint256):
     Ownable_only_owner()
-    ERC20_claimable_increaseLifetimeRewards(amount)
+    ERC20_claimable_pushAccRewardsPerToken(amount)
     return ()
 end
 <<<<<<< HEAD

@@ -13,12 +13,6 @@ from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner,
 @storage_var
 func accRewardsPerToken() -> (res : Uint256):
 end
-@storage_var
-func lifetimeRewardsClaimed() -> (res : Uint256):
-end
-@storage_var
-func lifetimeRewards() -> (res : Uint256):
-end
 
 # user => accRewardsPerToken at last interaction (in RAYs)
 @storage_var
@@ -114,17 +108,9 @@ func ERC20_claimable_claimRewards{
     end
 end
 
-func ERC20_claimable_increaseLifetimeRewards{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(amount : Uint256):
+func ERC20_claimable_pushAccRewardsPerToken{
+        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(accRewardsPerToken_ : Uint256):
     alloc_locals
-    let (lifetimeRewards_) = lifetimeRewards.read()
-    let (lifetimeRewards_, overflow) = uint256_add(lifetimeRewards_, amount)
-    assert overflow = 0
-    lifetimeRewards.write(lifetimeRewards_)
-    let (supply) = ERC20_totalSupply()
-    let (accRewardsPerToken_, rem) = uint256_unsigned_div_rem(lifetimeRewards_, supply)
-    assert rem.high = 0
-    assert rem.low = 0
     accRewardsPerToken.write(accRewardsPerToken_)
     return ()
 end

@@ -60,7 +60,6 @@ describe('TokenBridge', async function() {
   let l1tokenB: Contract;
   let TokenBridgeL1: ContractFactory;
   let tokenBridgeL1: Contract;
-  let messagingContractAddress: string;
 
   before(async function () {
 
@@ -95,45 +94,14 @@ describe('TokenBridge', async function() {
     TokenBridgeL1 = await ethers.getContractFactory('TokenBridge', signer);
     tokenBridgeL1 = await TokenBridgeL1.deploy();
     await tokenBridgeL1.deployed();
-  });
 
-  it('should deploy the messaging contract', async () => {
-    const {
-      address: deployedTo,
-      l1_provider: L1Provider,
-    } = await starknet.devnet.loadL1MessagingContract(networkUrl);
-    expect(deployedTo).not.to.be.undefined;
-    expect(L1Provider).to.equal(networkUrl);    
-  });
+    // load L1 <--> L2 messaging contract
 
-  it('should load the already deployed contract if the address is provided', async () => {
-    const {
-      address: deployedTo,
-    } = await starknet.devnet.loadL1MessagingContract(networkUrl);
-
-    await tokenBridgeL1.initializeWithoutProxy(tokenBridgeL2.address, deployedTo);
-    messagingContractAddress = await tokenBridgeL1.messagingContract();
-
-    const {
-      address: loadedFrom,
-    } = await starknet.devnet.loadL1MessagingContract(
-      networkUrl,
-      messagingContractAddress,
-    );
-    expect(messagingContractAddress).to.equal(loadedFrom);
-  });
-
-  it('should exchange messages between L1 and L2', async () => {
-
-    // on L1: send 200 tokens A and 300 tokens B to l1user
-    await l1tokenA.transfer(l1user.address, 200);
-    await l1tokenB.transfer(l1user.address, 300);
-    expect(await l1tokenA.balanceOf(l1user.address)).to.equal(200);
-    expect(await l1tokenB.balanceOf(l1user.address)).to.equal(300);    
-
-    // load messaging contract
     await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarknetMessaging.address);
 
+  });
+
+  it('initialize the bridge on L1 and L2', async () => {
     // this should initialize governance, set messaging contract address and L2 token bridge address
     // TODO: implement proper encoding
     // await tokenBridgeL1.initializeWithoutProxy(abiCoder.encode([ "string", "string" ], [tokenBridgeL2.address, mockStarknetMessaging.address]));
@@ -152,9 +120,17 @@ describe('TokenBridge', async function() {
     await l2user.invoke(tokenBridgeL2, 'approve_bridge', { l1_token: BigInt(l1tokenA.address), l2_token: BigInt(l2tokenA.address) });
     await l2user.invoke(tokenBridgeL2, 'approve_bridge', { l1_token: BigInt(l1tokenB.address), l2_token: BigInt(l2tokenB.address) });
 
-    // approve bridge with max uint256 amount
+    // approve L1 bridge with max uint256 amount
     await l1tokenA.connect(l1user).approve(tokenBridgeL1.address, MAX_UINT256);
     await l1tokenB.connect(l1user).approve(tokenBridgeL1.address, MAX_UINT256);
+  })
+
+  it('L1 user sends tokens A and tokens B to L2 user', async () => {
+    // on L1: send 200 tokens A and 300 tokens B to l1user
+    await l1tokenA.transfer(l1user.address, 200);
+    await l1tokenB.transfer(l1user.address, 300);
+    expect(await l1tokenA.balanceOf(l1user.address)).to.equal(200);
+    expect(await l1tokenB.balanceOf(l1user.address)).to.equal(300);
 
     // l1user deposits 30 tokens A and 50 tokens B on L1 for l2user on L2
     await tokenBridgeL1.connect(l1user).deposit(l1tokenA.address, BigInt(l2user.starknetContract.address), 30);
@@ -179,6 +155,12 @@ describe('TokenBridge', async function() {
     // check balance of L2 tokens
     expect(await l2tokenA.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  30n } });
     expect(await l2tokenB.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  40n } });
+  })
+
+  it('L2 user sends back tokens A and tokens B to L1 user', async () => {
+    // approve L2 bridge with given amount
+    await l2user.invoke(l2tokenA, 'approve', { spender: BigInt(l2tokenA.address), amount: { high: 0n, low:  20n } });
+    await l2user.invoke(l2tokenB, 'approve', { spender: BigInt(l2tokenB.address), amount: { high: 0n, low:  25n } });
 
     // withdraw some tokens from L2
     await l2user.invoke(tokenBridgeL2, 'initiate_withdraw', { l2_token: BigInt(l2tokenA.address), l1_recipient: BigInt(l1user.address), amount: { high: 0n, low:  20n } });
@@ -199,6 +181,5 @@ describe('TokenBridge', async function() {
     expect(await l1tokenB.balanceOf(l1user.address)).to.equal(285);    
     expect(await l1tokenA.balanceOf(tokenBridgeL1.address)).to.equal(10);
     expect(await l1tokenB.balanceOf(tokenBridgeL1.address)).to.equal(15);    
-
-  });
+  })
 });

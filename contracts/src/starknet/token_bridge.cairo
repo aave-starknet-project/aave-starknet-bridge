@@ -73,7 +73,9 @@ func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
     # The call is restricted to the governor.
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
-    assert caller_address = governor_
+    with_attr error_message("Called address should be {governor_}"): 
+        assert caller_address = governor_
+    end
 
     # Check l1_bridge isn't already set.
     let (l1_bridge_) = get_l1_token_bridge()
@@ -94,7 +96,9 @@ func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     # The call is restricted to the governor.
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
-    assert caller_address = governor_
+    with_attr error_message("Called address should be {governor_}"): 
+        assert caller_address = governor_
+    end
 
     let (l1_token_) = l2_token_to_l1_token.read(l2_token)
     with_attr error_message("L2 to L1 Bridge already setup"):
@@ -126,7 +130,7 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     assert_lt_felt(l1_recipient, ETH_ADDRESS_BOUND)
 
     let (l1_token) = l2_token_to_l1_token.read(l2_token)
-    with_attr error_message("L1 token not found"):
+    with_attr error_message("L1 token {l1_token} not found"):
         assert_not_zero(l1_token)
     end
 
@@ -134,7 +138,6 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     let (caller_address) = get_caller_address()
     let (contract_address) = get_contract_address()
 
-    IL2Token.approve(contract_address=l2_token, spender=contract_address, amount=amount)
     IL2Token.burn(contract_address=l2_token, account=caller_address, amount=amount)
     # IL2Token.permissionedBurn(contract_address=l2_token, account=caller_address, amount=amount)
 

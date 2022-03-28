@@ -7,11 +7,11 @@ import "@joriksch/sg-contracts/src/starkware/contracts/interfaces/ProxySupport.s
 import "@joriksch/sg-contracts/src/starkware/cairo/eth/CairoConstants.sol";
 import "@joriksch/sg-contracts/src/starkware/starknet/eth/StarknetMessaging.sol";
 
-interface IL1Token {
+interface IERC20 {
     function approve(address, uint256) external returns (bool);
     function balanceOf(address) external view returns (uint256);
     function transfer(address, uint256) external returns (bool);    
-    function transferFrom(address, address, uint256) external returns (bool);    
+    function transferFrom(address, address, uint256) external returns (bool);
 }
 
 contract TokenBridge is
@@ -29,10 +29,6 @@ contract TokenBridge is
 
     constructor() public GenericGovernance("AAVE_BRIDGE_GOVERNANCE") {}
 
-    function both(bool x, bool y) internal pure returns (bool z) {
-        assembly{ z := and(x, y)}
-    }
-
     function toSplitUint(uint256 value) internal pure returns (uint256, uint256) {
       uint256 low = value & ((1 << 128) - 1);
       uint256 high = value >> 128;
@@ -48,15 +44,14 @@ contract TokenBridge is
     }
 
     function validateInitData(bytes calldata data) internal pure override {
-        // 288 because address type (32) is replaced by uint256 type (256)
-        require(data.length == 288, "ILLEGAL_DATA_SIZE");
+        require(data.length == 64, "ILLEGAL_DATA_SIZE");
     }
 
     function processSubContractAddresses(bytes calldata subContractAddresses) internal override {}
 
     modifier isApprovedToken(address token) {
         uint256 l2TokenAddress = l1TokentoL2Token[token];
-        require(both(l2TokenAddress != 0, l2TokenAddress < CairoConstants.FIELD_PRIME), "L2_TOKEN_HAS_NOT_BEEN_APPROVED");
+        require((l2TokenAddress != 0) && (l2TokenAddress < CairoConstants.FIELD_PRIME), "L2_TOKEN_HAS_NOT_BEEN_APPROVED");
         _;
     }
 
@@ -70,7 +65,7 @@ contract TokenBridge is
             (uint256, StarknetMessaging)
         );
 
-        require(both(l2TokenBridge_ != 0, l2TokenBridge_ < CairoConstants.FIELD_PRIME), "L2_ADDRESS_OUT_OF_RANGE");
+        require((l2TokenBridge_ != 0) && (l2TokenBridge_ < CairoConstants.FIELD_PRIME), "L2_ADDRESS_OUT_OF_RANGE");
 
         messagingContract = messagingContract_;
         l2TokenBridge = l2TokenBridge_;
@@ -88,7 +83,7 @@ contract TokenBridge is
         //     data,
         //     (uint256, StarknetMessaging)
         // );
-        require(both(l2TokenBridge_ != 0, l2TokenBridge_ < CairoConstants.FIELD_PRIME), "L2_ADDRESS_OUT_OF_RANGE");
+        require((l2TokenBridge_ != 0) && (l2TokenBridge_ < CairoConstants.FIELD_PRIME), "L2_ADDRESS_OUT_OF_RANGE");
         messagingContract = messagingContract_;
         l2TokenBridge = l2TokenBridge_;
     }
@@ -101,7 +96,7 @@ contract TokenBridge is
     uint256 constant TRANSFER_FROM_STARKNET = 0;
 
     modifier isValidL2Address(uint256 l2Address) {
-        require(both(l2Address != 0, l2Address < CairoConstants.FIELD_PRIME), "L2_ADDRESS_OUT_OF_RANGE");
+        require((l2Address != 0) && (l2Address < CairoConstants.FIELD_PRIME), "L2_ADDRESS_OUT_OF_RANGE");
         _;
     }
 
@@ -151,7 +146,7 @@ contract TokenBridge is
     }
 
     function deposit(address l1Token_, uint256 l2Recipient, uint256 amount) external {
-        IL1Token l1Token = IL1Token(l1Token_);
+        IERC20 l1Token = IERC20(l1Token_);
         // l1Token.approve(address(this), amount);
         l1Token.transferFrom(msg.sender, address(this), amount);
         sendMessage(l1Token_, l2Recipient, amount);
@@ -160,7 +155,7 @@ contract TokenBridge is
     function withdraw(address l1Token_, address recipient, uint256 amount) isApprovedToken(l1Token_) external {
         consumeMessage(l1Token_, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
-        IL1Token l1Token = IL1Token(l1Token_);
+        IERC20 l1Token = IERC20(l1Token_);
         require(l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender), "UNDERFLOW");
         l1Token.transfer(recipient, amount);
     }

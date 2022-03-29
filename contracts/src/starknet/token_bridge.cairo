@@ -79,7 +79,7 @@ func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
     # The call is restricted to the governor.
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
-    with_attr error_message("Called address should be {governor_}"): 
+    with_attr error_message("Called address should be {caller_address}"): 
         assert caller_address = governor_
     end
 
@@ -102,7 +102,7 @@ func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     # The call is restricted to the governor.
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
-    with_attr error_message("Called address should be {governor_}"): 
+    with_attr error_message("Called address should be {caller_address}"): 
         assert caller_address = governor_
     end
 

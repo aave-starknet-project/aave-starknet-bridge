@@ -5,7 +5,7 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math import assert_lt_felt, assert_not_zero
 from starkware.cairo.common.uint256 import Uint256
 from starkware.starknet.common.messages import send_message_to_l1
-from starkware.starknet.common.syscalls import get_caller_address, get_contract_address
+from starkware.starknet.common.syscalls import get_caller_address
 
 const WITHDRAW_MESSAGE = 0
 const ETH_ADDRESS_BOUND = 2 ** 160
@@ -21,6 +21,12 @@ namespace IL2Token:
     end
 
     func approve(spender : felt, amount : Uint256) -> (success : felt):
+    end
+
+    func permissionedMint(recipient : felt, amount : Uint256):
+    end
+
+    func permissionedBurn(account : felt, amount : Uint256):
     end
 end
 
@@ -136,10 +142,8 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
 
     # Call burn on l2_token contract.
     let (caller_address) = get_caller_address()
-    let (contract_address) = get_contract_address()
 
     IL2Token.burn(contract_address=l2_token, account=caller_address, amount=amount)
-    # IL2Token.permissionedBurn(contract_address=l2_token, account=caller_address, amount=amount)
 
     # Send the message.
     let (message_payload : felt*) = alloc()
@@ -170,8 +174,6 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     assert_not_zero(l2_token_address)
 
     # Call mint on l2_token contract.
-    # let (contract_address) = get_caller_address()
-    # IL2Token.permissionedMint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
     IL2Token.mint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
 
     return ()

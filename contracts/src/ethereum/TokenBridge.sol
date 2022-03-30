@@ -71,22 +71,6 @@ contract TokenBridge is
         l2TokenBridge = l2TokenBridge_;
     }
 
-    function initializeWithoutProxy(bytes calldata data) public {
-        (uint256 l2TokenBridge_, StarknetMessaging messagingContract_) = abi.decode(
-            data,
-            (uint256, StarknetMessaging)
-        );
-        // following code initialize the state like`initialize()` function of ProxySupport contract
-        validateInitData(data);
-        initGovernance();
-
-        // this part corresponds to `initializeContractState()` function of StarknetTokenBridge contract
-        require((l2TokenBridge_ != 0) && (l2TokenBridge_ < CairoConstants.FIELD_PRIME), "L2_ADDRESS_OUT_OF_RANGE");
-        messagingContract = messagingContract_;
-        l2TokenBridge = l2TokenBridge_;
-    }
-
-
     // The selector of the "handle_deposit" l1_handler on L2.
     uint256 constant DEPOSIT_HANDLER =
         1285101517810983806491589552491143496277809242732141897358598292095611420389;

@@ -1,6 +1,5 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import console from 'console';
 import { Contract, ContractFactory } from 'ethers';
 import hre, { starknet, network, ethers } from 'hardhat';
 import {
@@ -27,7 +26,7 @@ function adaptAddress(address: string) {
 /**
  * Expects address equality after adapting them.
  * @param actual 
- * @param expected 
+ * @param expected
  */
 function expectAddressEquality(actual: string, expected: string) {
   expect(adaptAddress(actual)).to.equal(adaptAddress(expected));
@@ -58,6 +57,7 @@ describe('TokenBridge', async function() {
   let tokenBridgeL1: Contract;
   let ProxyFactory: ContractFactory;
   let proxy: Contract;
+  let proxied: Contract;
 
   before(async function () {
 
@@ -107,17 +107,20 @@ describe('TokenBridge', async function() {
     const initData = abiCoder.encode([ "address", "uint256", "address"], ["0x0000000000000000000000000000000000000000", tokenBridgeL2.address, mockStarknetMessaging.address]);
     await proxy.addImplementation(tokenBridgeL1.address, initData, false)
     await proxy.upgradeTo(tokenBridgeL1.address, initData, false);
+    expect(await proxy.implementation()).to.eq(tokenBridgeL1.address);
+    proxied = await ethers.getContractAt("TokenBridge", proxy.address, signer)
+    expect(await proxied.messagingContract()).to.eq(mockStarknetMessaging.address);
   })
 
   it('initialize the bridge on L1 and L2', async () => {
     // map L2 tokens to L1 tokens on L1 bridge
-    await tokenBridgeL1.approveBridge(l1tokenA.address, l2tokenA.address);
-    await tokenBridgeL1.approveBridge(l1tokenB.address, l2tokenB.address);
+    await proxied.approveBridge(l1tokenA.address, l2tokenA.address);
+    await proxied.approveBridge(l1tokenB.address, l2tokenB.address);
 
-    // set L1 token bridge from L2 bridge 
-    await l2user.invoke(tokenBridgeL2, 'set_l1_token_bridge', { l1_bridge_address: BigInt(tokenBridgeL1.address) });
+    // set L1 token bridge from L2 bridge
+    await l2user.invoke(tokenBridgeL2, 'set_l1_token_bridge', { l1_bridge_address: BigInt(proxied.address) });
     const { res: retrievedBridgeAddress } = await tokenBridgeL2.call('get_l1_token_bridge', {});
-    expect(retrievedBridgeAddress).to.equal(BigInt(tokenBridgeL1.address));
+    expect(retrievedBridgeAddress).to.equal(BigInt(proxied.address));
 
     // map L1 tokens to L2 tokens on L2 bridge
     await l2user.invoke(tokenBridgeL2, 'approve_bridge', { l1_token: BigInt(l1tokenA.address), l2_token: BigInt(l2tokenA.address) });
@@ -126,8 +129,8 @@ describe('TokenBridge', async function() {
 
   it('L1 user sends tokens A and tokens B to L2 user', async () => {
     // approve L1 bridge with max uint256 amount
-    await l1tokenA.connect(l1user).approve(tokenBridgeL1.address, MAX_UINT256);
-    await l1tokenB.connect(l1user).approve(tokenBridgeL1.address, MAX_UINT256);
+    await l1tokenA.connect(l1user).approve(proxied.address, MAX_UINT256);
+    await l1tokenB.connect(l1user).approve(proxied.address, MAX_UINT256);
 
     // on L1: send 200 tokens A and 300 tokens B to l1user
     await l1tokenA.transfer(l1user.address, 200);
@@ -136,22 +139,22 @@ describe('TokenBridge', async function() {
     expect(await l1tokenB.balanceOf(l1user.address)).to.equal(300);
 
     // l1user deposits 30 tokens A and 50 tokens B on L1 for l2user on L2
-    await tokenBridgeL1.connect(l1user).deposit(l1tokenA.address, BigInt(l2user.starknetContract.address), 30);
-    await tokenBridgeL1.connect(l1user).deposit(l1tokenB.address, BigInt(l2user.starknetContract.address), 40);
+    await proxied.connect(l1user).deposit(l1tokenA.address, BigInt(l2user.starknetContract.address), 30);
+    await proxied.connect(l1user).deposit(l1tokenB.address, BigInt(l2user.starknetContract.address), 40);
     expect(await l1tokenA.balanceOf(l1user.address)).to.equal(170);
     expect(await l1tokenB.balanceOf(l1user.address)).to.equal(260);    
-    expect(await l1tokenA.balanceOf(tokenBridgeL1.address)).to.equal(30);
-    expect(await l1tokenB.balanceOf(tokenBridgeL1.address)).to.equal(40);    
+    expect(await l1tokenA.balanceOf(proxied.address)).to.equal(30);
+    expect(await l1tokenB.balanceOf(proxied.address)).to.equal(40);    
 
     // flush L1 messages to be consumed by L2
     const flushL1Response = await starknet.devnet.flush();
     const flushL1Messages = flushL1Response.consumed_messages.from_l1;
     expect(flushL1Response.consumed_messages.from_l2).to.be.empty;
     expect(flushL1Messages).to.have.a.lengthOf(2);
-    expectAddressEquality(flushL1Messages[0].args.from_address, tokenBridgeL1.address);
+    expectAddressEquality(flushL1Messages[0].args.from_address, proxied.address);
     expectAddressEquality(flushL1Messages[0].args.to_address, tokenBridgeL2.address);
     expectAddressEquality(flushL1Messages[0].address, mockStarknetMessaging.address);
-    expectAddressEquality(flushL1Messages[1].args.from_address, tokenBridgeL1.address);
+    expectAddressEquality(flushL1Messages[1].args.from_address, proxied.address);
     expectAddressEquality(flushL1Messages[1].args.to_address, tokenBridgeL2.address);
     expectAddressEquality(flushL1Messages[1].address, mockStarknetMessaging.address);
 
@@ -176,13 +179,13 @@ describe('TokenBridge', async function() {
     expect(flushL2Messages).to.have.a.lengthOf(2);
 
     // actually withdraw tokens
-    await tokenBridgeL1.connect(l1user).withdraw(l1tokenA.address, l1user.address, 20);
-    await tokenBridgeL1.connect(l1user).withdraw(l1tokenB.address, l1user.address, 25);
+    await proxied.connect(l1user).withdraw(l1tokenA.address, l1user.address, 20);
+    await proxied.connect(l1user).withdraw(l1tokenB.address, l1user.address, 25);
 
     // check that tokens have been transfered to l1user
     expect(await l1tokenA.balanceOf(l1user.address)).to.equal(190);
     expect(await l1tokenB.balanceOf(l1user.address)).to.equal(285);    
-    expect(await l1tokenA.balanceOf(tokenBridgeL1.address)).to.equal(10);
-    expect(await l1tokenB.balanceOf(tokenBridgeL1.address)).to.equal(15);    
+    expect(await l1tokenA.balanceOf(proxied.address)).to.equal(10);
+    expect(await l1tokenB.balanceOf(proxied.address)).to.equal(15);    
   })
 });

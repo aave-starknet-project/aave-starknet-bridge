@@ -161,7 +161,6 @@ end
 @l1_handler
 func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         from_address : felt, l2_recipient : felt, l2_token_address: felt, amount_low: felt, amount_high: felt):
-        # from_address : felt, l2_recipient : felt, l2_token_low: felt, l2_token_high: felt, amount_low: felt, amount_high: felt):
     # The amount is validated (i.e. amount_low, amount_high < 2**128) by an inner call to
     # IMintableToken permissionedMint function.
 

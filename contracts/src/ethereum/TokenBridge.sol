@@ -153,7 +153,7 @@ contract TokenBridge is
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
 
-    function recieveRewards(address l1Token, address recipient, uint256 amount) isApprovedToken(l1Token) external {
+    function receiveRewards(address l1Token, address recipient, uint256 amount) isApprovedToken(l1Token) external {
         consumeBridgeRewardMessage(l1Token, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
         

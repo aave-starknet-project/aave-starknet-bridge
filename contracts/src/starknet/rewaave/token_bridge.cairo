@@ -30,6 +30,8 @@ end
 func rewAAVE() -> (address : felt):
 end
 
+# Events.
+
 @event
 func withdraw_initiated(l2_token : felt, l1_recipient : felt, amount : Uint256, caller : felt):
 end
@@ -257,5 +259,9 @@ func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
     # mints rewAAVE for user
     IERC20.mint(reward_token, recipient, amount)
     minted_rewards.emit(reward_token, recipient, amount)
+
+    # write block number event
+    l1_block_number.write(value=block_number)
+
     return ()
 end

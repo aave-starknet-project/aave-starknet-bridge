@@ -255,19 +255,19 @@ func wad() -> (wad : Uint256):
     return (Uint256(WAD, 0))
 end
 
-func halfRay() -> (halfRay : Uint256):
+func half_ray() -> (half_ray : Uint256):
     return (Uint256(HALF_RAY, 0))
 end
 
-func halfWad() -> (halfWad : Uint256):
+func half_wad() -> (half_wad : Uint256):
     return (Uint256(HALF_WAD, 0))
 end
 
-func wadRayRatio() -> (ratio : Uint256):
+func wad_ray_ratio() -> (ratio : Uint256):
     return (Uint256(WAD_RAY_RATIO, 0))
 end
 
-func halfWadRayRatio() -> (ratio : Uint256):
+func half_wad_ray_ratio() -> (ratio : Uint256):
     return (Uint256(HALF_WAD_RAY_RATION, 0))
 end
 
@@ -275,7 +275,7 @@ func uint256_max() -> (max : Uint256):
     return (Uint256(UINT128_MAX, UINT128_MAX))
 end
 
-func wadMul{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
+func wad_mul{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
     alloc_locals
     if a.high + a.low == 0:
         return (Uint256(0, 0))
@@ -285,7 +285,7 @@ func wadMul{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
     end
 
     let (UINT256_MAX) = uint256_max()
-    let (HALF_WAD_UINT) = halfWad()
+    let (HALF_WAD_UINT) = half_wad()
     let (WAD_UINT) = wad()
 
     with_attr error_message("WAD multiplication overflow"):
@@ -301,7 +301,7 @@ func wadMul{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
     return (res)
 end
 
-func wadDiv{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
+func wad_div{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
     alloc_locals
     with_attr error_message("WAD divide by zero"):
         if b.high + b.low == 0:
@@ -327,7 +327,7 @@ func wadDiv{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
     return (res)
 end
 
-func rayMul{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
+func ray_mul{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
     alloc_locals
     if a.high + a.low == 0:
         return (Uint256(0, 0))
@@ -337,7 +337,7 @@ func rayMul{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
     end
 
     let (UINT256_MAX) = uint256_max()
-    let (HALF_RAY_UINT) = halfRay()
+    let (HALF_RAY_UINT) = half_ray()
     let (RAY_UINT) = ray()
 
     with_attr error_message("RAY multiplication overflow"):
@@ -353,7 +353,7 @@ func rayMul{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
     return (res)
 end
 
-func rayDiv{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
+func ray_div{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
     alloc_locals
     with_attr error_message("RAY divide by zero"):
         if b.high + b.low == 0:
@@ -364,7 +364,7 @@ func rayDiv{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
     let (halfB, _) = uint256_unsigned_div_rem(b, Uint256(2, 0))
 
     let (UINT256_MAX) = uint256_max()
-    let (HALF_RAY_UINT) = halfRay()
+    let (HALF_RAY_UINT) = half_ray()
     let (RAY_UINT) = ray()
 
     with_attr error_message("RAY multiplication overflow"):
@@ -380,31 +380,31 @@ func rayDiv{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
     return (res)
 end
 
-func rayToWad{range_check_ptr}(a : Uint256) -> (res : Uint256):
+func ray_to_wad{range_check_ptr}(a : Uint256) -> (res : Uint256):
     alloc_locals
-    let (HALF_WAD_RAY_RATION_UINT) = halfWadRayRatio()
-    let (WAD_RAY_RATIO_UINT) = wadRayRatio()
+    let (HALF_WAD_RAY_RATION_UINT) = half_wad_ray_ratio()
+    let (WAD_RAY_RATIO_UINT) = wad_ray_ratio()
 
     let (res, overflow) = uint256_add(a, HALF_WAD_RAY_RATION_UINT)
-    with_attr error_message("rayToWad overflow"):
+    with_attr error_message("ray_to_wad overflow"):
         assert overflow = 0
     end
     let (res, _) = uint256_unsigned_div_rem(res, WAD_RAY_RATIO_UINT)
     return (res)
 end
 
-func wadToRay{range_check_ptr}(a : Uint256) -> (res : Uint256):
+func wad_to_ray{range_check_ptr}(a : Uint256) -> (res : Uint256):
     alloc_locals
-    let (WAD_RAY_RATIO_UINT) = wadRayRatio()
+    let (WAD_RAY_RATIO_UINT) = wad_ray_ratio()
 
     let (res, overflow) = uint256_mul(a, WAD_RAY_RATIO_UINT)
-    with_attr error_message("rayToWad overflow"):
+    with_attr error_message("ray_to_wad overflow"):
         assert overflow.high + overflow.low = 0
     end
     return (res)
 end
 
-func rayMulNoRounding{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
+func ray_mul_no_rounding{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
     alloc_locals
     if a.high + a.low == 0:
         return (Uint256(0, 0))
@@ -416,7 +416,7 @@ func rayMulNoRounding{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint2
     let (RAY_UINT) = ray()
 
     let (ab, overflow) = uint256_mul(a, b)
-    with_attr error_message("rayMulNoRounding overflow"):
+    with_attr error_message("ray_mul_no_rounding overflow"):
         assert overflow.high = 0
         assert overflow.low = 0
     end
@@ -424,7 +424,7 @@ func rayMulNoRounding{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint2
     return (res)
 end
 
-func rayDivNoRounding{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
+func ray_div_no_rounding{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
     alloc_locals
     with_attr error_message("RAY divide by zero"):
         if b.high + b.low == 0:
@@ -435,7 +435,7 @@ func rayDivNoRounding{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint2
     let (RAY_UINT) = ray()
 
     let (aRAY, overflow) = uint256_mul(a, RAY_UINT)
-    with_attr error_message("rayDivNoRounding overflow"):
+    with_attr error_message("ray_div_no_rounding overflow"):
         assert overflow.high = 0
         assert overflow.low = 0
     end
@@ -443,6 +443,7 @@ func rayDivNoRounding{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint2
     return (res)
 end
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 func rayToWadNoRounding{
   range_check_ptr
@@ -454,6 +455,10 @@ func rayToWadNoRounding{
 =======
 func rayToWadNoRounding{range_check_ptr}(a : Uint256) -> (res : Uint256):
     let (WAD_RAY_RATIO_UINT) = wadRayRatio()
+=======
+func ray_to_wad_no_rounding{range_check_ptr}(a : Uint256) -> (res : Uint256):
+    let (WAD_RAY_RATIO_UINT) = wad_ray_ratio()
+>>>>>>> 31bc890... Snake case take 2
     let (res, _) = uint256_unsigned_div_rem(a, WAD_RAY_RATIO_UINT)
     return (res)
 >>>>>>> e1ebfe9... Formatting

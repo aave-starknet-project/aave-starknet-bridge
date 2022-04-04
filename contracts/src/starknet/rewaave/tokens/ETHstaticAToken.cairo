@@ -19,6 +19,7 @@ from openzeppelin.utils.constants import TRUE
 from rewaave.tokens.claimable import (
     claimable_claim_rewards, claimable_push_acc_rewards_per_token, claimable_before_token_transfer,
     claimable_get_acc_rewards_per_token)
+<<<<<<< HEAD
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -57,6 +58,8 @@ from openzeppelin.utils.constants import TRUE
 from rewaave.tokens.claimable import (
     claimable_claim_rewards, claimable_push_accRewardsPerToken, claimable_before_token_transfer,
     claimable_get_accRewardsPerToken)
+=======
+>>>>>>> 31bc890... Snake case take 2
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -368,6 +371,7 @@ end
 @external
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         user : felt, recipient : felt) -> (claimed : Uint256):
     Ownable_only_owner()
@@ -411,6 +415,9 @@ func claimRewards{
   return ERC20_claimable_claimRewards(user, recipient)
 =======
 func claimRewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+=======
+func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+>>>>>>> 31bc890... Snake case take 2
         user : felt, recipient : felt) -> (claimed : Uint256):
     Ownable_only_owner()
 <<<<<<< HEAD
@@ -426,18 +433,18 @@ func claimRewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
 end
 
 @external
-func push_accRewardsPerToken{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        block : felt, accRewardsPerToken : Uint256):
+func push_acc_rewards_per_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        block : felt, acc_rewards_per_token : Uint256):
     alloc_locals
     Ownable_only_owner()
     let (last_block) = last_update.read()
     let (le) = is_le(last_block, block - 1)
     if le == 1:
-        let (prev_acc) = claimable_get_accRewardsPerToken()
-        let (le) = uint256_le(prev_acc, accRewardsPerToken)
+        let (prev_acc) = claimable_get_acc_rewards_per_token()
+        let (le) = uint256_le(prev_acc, acc_rewards_per_token)
         if le == 1:
             last_update.write(block)
-            claimable_push_accRewardsPerToken(accRewardsPerToken)
+            claimable_push_acc_rewards_per_token(acc_rewards_per_token)
             return ()
         else:
             return ()
@@ -448,9 +455,9 @@ func push_accRewardsPerToken{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, r
 end
 
 @external
-func get_accRewardsPerToken{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        ) -> (accRewardsPerToken : Uint256):
-    return claimable_get_accRewardsPerToken()
+func get_acc_rewards_per_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        ) -> (acc_rewards_per_token : Uint256):
+    return claimable_get_acc_rewards_per_token()
 end
 <<<<<<< HEAD
 

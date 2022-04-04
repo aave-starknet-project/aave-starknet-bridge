@@ -45,11 +45,11 @@ func l2_token_to_l1_token(l2_token : felt) -> (l1_token : felt):
 end
 
 @event
-func withdraw_initiated(l1_recipient : felt, amount : Uint256, caller : felt):
+func withdraw_initiated(l2_token : felt, l1_recipient : felt, amount : Uint256, caller : felt):
 end
 
 @event
-func deposit_handled(account : felt, amount : Uint256):
+func deposit_handled(l2_token : felt, account : felt, amount : Uint256):
 end
 # Constructor.
 
@@ -161,13 +161,13 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     assert message_payload[4] = amount.high
 
     send_message_to_l1(to_address=to_address, payload_size=5, payload=message_payload)
-    withdraw_initiated.emit(l1_recipient, amount, caller_address)
+    withdraw_initiated.emit(l2_token, l1_recipient, amount, caller_address)
     return ()
 end
 
 @l1_handler
 func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        from_address : felt, l2_recipient : felt, l2_token_address : felt, amount_low : felt,
+        from_address : felt, l2_recipient : felt, l2_token : felt, amount_low : felt,
         amount_high : felt):
     # The amount is validated (i.e. amount_low, amount_high < 2**128) by an inner call to
     # IMintableToken permissionedMint function.
@@ -178,10 +178,10 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     end
     let amount = Uint256(low=amount_low, high=amount_high)
 
-    assert_not_zero(l2_token_address)
+    assert_not_zero(l2_token)
 
     # Call mint on l2_token contract.
-    IL2Token.mint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
-    deposit_handled.emit(l2_recipient, amount)
+    IL2Token.mint(contract_address=l2_token, recipient=l2_recipient, amount=amount)
+    deposit_handled.emit(l2_token, l2_recipient, amount)
     return ()
 end

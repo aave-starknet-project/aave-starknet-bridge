@@ -15,8 +15,8 @@ from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner,
 from openzeppelin.utils.constants import TRUE
 
 from rewaave.tokens.claimable import (
-    claimable_claim_rewards, claimable_push_accRewardsPerToken, claimable_before_token_transfer,
-    claimable_get_accRewardsPerToken)
+    claimable_claim_rewards, claimable_push_acc_rewards_per_token, claimable_before_token_transfer,
+    claimable_get_acc_rewards_per_token)
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -131,25 +131,25 @@ func mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
 end
 
 @external
-func claimRewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         user : felt, recipient : felt) -> (claimed : Uint256):
     Ownable_only_owner()
     return claimable_claim_rewards(user, recipient)
 end
 
 @external
-func push_accRewardsPerToken{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        block : felt, accRewardsPerToken : Uint256):
+func push_acc_rewards_per_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        block : felt, acc_rewards_per_token : Uint256):
     alloc_locals
     Ownable_only_owner()
     let (last_block) = last_update.read()
     let (le) = is_le(last_block, block - 1)
     if le == 1:
-        let (prev_acc) = claimable_get_accRewardsPerToken()
-        let (le) = uint256_le(prev_acc, accRewardsPerToken)
+        let (prev_acc) = claimable_get_acc_rewards_per_token()
+        let (le) = uint256_le(prev_acc, acc_rewards_per_token)
         if le == 1:
             last_update.write(block)
-            claimable_push_accRewardsPerToken(accRewardsPerToken)
+            claimable_push_acc_rewards_per_token(acc_rewards_per_token)
             return ()
         else:
             return ()
@@ -160,7 +160,7 @@ func push_accRewardsPerToken{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, r
 end
 
 @external
-func get_accRewardsPerToken{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        ) -> (accRewardsPerToken : Uint256):
-    return claimable_get_accRewardsPerToken()
+func get_acc_rewards_per_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        ) -> (acc_rewards_per_token : Uint256):
+    return claimable_get_acc_rewards_per_token()
 end

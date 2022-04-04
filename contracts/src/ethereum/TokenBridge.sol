@@ -71,26 +71,7 @@ contract TokenBridge is
         l2TokenBridge = l2TokenBridge_;
     }
 
-    // TODO: implement proper encoding on js side
-    // function initializeWithoutProxy(bytes calldata data) public {
-    function initializeWithoutProxy(uint256 l2TokenBridge_, StarknetMessaging messagingContract_) public {
-        // following code initialize the state like`initialize()` function of ProxySupport contract
-        // validateInitData(data);
-        initGovernance();
-
-        // this part corresponds to `initializeContractState()` function of StarknetTokenBridge contract
-        // (uint256 l2TokenBridge_, StarknetMessaging messagingContract_) = abi.decode(
-        //     data,
-        //     (uint256, StarknetMessaging)
-        // );
-        require((l2TokenBridge_ != 0) && (l2TokenBridge_ < CairoConstants.FIELD_PRIME), "L2_ADDRESS_OUT_OF_RANGE");
-        messagingContract = messagingContract_;
-        l2TokenBridge = l2TokenBridge_;
-    }
-
-
     // The selector of the "handle_deposit" l1_handler on L2.
-    // TODO: Recompute hash when the signature is decided
     uint256 constant DEPOSIT_HANDLER =
         1285101517810983806491589552491143496277809242732141897358598292095611420389;
     uint256 constant TRANSFER_FROM_STARKNET = 0;
@@ -147,7 +128,6 @@ contract TokenBridge is
 
     function deposit(address l1Token_, uint256 l2Recipient, uint256 amount) external {
         IERC20 l1Token = IERC20(l1Token_);
-        // l1Token.approve(address(this), amount);
         l1Token.transferFrom(msg.sender, address(this), amount);
         sendMessage(l1Token_, l2Recipient, amount);
     }

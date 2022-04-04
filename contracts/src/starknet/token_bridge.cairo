@@ -41,7 +41,15 @@ func l1_token_bridge() -> (res : felt):
 end
 
 @storage_var
-func l2_token_to_l1_token(l2_token: felt) -> (l1_token: felt):
+func l2_token_to_l1_token(l2_token : felt) -> (l1_token : felt):
+end
+
+@event
+func withdraw_initiated(l1_recipient : felt, amount : Uint256, caller : felt):
+end
+
+@event
+func deposit_handled(account : felt, amount : Uint256):
 end
 
 # Constructor.
@@ -79,7 +87,7 @@ func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
     # The call is restricted to the governor.
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
-    with_attr error_message("Called address should be {caller_address}"): 
+    with_attr error_message("Called address should be {caller_address}"):
         assert caller_address = governor_
     end
 
@@ -98,11 +106,11 @@ end
 
 @external
 func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    l1_token: felt, l2_token: felt):
+        l1_token : felt, l2_token : felt):
     # The call is restricted to the governor.
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
-    with_attr error_message("Called address should be {caller_address}"): 
+    with_attr error_message("Called address should be {caller_address}"):
         assert caller_address = governor_
     end
 
@@ -121,7 +129,7 @@ end
 
 @external
 func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        l2_token: felt, l1_recipient : felt, amount : Uint256):
+        l2_token : felt, l1_recipient : felt, amount : Uint256):
     # The amount is validated (i.e. amount.low, amount.high < 2**128) by an inner call to
     # IMintableToken permissionedBurn function.
 
@@ -152,16 +160,17 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     assert message_payload[2] = l1_recipient
     assert message_payload[3] = amount.low
     assert message_payload[4] = amount.high
-    
-    send_message_to_l1(to_address=to_address, payload_size=5, payload=message_payload)
 
+    send_message_to_l1(to_address=to_address, payload_size=5, payload=message_payload)
+    withdraw_initiated.emit(l1_recipient, amount, caller_address)
     return ()
 end
 
 @l1_handler
 func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        from_address : felt, l2_recipient : felt, l2_token_address: felt, amount_low: felt, amount_high: felt):
-        # from_address : felt, l2_recipient : felt, l2_token_low: felt, l2_token_high: felt, amount_low: felt, amount_high: felt):
+        from_address : felt, l2_recipient : felt, l2_token_address : felt, amount_low : felt,
+        amount_high : felt):
+    # from_address : felt, l2_recipient : felt, l2_token_low: felt, l2_token_high: felt, amount_low: felt, amount_high: felt):
     # The amount is validated (i.e. amount_low, amount_high < 2**128) by an inner call to
     # IMintableToken permissionedMint function.
 

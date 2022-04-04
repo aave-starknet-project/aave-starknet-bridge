@@ -3,7 +3,7 @@ import {starknet} from 'hardhat';
 import {TIMEOUT} from './constants';
 import {expect} from 'chai';
 
-describe.only('ETHStaticAToken', function () {
+describe('ETHStaticAToken', function () {
   this.timeout(TIMEOUT);
 
   let tokenContract: StarknetContract;

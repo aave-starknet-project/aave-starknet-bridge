@@ -46,7 +46,7 @@ func update_user{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     return ()
 end
 
-func ERC20_claimable_before_token_transfer{
+func claimable_before_token_transfer{
         syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(from_ : felt, to : felt):
     alloc_locals
     if from_ == 0:
@@ -92,13 +92,14 @@ func get_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
     return (claimableRewards)
 end
 
-func ERC20_claimable_claim_rewards{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func claimable_claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         user : felt, recipient : felt) -> (claimed : Uint256):
     let (claimed) = get_claimable_rewards(user)
     let (rewardsController_) = Ownable_get_owner()
 
     unclaimed_rewards.write(user, Uint256(0, 0))
+
+    # TODO implement claiming
 
     if claimed.high + claimed.low == 0:
         return (Uint256(0, 0))
@@ -108,9 +109,15 @@ func ERC20_claimable_claim_rewards{
     end
 end
 
-func ERC20_claimable_push_accRewardsPerToken{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(accRewardsPerToken_ : Uint256):
+func claimable_push_accRewardsPerToken{
+        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        accRewardsPerToken_ : Uint256):
     alloc_locals
     accRewardsPerToken.write(accRewardsPerToken_)
     return ()
+end
+
+func claimable_get_accRewardsPerToken{
+        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (res : Uint256):
+    return accRewardsPerToken.read()
 end

@@ -145,15 +145,7 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     # Call burn on l2_token contract.
     let (caller_address) = get_caller_address()
 
-<<<<<<< HEAD
     IL2Token.burn(contract_address=l2_token, account=caller_address, amount=amount)
-=======
-    IERC20.transferFrom(
-        contract_address=l2_token,
-        sender=caller_address,
-        recipient=contract_address,
-        amount=amount)
->>>>>>> d53da5b (Formatting)
 
     # Send the message.
     let (message_payload : felt*) = alloc()
@@ -170,12 +162,7 @@ end
 
 @l1_handler
 func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-<<<<<<< HEAD
         from_address : felt, l2_recipient : felt, l2_token_address: felt, amount_low: felt, amount_high: felt):
-=======
-        from_address : felt, account : felt, l2_token_low : felt, l2_token_high : felt,
-        amount_low : felt, amount_high : felt):
->>>>>>> d53da5b (Formatting)
     # The amount is validated (i.e. amount_low, amount_high < 2**128) by an inner call to
     # IMintableToken permissionedMint function.
 
@@ -185,24 +172,10 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     end
     let amount : Uint256 = cast((low=amount_low, high=amount_high), Uint256)
 
-<<<<<<< HEAD
     assert_not_zero(l2_token_address)
 
     # Call mint on l2_token contract.
     IL2Token.mint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
-=======
-    # Call mint on l2_token contract.
-    let l2_token_address = l2_token_high * 2 ** 128 + l2_token_low
-
-    assert_not_zero(l2_token_address)
-
-    let (contract_address) = get_caller_address()
-    IERC20.transferFrom(
-        contract_address=l2_token_address,
-        sender=contract_address,
-        recipient=account,
-        amount=amount)
->>>>>>> d53da5b (Formatting)
 
     return ()
 end

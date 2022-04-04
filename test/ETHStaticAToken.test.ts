@@ -13,6 +13,7 @@ import {TIMEOUT} from './constants';
 import {expect} from 'chai';
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 describe('ETHStaticAToken', function () {
   this.timeout(TIMEOUT);
 
@@ -42,6 +43,9 @@ describe('ETHStaticAToken', function () {
       recipient: BigInt(user1.starknetContract.address),
 =======
 describe.only('ETHStaticAToken', function () {
+=======
+describe('ETHStaticAToken', function () {
+>>>>>>> d74583f... Enable all tests
   this.timeout(TIMEOUT);
 
   let tokenContract: StarknetContract;

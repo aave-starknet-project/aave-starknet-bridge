@@ -55,16 +55,16 @@ describe.only('ETHStaticAToken', function () {
   });
 
   it('allows owner to update accRewards', async () => {
-    await owner.invoke(tokenContract, 'push_accRewardsPerToken', {
+    await owner.invoke(tokenContract, 'push_acc_rewards_per_token', {
       block: 1,
-      accRewardsPerToken: {
+      acc_rewards_per_token: {
         high: 0,
         low: 1,
       },
     });
 
-    const {accRewardsPerToken} = await tokenContract.call('get_accRewardsPerToken')
-    expect(accRewardsPerToken).to.deep.equal({
+    const {acc_rewards_per_token} = await tokenContract.call('get_acc_rewards_per_token')
+    expect(acc_rewards_per_token).to.deep.equal({
       high: 0n,
       low: 1n,
     })
@@ -72,9 +72,9 @@ describe.only('ETHStaticAToken', function () {
 
   it('dissalows non-owner to update accRewards', async () => {
     try {
-      await user1.call(tokenContract, 'push_accRewardsPerToken', {
+      await user1.call(tokenContract, 'push_acc_rewards_per_token', {
         block: 2,
-        accRewardsPerToken: {
+        acc_rewards_per_token: {
           high: 0n,
           low: 100n,
         },
@@ -86,9 +86,9 @@ describe.only('ETHStaticAToken', function () {
 
   it('only allows increases in accRewards', async () => {
     try {
-      await owner.call(tokenContract, 'push_accRewardsPerToken', {
+      await owner.call(tokenContract, 'push_acc_rewards_per_token', {
         block: 3,
-        accRewardsPerToken: {
+        acc_rewards_per_token: {
           high: 0,
           low: 0,
         }
@@ -100,9 +100,9 @@ describe.only('ETHStaticAToken', function () {
 
   it('rejects old block numbers', async () => {
     try {
-      await owner.call(tokenContract, 'push_accRewardsPerToken', {
+      await owner.call(tokenContract, 'push_acc_rewards_per_token', {
         block: 0,
-        accRewardsPerToken: {
+        acc_rewards_per_token: {
           high: 0,
           low: 2,
         }

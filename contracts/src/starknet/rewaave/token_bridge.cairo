@@ -152,15 +152,7 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     # Call burn on l2_token contract.
     let (caller_address) = get_caller_address()
 
-<<<<<<< HEAD
     IL2Token.burn(contract_address=l2_token, account=caller_address, amount=amount)
-=======
-    IERC20.transferFrom(
-        contract_address=l2_token,
-        sender=caller_address,
-        recipient=contract_address,
-        amount=amount)
->>>>>>> d53da5b (Formatting)
 
     # Send the message.
     let (message_payload : felt*) = alloc()
@@ -183,6 +175,7 @@ end
 @l1_handler
 func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
 <<<<<<< HEAD
+<<<<<<< HEAD
         from_address : felt, l2_recipient : felt, l2_token : felt, amount_low : felt,
         amount_high : felt):
 =======
@@ -193,6 +186,9 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
         amount_low : felt, amount_high : felt):
 >>>>>>> d53da5b (Formatting)
 >>>>>>> e1ebfe9... Formatting
+=======
+        from_address : felt, l2_recipient : felt, l2_token_address: felt, amount_low: felt, amount_high: felt):
+>>>>>>> 56ee0d9... Fix rebase artifact
     # The amount is validated (i.e. amount_low, amount_high < 2**128) by an inner call to
     # IMintableToken permissionedMint function.
 
@@ -205,15 +201,19 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 <<<<<<< HEAD
     assert_not_zero(l2_token)
 
+<<<<<<< HEAD
     # Call mint on l2_token contract.
     IL2Token.mint(contract_address=l2_token, recipient=l2_recipient, amount=amount)
     deposit_handled.emit(l2_token, l2_recipient, amount)
 =======
 <<<<<<< HEAD
+=======
+>>>>>>> 56ee0d9... Fix rebase artifact
     assert_not_zero(l2_token_address)
 
     # Call mint on l2_token contract.
     IL2Token.mint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
+<<<<<<< HEAD
 =======
     # Call mint on l2_token contract.
     let l2_token_address = l2_token_high * 2 ** 128 + l2_token_low
@@ -228,6 +228,8 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
         amount=amount)
 >>>>>>> d53da5b (Formatting)
 >>>>>>> e1ebfe9... Formatting
+=======
+>>>>>>> 56ee0d9... Fix rebase artifact
 
     return ()
 end

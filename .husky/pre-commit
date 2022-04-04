@@ -2,7 +2,11 @@
 . "$(dirname "$0")/_/husky.sh"
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 npx git-format-staged --formatter 'cairo-format -i  "{}"' '*.cairo'
 =======
 npx git-format-staged --formatter 'cairo-format -i  "{}"' '*.js' '*.ts'
 >>>>>>> e1ebfe9... Formatting
+=======
+npx git-format-staged --formatter 'cairo-format -i  "{}"' '*.cairo'
+>>>>>>> c20e50d... Implement some tests, add getter for rewards per token, fix update preconditions

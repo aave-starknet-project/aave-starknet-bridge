@@ -8,7 +8,7 @@ from starkware.cairo.common.math_cmp import is_le
 from openzeppelin.token.erc20.library import (
     ERC20_name, ERC20_symbol, ERC20_totalSupply, ERC20_decimals, ERC20_balanceOf, ERC20_allowance,
     ERC20_initializer, ERC20_approve, ERC20_increaseAllowance, ERC20_decreaseAllowance,
-    ERC20_transfer, ERC20_transferFrom, ERC20_mint)
+    ERC20_transfer, ERC20_transferFrom, ERC20_mint, ERC20_burn)
 
 from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner, Ownable_get_owner
 
@@ -25,10 +25,10 @@ end
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         name : felt, symbol : felt, decimals : felt, initial_supply : Uint256, recipient : felt,
-        controller : felt):
+        controller : felt, reward_token: felt):
     ERC20_initializer(name, symbol, decimals)
     ERC20_mint(recipient, initial_supply)
-    # TODO Init reward token from controller
+    REWARD_TOKEN.write(reward_token)
     Ownable_initializer(controller)
     # TODO we either need to configure the last_update here, or pause the contract
     # until the first update somehow.
@@ -145,6 +145,14 @@ func mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
 end
 
 @external
+func burn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        account : felt, amount : Uint256):
+    alloc_locals
+    Ownable_only_owner()
+    ERC20_burn(account=account, amount=amount)
+    return ()
+end
+
 func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         user : felt, recipient : felt) -> (claimed : Uint256):
     Ownable_only_owner()

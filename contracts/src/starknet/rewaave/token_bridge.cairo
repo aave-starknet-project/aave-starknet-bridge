@@ -14,26 +14,6 @@ const WITHDRAW_MESSAGE = 0
 const BRIDGE_REWARD_MESSAGE = 1
 const ETH_ADDRESS_BOUND = 2 ** 160
 
-# Interface
-
-@contract_interface
-namespace IL2Token:
-    func mint(recipient : felt, amount : Uint256):
-    end
-
-    func burn(account : felt, amount : Uint256):
-    end
-
-    func approve(spender : felt, amount : Uint256) -> (success : felt):
-    end
-
-    func permissionedMint(recipient : felt, amount : Uint256):
-    end
-
-    func permissionedBurn(account : felt, amount : Uint256):
-    end
-end
-
 # Storage.
 
 @storage_var
@@ -154,7 +134,7 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     # Call burn on l2_token contract.
     let (caller_address) = get_caller_address()
 
-    IL2Token.burn(contract_address=l2_token, account=caller_address, amount=amount)
+    IETHStaticAToken.burn(contract_address=l2_token, account=caller_address, amount=amount)
 
     # Send the message.
     let (message_payload : felt*) = alloc()
@@ -179,7 +159,7 @@ func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     let (reward_token) = IETHStaticAToken.get_REWARD_TOKEN(contract_address=l1_token)
 
     # BURN REWARD TOKEN
-    IERC20.transferFrom(contract_address=reward_token, sender=token_owner, recipient=bridge_address, amount=amount)
+    IERC20.burn(contract_address=reward_token, account=token_owner, amount=amount)
 
     # Send message for bridging tokens
     let (message_payload : felt*) = alloc()

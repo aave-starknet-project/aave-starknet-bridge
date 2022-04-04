@@ -53,4 +53,7 @@ namespace IETHStaticAToken:
 
     func increaseLifetimeRewards(amount: Uint256):
     end
+
+    func burn(account : felt, amount : Uint256):
+    end
 end

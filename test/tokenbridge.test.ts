@@ -47,6 +47,7 @@ describe('TokenBridge', async function() {
   let l2tokenB: StarknetContract;
   let TokenBridgeL2: StarknetContractFactory;
   let tokenBridgeL2: StarknetContract;
+  let rewAaveToken: StarknetContract;
   // L1
   let MockStarknetMessaging: ContractFactory;
   let mockStarknetMessaging: Contract;
@@ -65,11 +66,21 @@ describe('TokenBridge', async function() {
 
     l2user = await starknet.deployAccount("OpenZeppelin");
 
-    L2TokenFactory = await starknet.getContractFactory('l2_token');
+    const rewAaveContractFactory = await starknet.getContractFactory('rewAAVE');
+    rewAaveToken = await rewAaveContractFactory.deploy({
+      name: 444,
+      symbol: 444,
+      decimals: 8,
+      initial_supply: {high: 0, low: 0},
+      recipient: BigInt(l2user.starknetContract.address),
+      owner: BigInt(l2user.starknetContract.address),
+    });
+
+    L2TokenFactory = await starknet.getContractFactory('ETHstaticAToken');
     l2tokenA = await L2TokenFactory.deploy(
-        { name: 1234, symbol: 123, decimals: 18, minter_address: BigInt(l2user.starknetContract.address) });
+        { name: 1234, symbol: 123, decimals: 18, initial_supply: {high:0, low: 1000}, recipient: BigInt(l2user.starknetContract.address), controller:  BigInt(l2user.starknetContract.address), reward_token: BigInt(rewAaveToken.address)});
     l2tokenB = await L2TokenFactory.deploy(
-        { name: 4321, symbol: 321, decimals: 18, minter_address: BigInt(l2user.starknetContract.address) });
+        { name: 4321, symbol: 321, decimals: 18, initial_supply: {high:0, low:1000}, recipient: BigInt(l2user.starknetContract.address), controller:  BigInt(l2user.starknetContract.address), reward_token: BigInt(rewAaveToken.address)});
   
     TokenBridgeL2 = await starknet.getContractFactory('token_bridge');
     tokenBridgeL2 = await TokenBridgeL2.deploy({ governor_address: BigInt(l2user.starknetContract.address) });
@@ -100,7 +111,6 @@ describe('TokenBridge', async function() {
     // load L1 <--> L2 messaging contract
 
     await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarknetMessaging.address);
-
   });
 
   it('set L1 token bridge as implementation contract', async () => {

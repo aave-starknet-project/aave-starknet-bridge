@@ -46,14 +46,18 @@ end
 func l2_token_to_l1_token(l2_token : felt) -> (l1_token : felt):
 end
 
+@storage_var
+func rewAAVE_token() -> (rewAAVE : felt):
+end
 # Constructor.
 
 # To finish the init you have to initialize the L2 token contract and the L1 bridge contract.
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        governor_address : felt):
+        governor_address : felt, rewAAVE : felt):
     assert_not_zero(governor_address)
     governor.write(value=governor_address)
+    rewAAVE_token_address.write(rewAAVE)
     return ()
 end
 
@@ -81,7 +85,7 @@ func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
     # The call is restricted to the governor.
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
-    with_attr error_message("Called address should be {caller_address}"): 
+    with_attr error_message("Called address should be {caller_address}"):
         assert caller_address = governor_
     end
 
@@ -104,7 +108,7 @@ func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     # The call is restricted to the governor.
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
-    with_attr error_message("Called address should be {caller_address}"): 
+    with_attr error_message("Called address should be {caller_address}"):
         assert caller_address = governor_
     end
 
@@ -162,7 +166,8 @@ end
 
 @l1_handler
 func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        from_address : felt, l2_recipient : felt, l2_token_address: felt, amount_low: felt, amount_high: felt):
+        from_address : felt, l2_recipient : felt, l2_token_address : felt, amount_low : felt,
+        amount_high : felt):
     # The amount is validated (i.e. amount_low, amount_high < 2**128) by an inner call to
     # IMintableToken permissionedMint function.
 
@@ -176,6 +181,22 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 
     # Call mint on l2_token contract.
     IL2Token.mint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
+
+    return ()
+end
+
+@external
+func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        recipient : felt, amount : Uint256):
+    # get the address of the ETHStaticAToken
+    let (l2_token) = get_caller_address()
+    # Verify that it's a valid token by checking for its counterpart on l1
+    let (l1_token) = l2_token_to_l1_token.read(l2_token)
+    with_attr error_message("L1 token {l1_token} not found"):
+        assert_not_zero(l1_token)
+    end
+    # mints rewAAVE for user
+    IL2Token.mint(rewAAVE_token, recipient, amount)
 
     return ()
 end

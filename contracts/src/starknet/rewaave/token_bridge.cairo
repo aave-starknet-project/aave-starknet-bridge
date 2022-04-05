@@ -290,7 +290,7 @@ end
 
 @l1_handler
 func handle_transfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        from_address : felt, block_number : felt, l1_token : felt, sender : felt, sender_rewards : felt, recipient : felt, recipient_rewards : felt):
+        from_address : felt, block_number : felt, l1_token : felt, rewards : felt):
 
     with_attr error_message("Expected transfer call from L1 token {l1_token}"):
         assert from_address = l1_token
@@ -301,9 +301,7 @@ func handle_transfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
         assert_not_zero(l2_token)
     end
 
-    IL2Token.set_block_number(contract_address=l2_token, block_number=block_number)
-    IL2Token.set_user_acc_rewards(contract_address=l2_token, user=sender, rewards=sender_rewards)
-    IL2Token.set_user_acc_rewards(contract_address=l2_token, user=recipient, rewards=recipient_rewards)
+    IL2Token.push_acc_rewards_per_token(contract_address=l2_token, block=block_number, acc_rewards_per_token=rewards)
 
     return ()
 end

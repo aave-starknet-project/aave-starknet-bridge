@@ -86,18 +86,32 @@ func get_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
     return (res)
 end
 
-# Externals.
+# Internals.
 
+<<<<<<< HEAD
 @external
 func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l1_bridge_address : felt
 ):
     # The call is restricted to the governor.
+=======
+func auth{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+>>>>>>> added l1 handler to handle transfer messages
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
     with_attr error_message("caller address should be {governor_}"):
         assert caller_address = governor_
     end
+    return ()
+end
+
+# Externals.
+
+@external
+func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        l1_bridge_address : felt):
+    # The call is restricted to the governor.
+    auth()
 
     # Check l1_bridge isn't already set.
     let (l1_bridge_) = get_l1_token_bridge()
@@ -133,12 +147,16 @@ func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     l1_token : felt, l2_token : felt
 ):
     # The call is restricted to the governor.
+<<<<<<< HEAD
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
 
     with_attr error_message("caller address should be {governor_}"):
         assert caller_address = governor_
     end
+=======
+    auth()
+>>>>>>> added l1 handler to handle transfer messages
 
     let (l1_token_) = l2_token_to_l1_token.read(l2_token)
     with_attr error_message("L2 to L1 Bridge already setup"):
@@ -150,6 +168,7 @@ func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     assert_lt_felt(l1_token, ETH_ADDRESS_BOUND)
 
     l2_token_to_l1_token.write(l2_token, l1_token)
+    l1_token_to_l2_token.write(l1_token, l2_token)
     return ()
 end
 
@@ -158,7 +177,7 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     l2_token : felt, l1_recipient : felt, amount : Uint256
 ):
     # The amount is validated (i.e. amount.low, amount.high < 2**128) by an inner call to
-    # IMintableToken permissionedBurn function.
+    # IMintableToken burn function.
 
     assert_not_zero(l2_token)
 
@@ -230,7 +249,7 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     amount_high : felt,
 ):
     # The amount is validated (i.e. amount_low, amount_high < 2**128) by an inner call to
-    # IMintableToken permissionedMint function.
+    # IMintableToken mint function.
 
     let (expected_from_address) = get_l1_token_bridge()
     with_attr error_message("Expected deposit from l1_token_bridge"):
@@ -262,6 +281,29 @@ func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
 
     # write block number event
     l1_block_number.write(value=block_number)
+
+    # Emit event
+    deposit_handled.emit(l2_token, l2_recipient, amount)
+
+    return ()
+end
+
+@l1_handler
+func handle_transfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        from_address : felt, block_number : felt, l1_token : felt, sender : felt, sender_rewards : felt, recipient : felt, recipient_rewards : felt):
+
+    with_attr error_message("Expected transfer call from L1 token {l1_token}"):
+        assert from_address = l1_token
+    end
+
+    let (l2_token) = l1_token_to_l2_token.read(l1_token)
+    with_attr error_message("L2 token {l2_token} not found"):
+        assert_not_zero(l2_token)
+    end
+
+    IL2Token.set_block_number(contract_address=l2_token, block_number=block_number)
+    IL2Token.set_user_acc_rewards(contract_address=l2_token, user=sender, rewards=sender_rewards)
+    IL2Token.set_user_acc_rewards(contract_address=l2_token, user=recipient, rewards=recipient_rewards)
 
     return ()
 end

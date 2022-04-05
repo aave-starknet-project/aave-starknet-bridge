@@ -46,21 +46,27 @@ end
 func l2_token_to_l1_token(l2_token : felt) -> (l1_token : felt):
 end
 
+<<<<<<< HEAD
 @event
 func withdraw_initiated(l2_token : felt, l1_recipient : felt, amount : Uint256, caller : felt):
 end
 
 @event
 func deposit_handled(l2_token : felt, account : felt, amount : Uint256):
+=======
+@storage_var
+func rewAAVE_token() -> (rewAAVE : felt):
+>>>>>>> c6b3d89... mint rewards on tokens bridge
 end
 # Constructor.
 
 # To finish the init you have to initialize the L2 token contract and the L1 bridge contract.
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        governor_address : felt):
+        governor_address : felt, rewAAVE : felt):
     assert_not_zero(governor_address)
     governor.write(value=governor_address)
+    rewAAVE_token_address.write(rewAAVE)
     return ()
 end
 
@@ -176,6 +182,7 @@ end
 func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         from_address : felt, l2_recipient : felt, l2_token : felt, amount_low : felt,
         amount_high : felt):
 =======
@@ -189,6 +196,10 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 =======
         from_address : felt, l2_recipient : felt, l2_token_address: felt, amount_low: felt, amount_high: felt):
 >>>>>>> 56ee0d9... Fix rebase artifact
+=======
+        from_address : felt, l2_recipient : felt, l2_token_address : felt, amount_low : felt,
+        amount_high : felt):
+>>>>>>> c6b3d89... mint rewards on tokens bridge
     # The amount is validated (i.e. amount_low, amount_high < 2**128) by an inner call to
     # IMintableToken permissionedMint function.
 
@@ -230,6 +241,22 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 >>>>>>> e1ebfe9... Formatting
 =======
 >>>>>>> 56ee0d9... Fix rebase artifact
+
+    return ()
+end
+
+@external
+func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        recipient : felt, amount : Uint256):
+    # get the address of the ETHStaticAToken
+    let (l2_token) = get_caller_address()
+    # Verify that it's a valid token by checking for its counterpart on l1
+    let (l1_token) = l2_token_to_l1_token.read(l2_token)
+    with_attr error_message("L1 token {l1_token} not found"):
+        assert_not_zero(l1_token)
+    end
+    # mints rewAAVE for user
+    IL2Token.mint(rewAAVE_token, recipient, amount)
 
     return ()
 end

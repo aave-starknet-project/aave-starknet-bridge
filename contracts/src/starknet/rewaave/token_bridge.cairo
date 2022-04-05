@@ -119,9 +119,6 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     assert_not_zero(l2_token)
 
     let (to_address) = get_l1_token_bridge()
-    # Check address is valid.
-    assert_lt_felt(to_address, ETH_ADDRESS_BOUND)
-    assert_not_zero(to_address)
 
     # Check address is valid.
     assert_lt_felt(l1_recipient, ETH_ADDRESS_BOUND)
@@ -151,7 +148,11 @@ end
 
 @external
 func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    l1_token : felt, l1_recipient : felt, amount : Uint256):
+    l2_token : felt, l1_recipient : felt, amount : Uint256):
+    let (to_address) = get_l1_token_bridge()
+
+    let (l1_token) = l2_token_to_l1_token.read(l2_token)
+
     let (token_owner) = get_caller_address()
 
     let (bridge_address) = get_contract_address()
@@ -168,6 +169,8 @@ func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     assert message_payload[2] = l1_recipient
     assert message_payload[3] = amount.low
     assert message_payload[4] = amount.high
+
+    send_message_to_l1(to_address=to_address, payload_size=5, payload=message_payload)
 
     return ()
 end

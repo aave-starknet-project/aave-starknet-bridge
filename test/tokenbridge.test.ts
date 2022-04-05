@@ -66,6 +66,9 @@ describe('TokenBridge', async function() {
 
     l2user = await starknet.deployAccount("OpenZeppelin");
 
+    TokenBridgeL2 = await starknet.getContractFactory('token_bridge');
+    tokenBridgeL2 = await TokenBridgeL2.deploy({ governor_address: BigInt(l2user.starknetContract.address) });
+
     const rewAaveContractFactory = await starknet.getContractFactory('rewAAVE');
     rewAaveToken = await rewAaveContractFactory.deploy({
       name: 444,
@@ -73,18 +76,14 @@ describe('TokenBridge', async function() {
       decimals: 8,
       initial_supply: {high: 0, low: 0},
       recipient: BigInt(l2user.starknetContract.address),
-      owner: BigInt(l2user.starknetContract.address),
+      owner: BigInt(tokenBridgeL2.address),
     });
 
     L2TokenFactory = await starknet.getContractFactory('ETHstaticAToken');
     l2tokenA = await L2TokenFactory.deploy(
-        { name: 1234, symbol: 123, decimals: 18, initial_supply: {high:0, low: 1000}, recipient: BigInt(l2user.starknetContract.address), controller:  BigInt(l2user.starknetContract.address), reward_token: BigInt(rewAaveToken.address)});
+        { name: 1234, symbol: 123, decimals: 18, initial_supply: {high:0, low: 1000}, recipient: BigInt(l2user.starknetContract.address), controller: BigInt(tokenBridgeL2.address), reward_token: BigInt(rewAaveToken.address)});
     l2tokenB = await L2TokenFactory.deploy(
-        { name: 4321, symbol: 321, decimals: 18, initial_supply: {high:0, low:1000}, recipient: BigInt(l2user.starknetContract.address), controller:  BigInt(l2user.starknetContract.address), reward_token: BigInt(rewAaveToken.address)});
-  
-    TokenBridgeL2 = await starknet.getContractFactory('token_bridge');
-    tokenBridgeL2 = await TokenBridgeL2.deploy({ governor_address: BigInt(l2user.starknetContract.address) });
-
+        { name: 4321, symbol: 321, decimals: 18, initial_supply: {high:0, low:1000}, recipient: BigInt(l2user.starknetContract.address), controller: BigInt(tokenBridgeL2.address), reward_token: BigInt(rewAaveToken.address)});
     // L1 deployments
 
     [signer, l1user] = await ethers.getSigners();

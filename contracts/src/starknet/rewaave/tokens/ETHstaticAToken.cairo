@@ -34,11 +34,11 @@ end
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         name : felt, symbol : felt, decimals : felt, initial_supply : Uint256, recipient : felt,
-        controller : felt, tokens_bridge : felt):
+        controller : felt, l2_token_bridge_ : felt):
     ERC20_initializer(name, symbol, decimals)
     ERC20_mint(recipient, initial_supply)
     Ownable_initializer(controller)
-    l2_token_bridge.write(tokens_bridge)
+    l2_token_bridge.write(l2_token_bridge_)
     # TODO we either need to configure the last_update here, or pause the contract
     # until the first update somehow.
     # Actually we can just rely on the first bridger to give us the right rewards!
@@ -384,7 +384,7 @@ end
 <<<<<<< HEAD
 <<<<<<< HEAD
 func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        user : felt, recipient : felt) -> (claimed : Uint256):
+        user : felt, recipient : felt) -> (success : felt):
     let (caller) = get_caller_address()
 
     with_attr error_message("user address should be {caller}"):
@@ -392,7 +392,7 @@ func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     end
     let (rewards) = claimable_claim_rewards(user, recipient)
     ITokenBridge.mint_rewards(l2_token_bridge, recipient, rewards)
-    return (rewards)
+    return (TRUE)
 end
 
 @external

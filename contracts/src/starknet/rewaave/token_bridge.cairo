@@ -57,7 +57,7 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
         governor_address : felt, rewAAVE : felt):
     assert_not_zero(governor_address)
     governor.write(value=governor_address)
-    rewAAVE_token_address.write(rewAAVE)
+    rewAAVE_token.write(rewAAVE)
     return ()
 end
 

@@ -93,19 +93,16 @@ func get_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
 end
 
 func claimable_claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        user : felt, recipient : felt) -> (claimed : Uint256):
-    let (claimed) = get_claimable_rewards(user)
-    let (rewardsController_) = Ownable_get_owner()
+        user : felt) -> (rewards : Uint256):
+    let (rewards) = get_claimable_rewards(user)
 
     unclaimed_rewards.write(user, Uint256(0, 0))
 
-    # TODO implement claiming
-
-    if claimed.high + claimed.low == 0:
+    if rewards.high + rewards.low == 0:
         return (Uint256(0, 0))
     else:
         update_user_snapshot_rewards_per_token(user)
-        return (claimed)
+        return (rewards)
     end
 end
 

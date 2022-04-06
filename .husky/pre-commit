@@ -3,6 +3,7 @@
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 npx git-format-staged --formatter 'cairo-format -i  "{}"' '*.cairo'
 =======
 npx git-format-staged --formatter 'cairo-format -i  "{}"' '*.js' '*.ts'
@@ -10,3 +11,6 @@ npx git-format-staged --formatter 'cairo-format -i  "{}"' '*.js' '*.ts'
 =======
 npx git-format-staged --formatter 'cairo-format -i  "{}"' '*.cairo'
 >>>>>>> c20e50d... Implement some tests, add getter for rewards per token, fix update preconditions
+=======
+npx git-format-staged --formatter 'cairo-format -i  "{}"' '*.cairo'
+>>>>>>> d219ee6d158413ea3ab958ab0c964ff79eb49ca9

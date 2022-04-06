@@ -1,5 +1,6 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { StarknetContract, StarknetContractFactory, Account } from 'hardhat/types';
 =======
 import { StarknetContract, StarknetContractFactory, Account } from "hardhat/types/runtime";
@@ -8,10 +9,14 @@ import { StarknetContract, StarknetContractFactory, Account } from "hardhat/type
 =======
 import { StarknetContract, StarknetContractFactory, Account } from 'hardhat/types';
 >>>>>>> c20e50d... Implement some tests, add getter for rewards per token, fix update preconditions
+=======
+import { StarknetContract, StarknetContractFactory, Account } from 'hardhat/types';
+>>>>>>> d219ee6d158413ea3ab958ab0c964ff79eb49ca9
 import {starknet} from 'hardhat';
 import {TIMEOUT} from './constants';
 import {expect} from 'chai';
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 describe('ETHStaticAToken', function () {
@@ -46,6 +51,9 @@ describe.only('ETHStaticAToken', function () {
 =======
 describe('ETHStaticAToken', function () {
 >>>>>>> d74583f... Enable all tests
+=======
+describe('ETHStaticAToken', function () {
+>>>>>>> d219ee6d158413ea3ab958ab0c964ff79eb49ca9
   this.timeout(TIMEOUT);
 
   let tokenContract: StarknetContract;
@@ -70,6 +78,7 @@ describe('ETHStaticAToken', function () {
   });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   it("should be able to mint", async () => {
     const ohoh = await l2TokenContract.invoke("mint", {
       recipient: 1n,
@@ -79,11 +88,17 @@ describe('ETHStaticAToken', function () {
     await owner.invoke(tokenContract, 'mint', {
       recipient: BigInt(user1.starknetContract.address),
 >>>>>>> c20e50d... Implement some tests, add getter for rewards per token, fix update preconditions
+=======
+  it('allows owner to mint', async () => {
+    await owner.invoke(tokenContract, 'mint', {
+      recipient: BigInt(user1.starknetContract.address),
+>>>>>>> d219ee6d158413ea3ab958ab0c964ff79eb49ca9
       amount: {
         high: 0n,
         low: 100n,
       },
     });
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 
@@ -180,6 +195,8 @@ describe('ETHStaticAToken', function () {
     expect(totalSupply).to.deep.equal({high: 0n, low:  1000000100n});
 >>>>>>> f1627eb... Basic implementation of staticAToken and rewards collection
 =======
+=======
+>>>>>>> d219ee6d158413ea3ab958ab0c964ff79eb49ca9
 
     const {totalSupply} = await tokenContract.call('totalSupply');
     expect(totalSupply).to.deep.equal({high: 0n, low: 100n});
@@ -267,6 +284,9 @@ describe('ETHStaticAToken', function () {
 
   it('tracks unclaimed rewards', async () => {
     expect.fail("not implemented yet")
+<<<<<<< HEAD
 >>>>>>> c20e50d... Implement some tests, add getter for rewards per token, fix update preconditions
+=======
+>>>>>>> d219ee6d158413ea3ab958ab0c964ff79eb49ca9
   });
 })

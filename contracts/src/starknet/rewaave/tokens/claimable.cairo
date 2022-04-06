@@ -27,7 +27,6 @@ func update_user_snapshot_rewards_per_token{
         syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt):
     let (acc_rewards_per_token_) = acc_rewards_per_token.read()
     user_snapshot_rewards_per_token.write(user, acc_rewards_per_token_)
-
     return ()
 end
 
@@ -83,34 +82,12 @@ func get_pending_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
 end
 
 func get_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        user : felt) -> (pending_rewards : Uint256):
-    alloc_locals
-    let (unclaimed_rewards_) = unclaimed_rewards.read(user)
-    let (pending) = get_pending_rewards(user)
-    let (claimable_rewards, overflow) = uint256_add(unclaimed_rewards_, pending)
-    assert overflow = 0
-    let (claimable_rewards) = ray_to_wad_no_rounding(claimable_rewards)
-    return (claimable_rewards)
-
-    alloc_locals
-    let (balance) = ERC20_balanceOf(user)
-    let (supply) = ERC20_totalSupply()
-    let (accRewardsPerToken_) = acc_rewards_per_token.read()
-    let (user_snapshot_rewards_per_token_) = user_snapshot_rewards_per_token.read(user)
-    let (accrued_since_last_interaction) = uint256_sub(
-        accRewardsPerToken_, user_snapshot_rewards_per_token_)
-    let (pending_rewards) = ray_mul_no_rounding(accrued_since_last_interaction, balance)
-    return (pending_rewards)
-end
-
-func get_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         user : felt) -> (claimable_rewards : Uint256):
     alloc_locals
     let (unclaimed_rewards_) = unclaimed_rewards.read(user)
     let (pending) = get_pending_rewards(user)
     let (claimable_rewards, overflow) = uint256_add(unclaimed_rewards_, pending)
     assert overflow = 0
-
     let (claimable_rewards) = ray_to_wad_no_rounding(claimable_rewards)
     return (claimable_rewards)
 end
@@ -129,18 +106,6 @@ func claimable_claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, r
     end
 end
 
-func claimable_push_acc_rewards_per_token{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        acc_rewards_per_token_ : Uint256):
-    alloc_locals
-    acc_rewards_per_token.write(acc_rewards_per_token_)
-    return ()
-end
-
-func claimable_get_acc_rewards_per_token{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (res : Uint256):
-    return acc_rewards_per_token.read()
-end
 func claimable_push_acc_rewards_per_token{
         syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         acc_rewards_per_token_ : Uint256):

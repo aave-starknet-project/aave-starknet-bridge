@@ -21,11 +21,14 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
     "@nomiclabs/hardhat-waffle": "^2.0.3",
+<<<<<<< HEAD
 =======
 >>>>>>> e1ebfe9... Formatting
 =======
     "@nomiclabs/hardhat-waffle": "^2.0.3",
 >>>>>>> 56ee0d9... Fix rebase artifact
+=======
+>>>>>>> d219ee6d158413ea3ab958ab0c964ff79eb49ca9
     "@openzeppelin/contracts": "^4.5.0",
     "@shardlabs/starknet-hardhat-plugin": "^0.5.1",
     "@toruslabs/starkware-crypto": "^1.0.0",
@@ -45,6 +48,7 @@
   },
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   "husky": {
     "hooks": {}
 =======
@@ -60,5 +64,9 @@
   "husky": {
     "hooks": {}
 >>>>>>> e1ebfe9... Formatting
+=======
+  "husky": {
+    "hooks": {}
+>>>>>>> d219ee6d158413ea3ab958ab0c964ff79eb49ca9
   }
 }

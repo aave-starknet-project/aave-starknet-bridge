@@ -32,6 +32,7 @@ namespace IERC20:
     end
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 end
 =======
 end
@@ -39,3 +40,6 @@ end
 =======
 end
 >>>>>>> e1ebfe9... Formatting
+=======
+end
+>>>>>>> d219ee6d158413ea3ab958ab0c964ff79eb49ca9

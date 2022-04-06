@@ -1,6 +1,9 @@
 from starkware.cairo.common.uint256 import (
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d219ee6d158413ea3ab958ab0c964ff79eb49ca9
     Uint256, uint256_add, uint256_sub, uint256_mul, uint256_unsigned_div_rem, uint256_le)
 
 # WAD = 1 * 10 ^ 18
@@ -9,6 +12,7 @@ const HALF_WAD = WAD / 2
 
 # RAY = 1 * 10 ^ 27
 const RAY = 10 ** 27
+<<<<<<< HEAD
 =======
   Uint256,
   uint256_add,
@@ -32,6 +36,8 @@ const RAY      = 10 ** 27
 =======
 const RAY = 10 ** 27
 >>>>>>> e1ebfe9... Formatting
+=======
+>>>>>>> d219ee6d158413ea3ab958ab0c964ff79eb49ca9
 const HALF_RAY = RAY / 2
 
 const UINT128_MAX = 2 ** 129 - 1
@@ -40,6 +46,7 @@ const UINT128_MAX = 2 ** 129 - 1
 const WAD_RAY_RATIO = 10 ** 9
 const HALF_WAD_RAY_RATION = WAD_RAY_RATIO / 2
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 func ray() -> (ray : Uint256):
@@ -249,6 +256,10 @@ func ray() -> (ray: Uint256):
 func ray() -> (ray : Uint256):
     return (Uint256(RAY, 0))
 >>>>>>> e1ebfe9... Formatting
+=======
+func ray() -> (ray : Uint256):
+    return (Uint256(RAY, 0))
+>>>>>>> d219ee6d158413ea3ab958ab0c964ff79eb49ca9
 end
 
 func wad() -> (wad : Uint256):
@@ -445,6 +456,7 @@ end
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 func rayToWadNoRounding{
   range_check_ptr
 }(a: Uint256) -> (res: Uint256):
@@ -462,4 +474,10 @@ func ray_to_wad_no_rounding{range_check_ptr}(a : Uint256) -> (res : Uint256):
     let (res, _) = uint256_unsigned_div_rem(a, WAD_RAY_RATIO_UINT)
     return (res)
 >>>>>>> e1ebfe9... Formatting
+=======
+func ray_to_wad_no_rounding{range_check_ptr}(a : Uint256) -> (res : Uint256):
+    let (WAD_RAY_RATIO_UINT) = wad_ray_ratio()
+    let (res, _) = uint256_unsigned_div_rem(a, WAD_RAY_RATIO_UINT)
+    return (res)
+>>>>>>> d219ee6d158413ea3ab958ab0c964ff79eb49ca9
 end

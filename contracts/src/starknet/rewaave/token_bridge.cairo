@@ -26,17 +26,15 @@ end
 func l2_token_to_l1_token(l2_token : felt) -> (l1_token : felt):
 end
 
-<<<<<<< HEAD
 @event
 func withdraw_initiated(l2_token : felt, l1_recipient : felt, amount : Uint256, caller : felt):
 end
 
 @event
 func deposit_handled(l2_token : felt, account : felt, amount : Uint256):
-=======
+
 @storage_var
 func rewAAVE_token() -> (rewAAVE : felt):
->>>>>>> c6b3d89... mint rewards on tokens bridge
 end
 # Constructor.
 
@@ -147,11 +145,6 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     assert message_payload[2] = l1_recipient
     assert message_payload[3] = amount.low
     assert message_payload[4] = amount.high
-<<<<<<< HEAD
-=======
-
-    send_message_to_l1(to_address=to_address, payload_size=5, payload=message_payload)
->>>>>>> e1ebfe9... Formatting
 
     send_message_to_l1(to_address=to_address, payload_size=5, payload=message_payload)
     withdraw_initiated.emit(l2_token, l1_recipient, amount, caller_address)
@@ -160,26 +153,8 @@ end
 
 @l1_handler
 func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
         from_address : felt, l2_recipient : felt, l2_token : felt, amount_low : felt,
         amount_high : felt):
-=======
-<<<<<<< HEAD
-        from_address : felt, l2_recipient : felt, l2_token_address: felt, amount_low: felt, amount_high: felt):
-=======
-        from_address : felt, account : felt, l2_token_low : felt, l2_token_high : felt,
-        amount_low : felt, amount_high : felt):
->>>>>>> d53da5b (Formatting)
->>>>>>> e1ebfe9... Formatting
-=======
-        from_address : felt, l2_recipient : felt, l2_token_address: felt, amount_low: felt, amount_high: felt):
->>>>>>> 56ee0d9... Fix rebase artifact
-=======
-        from_address : felt, l2_recipient : felt, l2_token_address : felt, amount_low : felt,
-        amount_high : felt):
->>>>>>> c6b3d89... mint rewards on tokens bridge
     # The amount is validated (i.e. amount_low, amount_high < 2**128) by an inner call to
     # IMintableToken permissionedMint function.
 
@@ -189,42 +164,11 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     end
     let amount = Uint256(low=amount_low, high=amount_high)
 
-<<<<<<< HEAD
-    assert_not_zero(l2_token)
-
-<<<<<<< HEAD
-    # Call mint on l2_token contract.
-    IL2Token.mint(contract_address=l2_token, recipient=l2_recipient, amount=amount)
-    deposit_handled.emit(l2_token, l2_recipient, amount)
-=======
-<<<<<<< HEAD
-=======
->>>>>>> 56ee0d9... Fix rebase artifact
     assert_not_zero(l2_token_address)
 
-    # Call mint on l2_token contract.
-<<<<<<< HEAD
-    IL2Token.mint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
-<<<<<<< HEAD
-=======
-    # Call mint on l2_token contract.
-    let l2_token_address = l2_token_high * 2 ** 128 + l2_token_low
 
-    assert_not_zero(l2_token_address)
-
-    let (contract_address) = get_caller_address()
-    IERC20.transferFrom(
-        contract_address=l2_token_address,
-        sender=contract_address,
-        recipient=account,
-        amount=amount)
->>>>>>> d53da5b (Formatting)
->>>>>>> e1ebfe9... Formatting
-=======
->>>>>>> 56ee0d9... Fix rebase artifact
-=======
     IERC20.mint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
->>>>>>> d219ee6... using IERC20 impl on bridge & fixing modifier
+
 
     return ()
 end

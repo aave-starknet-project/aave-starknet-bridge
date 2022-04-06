@@ -17,15 +17,6 @@ describe('ETHStaticAToken', function () {
   });
 
   it('should deploy', async () => {
-    const rewAaveContractFactory = await starknet.getContractFactory('rewAAve');
-    rewAaveToken = await rewAaveContractFactory.deploy({
-      name: 444,
-      symbol: 444,
-      decimals: 8,
-      initial_supply: {high: 0n, low: 1000n},
-      recipient: BigInt(owner.starknetContract.address),
-    })
-
     const tokenContractFactory = await starknet.getContractFactory('ETHstaticAToken');
     tokenContract = await tokenContractFactory.deploy({
       name: 666,
@@ -34,7 +25,6 @@ describe('ETHStaticAToken', function () {
       initial_supply: {high: 0, low: 0},
       recipient: BigInt(owner.starknetContract.address),
       controller: BigInt(owner.starknetContract.address),
-      reward_token: BigInt(rewAaveToken.address),
     });
   });
 

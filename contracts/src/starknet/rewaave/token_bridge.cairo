@@ -148,7 +148,7 @@ end
 
 @external
 func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    l2_token : felt, l1_recipient : felt, amount : Uint256):
+        l2_token : felt, l1_recipient : felt, amount : Uint256):
     let (to_address) = get_l1_token_bridge()
 
     let (l1_token) = l2_token_to_l1_token.read(l2_token)
@@ -191,7 +191,7 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     assert_not_zero(l2_token)
 
     # Call mint on l2_token contract.
-    IL2Token.mint(contract_address=l2_token, recipient=l2_recipient, amount=amount)
+    IERC20.mint(contract_address=l2_token, recipient=l2_recipient, amount=amount)
     deposit_handled.emit(l2_token, l2_recipient, amount)
 
     return ()

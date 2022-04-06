@@ -81,9 +81,16 @@ describe('TokenBridge', async function() {
 
     L2TokenFactory = await starknet.getContractFactory('ETHstaticAToken');
     l2tokenA = await L2TokenFactory.deploy(
-        { name: 1234, symbol: 123, decimals: 18, initial_supply: {high:0, low:1000}, recipient: BigInt(tokenBridgeL2.address), controller: BigInt(tokenBridgeL2.address), reward_token: BigInt(rewAaveToken.address)});
+        {
+          name: 1234,
+          symbol: 123,
+          decimals: 18,
+          initial_supply: {high:0, low:1000},
+          recipient: BigInt(tokenBridgeL2.address),
+          controller: BigInt(tokenBridgeL2.address),
+        });
     l2tokenB = await L2TokenFactory.deploy(
-        { name: 4321, symbol: 321, decimals: 18, initial_supply: {high:0, low:1000}, recipient: BigInt(tokenBridgeL2.address), controller: BigInt(tokenBridgeL2.address), reward_token: BigInt(rewAaveToken.address)});
+        { name: 4321, symbol: 321, decimals: 18, initial_supply: {high:0, low:1000}, recipient: BigInt(tokenBridgeL2.address), controller: BigInt(tokenBridgeL2.address)});
     // L1 deployments
 
     [signer, l1user] = await ethers.getSigners();

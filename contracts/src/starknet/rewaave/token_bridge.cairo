@@ -5,7 +5,9 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math import assert_lt_felt, assert_not_zero
 from starkware.cairo.common.uint256 import Uint256
 from starkware.starknet.common.messages import send_message_to_l1
-from starkware.starknet.common.syscalls import get_caller_address
+from starkware.starknet.common.syscalls import get_caller_address, get_contract_address
+
+from rewaave.tokens.IERC20 import IERC20
 
 const WITHDRAW_MESSAGE = 0
 const ETH_ADDRESS_BOUND = 2 ** 160
@@ -183,5 +185,6 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     # Call mint on l2_token contract.
     IL2Token.mint(contract_address=l2_token, recipient=l2_recipient, amount=amount)
     deposit_handled.emit(l2_token, l2_recipient, amount)
+
     return ()
 end

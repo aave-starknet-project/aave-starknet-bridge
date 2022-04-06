@@ -34,6 +34,10 @@ end
 func deposit_handled(l2_token : felt, account : felt, amount : Uint256):
 end
 
+@event
+func mint_rewards_initiated(l2_reward_token : felt, account : felt, amount : Uint256):
+end
+
 @storage_var
 func rewAAVE_token() -> (rewAAVE : felt):
 end
@@ -185,6 +189,6 @@ func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
     end
     # mints rewAAVE for user
     IERC20.mint(rewAAVE_token, recipient, amount)
-
+    mint_rewards_initiated.emit(rewAAVE_token, recipient, amount)
     return ()
 end

@@ -28,6 +28,10 @@ end
 func l2_token_to_l1_token(l2_token : felt) -> (l1_token : felt):
 end
 
+@storage_var
+func rewAave() -> (address : felt):
+end
+
 @event
 func withdraw_initiated(l2_token : felt, l1_recipient : felt, amount : Uint256, caller : felt):
 end
@@ -84,6 +88,21 @@ func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
 
     # Set new value.
     l1_token_bridge.write(value=l1_bridge_address)
+    return ()
+end
+
+@external
+func set_reward_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        reward_token : felt):
+    alloc_locals
+    # The call is restricted to the governor.
+    let (caller_address) = get_caller_address()
+    let (governor_) = get_governor()
+    with_attr error_message("Called address should be {caller_address}"):
+        assert caller_address = governor_
+    end
+
+    rewAave.write(reward_token)
     return ()
 end
 
@@ -157,7 +176,7 @@ func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 
     let (bridge_address) = get_contract_address()
 
-    let (reward_token) = IETHStaticAToken.get_REWARD_TOKEN(contract_address=l1_token)
+    let (reward_token) = rewAave.read()
 
     # BURN REWARD TOKEN
     IERC20.burn(contract_address=reward_token, account=token_owner, amount=amount)

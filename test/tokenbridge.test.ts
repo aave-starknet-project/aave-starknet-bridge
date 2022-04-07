@@ -67,7 +67,7 @@ describe('TokenBridge', async function() {
     l2user = await starknet.deployAccount("OpenZeppelin");
 
     TokenBridgeL2 = await starknet.getContractFactory('token_bridge');
-    tokenBridgeL2 = await TokenBridgeL2.deploy({ governor_address: BigInt(l2user.starknetContract.address) });
+    tokenBridgeL2 = await TokenBridgeL2.deploy({ governor_address: BigInt(l2user.starknetContract.address) });
 
     const rewAaveContractFactory = await starknet.getContractFactory('rewAAVE');
     rewAaveToken = await rewAaveContractFactory.deploy({
@@ -139,6 +139,7 @@ describe('TokenBridge', async function() {
     expect(retrievedBridgeAddress).to.equal(BigInt(proxied.address));
 
     // map L1 tokens to L2 tokens on L2 bridge
+    await l2user.invoke(tokenBridgeL2, 'set_reward_token', { reward_token: BigInt(rewAaveToken.address) });
     await l2user.invoke(tokenBridgeL2, 'approve_bridge', { l1_token: BigInt(l1tokenA.address), l2_token: BigInt(l2tokenA.address) });
     await l2user.invoke(tokenBridgeL2, 'approve_bridge', { l1_token: BigInt(l1tokenB.address), l2_token: BigInt(l2tokenB.address) });
   })

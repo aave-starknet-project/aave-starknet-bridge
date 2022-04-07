@@ -5,9 +5,6 @@ from starkware.cairo.common.uint256 import Uint256
 @contract_interface
 namespace IETHStaticAToken:
 
-    func get_REWARD_TOKEN() -> (token: felt):
-    end
-
     func name() -> (name: felt):
     end
 

@@ -146,9 +146,9 @@ contract TokenBridge is
         uint256[] memory payload = new uint256[](5);
         payload[0] = BRIDGE_REWARD_MESSAGE;
         payload[1] = uint256(l1Token);
-        payload[1] = uint256(recipient);
-        payload[2] = amount & (UINT256_PART_SIZE - 1);
-        payload[3] = amount >> UINT256_PART_SIZE_BITS;
+        payload[2] = uint256(recipient);
+        payload[3] = amount & (UINT256_PART_SIZE - 1);
+        payload[4] = amount >> UINT256_PART_SIZE_BITS;
 
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
@@ -156,7 +156,7 @@ contract TokenBridge is
     function receiveRewards(address l1Token, address recipient, uint256 amount) isApprovedToken(l1Token) external {
         consumeBridgeRewardMessage(l1Token, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
-        
+
         IStaticATokenLM staticAToken =  IStaticATokenLM(l1Token);
         staticAToken.claimRewardsToSelf(true);
 

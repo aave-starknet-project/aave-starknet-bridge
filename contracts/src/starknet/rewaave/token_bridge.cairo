@@ -39,6 +39,10 @@ end
 @event
 func deposit_handled(l2_token : felt, account : felt, amount : Uint256):
 end
+
+@event
+func bridged_rewards(l2_token: felt, acocunt: felt, amount: Uint256):
+end
 # Constructor.
 
 # To finish the init you have to initialize the L2 token contract and the L1 bridge contract.
@@ -190,6 +194,7 @@ func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     assert message_payload[4] = amount.high
 
     send_message_to_l1(to_address=to_address, payload_size=5, payload=message_payload)
+    bridged_rewards.emit(l2_token, l1_recipient, amount)
 
     return ()
 end

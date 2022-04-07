@@ -24,18 +24,13 @@ namespace ITokenBridge:
     end
 end
 
-@storage_var
-func l2_token_bridge() -> (address : felt):
-end
-
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         name : felt, symbol : felt, decimals : felt, initial_supply : Uint256, recipient : felt,
-        controller : felt, l2_token_bridge_ : felt):
+        controller : felt):
     ERC20_initializer(name, symbol, decimals)
     ERC20_mint(recipient, initial_supply)
     Ownable_initializer(controller)
-    l2_token_bridge.write(l2_token_bridge_)
     # TODO we either need to configure the last_update here, or pause the contract
     # until the first update somehow.
     # Actually we can just rely on the first bridger to give us the right rewards!
@@ -158,7 +153,7 @@ func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
         assert caller = user
     end
     let (rewards) = claimable_claim_rewards(user)
-    let (l2_token_bridge_) = l2_token_bridge.read()
+    let (l2_token_bridge_) = Ownable_get_owner()
     ITokenBridge.mint_rewards(l2_token_bridge_, recipient, rewards)
     return (TRUE)
 end

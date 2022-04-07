@@ -53,7 +53,7 @@ end
 # To finish the init you have to initialize the L2 token contract and the L1 bridge contract.
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        governor_address : felt, rewAAVE : felt):
+        governor_address : felt):
     assert_not_zero(governor_address)
     governor.write(value=governor_address)
     return ()

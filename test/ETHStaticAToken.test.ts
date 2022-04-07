@@ -20,7 +20,6 @@ describe("ETHStaticAToken", function () {
     user1 = await starknet.deployAccount("OpenZeppelin");
   });
 
-
   it("should deploy", async () => {
     const tokenContractFactory = await starknet.getContractFactory(
       "ETHstaticAToken"
@@ -38,8 +37,7 @@ describe("ETHStaticAToken", function () {
       decimals: 4,
       initial_supply: { high: 0, low: 0 },
       recipient: BigInt(owner.starknetContract.address),
-      controller: BigInt(owner.starknetContract.address),
-      l2_token_bridge_: bridgeContract.address,
+      controller: bridgeContract.address,
     });
   });
 

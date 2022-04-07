@@ -7,7 +7,7 @@ from starkware.cairo.common.uint256 import Uint256
 from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address, get_contract_address
 
-from rewaave.tokens.IERC20 import IERC20
+from src.starknet.rewaave.tokens.IERC20 import IERC20
 
 const WITHDRAW_MESSAGE = 0
 const ETH_ADDRESS_BOUND = 2 ** 160
@@ -173,7 +173,7 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 
     # Call mint on l2_token contract.
     IERC20.mint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
-    deposit_handled.emit(l2_token, l2_recipient, amount)
+    deposit_handled.emit(l2_token_address, l2_recipient, amount)
     return ()
 end
 
@@ -187,8 +187,9 @@ func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
     with_attr error_message("L1 token {l1_token} not found for {l2_token}"):
         assert_not_zero(l1_token)
     end
+    let (reward_tokens) = rewAAVE_token.read()
     # mints rewAAVE for user
-    IERC20.mint(rewAAVE_token, recipient, amount)
-    mint_rewards_initiated.emit(rewAAVE_token, recipient, amount)
+    IERC20.mint(reward_tokens, recipient, amount)
+    mint_rewards_initiated.emit(reward_tokens, recipient, amount)
     return ()
 end

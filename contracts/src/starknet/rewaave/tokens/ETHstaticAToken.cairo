@@ -14,7 +14,7 @@ from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner,
 
 from openzeppelin.utils.constants import TRUE
 
-from rewaave.tokens.claimable import (
+from src.starknet.rewaave.tokens.claimable import (
     claimable_claim_rewards, claimable_push_acc_rewards_per_token, claimable_before_token_transfer,
     claimable_get_acc_rewards_per_token)
 
@@ -149,8 +149,9 @@ func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     with_attr error_message("user address should be {caller}"):
         assert caller = user
     end
-    let (rewards) = claimable_claim_rewards(user, recipient)
-    ITokenBridge.mint_rewards(l2_token_bridge, recipient, rewards)
+    let (rewards) = claimable_claim_rewards(user)
+    let (l2_token_bridge_) = l2_token_bridge.read()
+    ITokenBridge.mint_rewards(l2_token_bridge_, recipient, rewards)
     return (TRUE)
 end
 

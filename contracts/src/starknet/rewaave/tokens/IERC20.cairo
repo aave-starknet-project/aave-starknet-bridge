@@ -30,4 +30,10 @@ namespace IERC20:
 
     func approve(spender : felt, amount : Uint256) -> (success : felt):
     end
+
+    func mint(recipient : felt, amount : Uint256):
+    end
+
+    func burn(account : felt, amount : Uint256):
+    end
 end

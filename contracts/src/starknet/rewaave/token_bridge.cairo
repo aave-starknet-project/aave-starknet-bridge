@@ -45,7 +45,7 @@ func mint_rewards_initiated(l2_reward_token : felt, account : felt, amount : Uin
 end
 
 @event
-func bridged_rewards(l2_token: felt, acocunt: felt, amount: Uint256):
+func bridged_rewards(l2_token : felt, acocunt : felt, amount : Uint256):
 end
 
 # Constructor.
@@ -160,9 +160,7 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     # Call burn on l2_token contract.
     let (caller_address) = get_caller_address()
 
-
     IETHStaticAToken.burn(contract_address=l2_token, account=caller_address, amount=amount)
-
 
     # Send the message.
     let (message_payload : felt*) = alloc()
@@ -230,7 +228,6 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     return ()
 end
 
-
 @external
 func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         recipient : felt, amount : Uint256):
@@ -241,9 +238,9 @@ func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
     with_attr error_message("L1 token {l1_token} not found for {l2_token}"):
         assert_not_zero(l1_token)
     end
-    let (reward_token) = rewAAVE_token.read()
+    let (reward_token) = rewAAVE.read()
     # mints rewAAVE for user
-    IERC20.mint(reward_tokens, recipient, amount)
+    IERC20.mint(reward_token, recipient, amount)
     mint_rewards_initiated.emit(reward_token, recipient, amount)
     return ()
 end

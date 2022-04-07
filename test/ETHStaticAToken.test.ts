@@ -20,6 +20,7 @@ describe("ETHStaticAToken", function () {
     user1 = await starknet.deployAccount("OpenZeppelin");
   });
 
+
   it("should deploy", async () => {
     const tokenContractFactory = await starknet.getContractFactory(
       "ETHstaticAToken"
@@ -30,6 +31,7 @@ describe("ETHStaticAToken", function () {
     bridgeContract = await bridgeContractFactory.deploy({
       governor_address: BigInt(owner.starknetContract.address),
     });
+
     tokenContract = await tokenContractFactory.deploy({
       name: 666,
       symbol: 666,

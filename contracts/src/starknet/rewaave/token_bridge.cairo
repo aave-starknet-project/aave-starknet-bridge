@@ -8,8 +8,10 @@ from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address, get_contract_address
 
 from rewaave.tokens.IERC20 import IERC20
+from rewaave.tokens.IETHStaticAToken import IETHStaticAToken
 
 const WITHDRAW_MESSAGE = 0
+const BRIDGE_REWARD_MESSAGE = 1
 const ETH_ADDRESS_BOUND = 2 ** 160
 
 # Storage.
@@ -26,6 +28,10 @@ end
 func l2_token_to_l1_token(l2_token : felt) -> (l1_token : felt):
 end
 
+@storage_var
+func rewAAVE() -> (address : felt):
+end
+
 @event
 func withdraw_initiated(l2_token : felt, l1_recipient : felt, amount : Uint256, caller : felt):
 end
@@ -38,9 +44,10 @@ end
 func mint_rewards_initiated(l2_reward_token : felt, account : felt, amount : Uint256):
 end
 
-@storage_var
-func rewAAVE_token() -> (rewAAVE : felt):
+@event
+func bridged_rewards(l2_token: felt, acocunt: felt, amount: Uint256):
 end
+
 # Constructor.
 
 # To finish the init you have to initialize the L2 token contract and the L1 bridge contract.
@@ -94,11 +101,27 @@ func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
 end
 
 @external
+func set_reward_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        reward_token : felt):
+    alloc_locals
+    # The call is restricted to the governor.
+    let (caller_address) = get_caller_address()
+    let (governor_) = get_governor()
+    with_attr error_message("Called address should be {governer_}"):
+        assert caller_address = governor_
+    end
+
+    rewAAVE.write(reward_token)
+    return ()
+end
+
+@external
 func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         l1_token : felt, l2_token : felt):
     # The call is restricted to the governor.
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
+
     with_attr error_message("Called address should be {governor_}"):
         assert caller_address = governor_
     end
@@ -125,9 +148,6 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     assert_not_zero(l2_token)
 
     let (to_address) = get_l1_token_bridge()
-    # Check address is valid.
-    assert_lt_felt(to_address, ETH_ADDRESS_BOUND)
-    assert_not_zero(to_address)
 
     # Check address is valid.
     assert_lt_felt(l1_recipient, ETH_ADDRESS_BOUND)
@@ -140,7 +160,9 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     # Call burn on l2_token contract.
     let (caller_address) = get_caller_address()
 
-    IERC20.burn(contract_address=l2_token, account=caller_address, amount=amount)
+
+    IETHStaticAToken.burn(contract_address=l2_token, account=caller_address, amount=amount)
+
 
     # Send the message.
     let (message_payload : felt*) = alloc()
@@ -152,6 +174,37 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
 
     send_message_to_l1(to_address=to_address, payload_size=5, payload=message_payload)
     withdraw_initiated.emit(l2_token, l1_recipient, amount, caller_address)
+    return ()
+end
+
+@external
+func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        l2_token : felt, l1_recipient : felt, amount : Uint256):
+    let (to_address) = get_l1_token_bridge()
+
+    let (l1_token) = l2_token_to_l1_token.read(l2_token)
+    with_attr error_message("L1 token {l1_token} not found"):
+        assert_not_zero(l1_token)
+    end
+
+    let (token_owner) = get_caller_address()
+
+    let (reward_token) = rewAAVE.read()
+
+    # BURN REWARD TOKEN
+    IERC20.burn(contract_address=reward_token, account=token_owner, amount=amount)
+
+    # Send message for bridging tokens
+    let (message_payload : felt*) = alloc()
+    assert message_payload[0] = BRIDGE_REWARD_MESSAGE
+    assert message_payload[1] = l1_token
+    assert message_payload[2] = l1_recipient
+    assert message_payload[3] = amount.low
+    assert message_payload[4] = amount.high
+
+    send_message_to_l1(to_address=to_address, payload_size=5, payload=message_payload)
+    bridged_rewards.emit(l2_token, l1_recipient, amount)
+
     return ()
 end
 
@@ -171,10 +224,12 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     assert_not_zero(l2_token_address)
 
     # Call mint on l2_token contract.
-    IERC20.mint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
+
+    IETHStaticAToken.mint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
     deposit_handled.emit(l2_token_address, l2_recipient, amount)
     return ()
 end
+
 
 @external
 func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(

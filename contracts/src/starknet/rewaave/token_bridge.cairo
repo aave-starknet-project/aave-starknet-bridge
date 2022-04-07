@@ -186,9 +186,9 @@ func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
     with_attr error_message("L1 token {l1_token} not found for {l2_token}"):
         assert_not_zero(l1_token)
     end
-    let (reward_tokens) = rewAAVE_token.read()
+    let (reward_token) = rewAAVE_token.read()
     # mints rewAAVE for user
     IERC20.mint(reward_tokens, recipient, amount)
-    mint_rewards_initiated.emit(reward_tokens, recipient, amount)
+    mint_rewards_initiated.emit(reward_token, recipient, amount)
     return ()
 end

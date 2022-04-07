@@ -102,7 +102,7 @@ func set_reward_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
     # The call is restricted to the governor.
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
-    with_attr error_message("Called address should be {caller_address}"):
+    with_attr error_message("Called address should be {governer_}"):
         assert caller_address = governor_
     end
 
@@ -116,7 +116,7 @@ func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     # The call is restricted to the governor.
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
-    with_attr error_message("Called address should be {caller_address}"):
+    with_attr error_message("Called address should be {governer_}"):
         assert caller_address = governor_
     end
 
@@ -175,10 +175,11 @@ func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     let (to_address) = get_l1_token_bridge()
 
     let (l1_token) = l2_token_to_l1_token.read(l2_token)
+    with_attr error_message("L1 token {l1_token} not found"):
+        assert_not_zero(l1_token)
+    end
 
     let (token_owner) = get_caller_address()
-
-    let (bridge_address) = get_contract_address()
 
     let (reward_token) = rewAave.read()
 

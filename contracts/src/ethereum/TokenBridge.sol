@@ -7,12 +7,8 @@ import "@joriksch/sg-contracts/src/starkware/contracts/interfaces/ProxySupport.s
 import "@joriksch/sg-contracts/src/starkware/cairo/eth/CairoConstants.sol";
 import "@joriksch/sg-contracts/src/starkware/starknet/eth/StarknetMessaging.sol";
 
-interface IERC20 {
-    function approve(address, uint256) external returns (bool);
-    function balanceOf(address) external view returns (uint256);
-    function transfer(address, uint256) external returns (bool);    
-    function transferFrom(address, address, uint256) external returns (bool);
-}
+import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IStaticATokenLM} from "@swp0x0/protocol-v2/contracts/interfaces/IStaticATokenLM.sol";
 
 contract TokenBridge is
     GenericGovernance,
@@ -21,6 +17,7 @@ contract TokenBridge is
 {
     event LogDeposit(address sender, address token, uint256 amount, uint256 l2Recipient);
     event LogWithdrawal(address token, address recipient, uint256 amount);
+    event LogBridgeReward(address token, address recipient, uint256 amount);
     event LogBridgeAdded(address l1Token, uint256 l2Token);
 
     mapping(address => uint256) public l1TokentoL2Token;
@@ -75,6 +72,9 @@ contract TokenBridge is
     uint256 constant DEPOSIT_HANDLER =
         1285101517810983806491589552491143496277809242732141897358598292095611420389;
     uint256 constant TRANSFER_FROM_STARKNET = 0;
+    uint256 constant BRIDGE_REWARD_MESSAGE = 1;
+    uint256 constant UINT256_PART_SIZE_BITS = 128;
+    uint256 constant UINT256_PART_SIZE = 2**UINT256_PART_SIZE_BITS;
 
     modifier isValidL2Address(uint256 l2Address) {
         require((l2Address != 0) && (l2Address < CairoConstants.FIELD_PRIME), "L2_ADDRESS_OUT_OF_RANGE");
@@ -138,5 +138,29 @@ contract TokenBridge is
         IERC20 l1Token = IERC20(l1Token_);
         require(l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender), "UNDERFLOW");
         l1Token.transfer(recipient, amount);
+    }
+
+     function consumeBridgeRewardMessage(address l1Token, address recipient, uint256 amount) internal {
+        emit LogBridgeReward(l1Token, recipient, amount);
+
+        uint256[] memory payload = new uint256[](5);
+        payload[0] = BRIDGE_REWARD_MESSAGE;
+        payload[1] = uint256(l1Token);
+        payload[2] = uint256(recipient);
+        payload[3] = amount & (UINT256_PART_SIZE - 1);
+        payload[4] = amount >> UINT256_PART_SIZE_BITS;
+
+        messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
+    }
+
+    function receiveRewards(address l1Token, address recipient, uint256 amount) isApprovedToken(l1Token) external {
+        consumeBridgeRewardMessage(l1Token, recipient, amount);
+        require(recipient != address(0x0), "INVALID_RECIPIENT");
+
+        IStaticATokenLM staticAToken =  IStaticATokenLM(l1Token);
+        staticAToken.claimRewardsToSelf(true);
+
+        IERC20 rewardToken = staticAToken.REWARD_TOKEN();
+        rewardToken.transfer(recipient, amount);
     }
 }

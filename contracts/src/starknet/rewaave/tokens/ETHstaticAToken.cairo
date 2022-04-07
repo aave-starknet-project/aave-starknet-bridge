@@ -133,8 +133,8 @@ end
 @external
 func burn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         account : felt, amount : Uint256):
-    alloc_locals
     Ownable_only_owner()
+    claimable_before_token_transfer(account, 0)
     ERC20_burn(account=account, amount=amount)
     return ()
 end

@@ -118,6 +118,13 @@ describe('TokenBridge', async function() {
 
   });
 
+  it('set L2 token bridge as implementation contract', async () => {
+    await l2user.invoke(proxyTokenBridgeL2, 'initialize', {implementation_address: BigInt(tokenBridgeL2.address)})
+    const { implementation } = await proxyTokenBridgeL2.call('get_implementation', {});
+
+    expect(implementation).to.equal(BigInt(tokenBridgeL2.address));
+  })
+
   it('set L1 token bridge as implementation contract', async () => {
     const initData = abiCoder.encode([ "address", "uint256", "address"], ["0x0000000000000000000000000000000000000000", tokenBridgeL2.address, mockStarknetMessagingAddress]);
     await proxy.addImplementation(tokenBridgeL1.address, initData, false)

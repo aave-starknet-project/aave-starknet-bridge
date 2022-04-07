@@ -48,4 +48,7 @@ namespace IETHstaticAToken:
 
     func burn(account : felt, amount : Uint256):
     end
+
+    func push_acc_rewards_per_token(block : felt, acc_rewards_per_token : Uint256):
+    end
 end

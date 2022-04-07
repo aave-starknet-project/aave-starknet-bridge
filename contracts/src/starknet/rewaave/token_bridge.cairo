@@ -7,6 +7,7 @@ from starkware.cairo.common.uint256 import Uint256
 from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address, get_contract_address
 from rewaave.tokens.IERC20 import IERC20
+from rewaave.tokens.IETHstaticAToken import IETHStaticAToken
 
 const WITHDRAW_MESSAGE = 0
 const BRIDGE_REWARD_MESSAGE = 1
@@ -88,19 +89,19 @@ end
 
 # Internals.
 
-<<<<<<< HEAD
-@external
-func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    l1_bridge_address : felt
-):
-    # The call is restricted to the governor.
-=======
-func auth{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
->>>>>>> added l1 handler to handle transfer messages
+func auth_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
-    with_attr error_message("caller address should be {governor_}"):
+    with_attr error_message("Called address should be {governor_}"):
         assert caller_address = governor_
+    end
+    return ()
+end
+
+func auth_l1_handler{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(from_address_ : felt):
+    let (expected_from_address) = get_l1_token_bridge()
+    with_attr error_message("Expected deposit from l1_token_bridge: {expected_from_address}"):
+        assert from_address_ = expected_from_address
     end
     return ()
 end
@@ -111,7 +112,7 @@ end
 func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         l1_bridge_address : felt):
     # The call is restricted to the governor.
-    auth()
+    auth_governor()
 
     # Check l1_bridge isn't already set.
     let (l1_bridge_) = get_l1_token_bridge()
@@ -132,11 +133,7 @@ func set_reward_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
 ):
     alloc_locals
     # The call is restricted to the governor.
-    let (caller_address) = get_caller_address()
-    let (governor_) = get_governor()
-    with_attr error_message("caller address should be {governer_}"):
-        assert caller_address = governor_
-    end
+    auth_governor()
 
     rewAAVE.write(reward_token)
     return ()
@@ -147,16 +144,7 @@ func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     l1_token : felt, l2_token : felt
 ):
     # The call is restricted to the governor.
-<<<<<<< HEAD
-    let (caller_address) = get_caller_address()
-    let (governor_) = get_governor()
-
-    with_attr error_message("caller address should be {governor_}"):
-        assert caller_address = governor_
-    end
-=======
-    auth()
->>>>>>> added l1 handler to handle transfer messages
+    auth_governor()
 
     let (l1_token_) = l2_token_to_l1_token.read(l2_token)
     with_attr error_message("L2 to L1 Bridge already setup"):
@@ -168,7 +156,6 @@ func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     assert_lt_felt(l1_token, ETH_ADDRESS_BOUND)
 
     l2_token_to_l1_token.write(l2_token, l1_token)
-    l1_token_to_l2_token.write(l1_token, l2_token)
     return ()
 end
 
@@ -251,10 +238,8 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     # The amount is validated (i.e. amount_low, amount_high < 2**128) by an inner call to
     # IMintableToken mint function.
 
-    let (expected_from_address) = get_l1_token_bridge()
-    with_attr error_message("Expected deposit from l1_token_bridge"):
-        assert from_address = expected_from_address
-    end
+    auth_l1_handler(from_address_=from_address)
+
     let amount = Uint256(low=amount_low, high=amount_high)
 
     assert_not_zero(l2_token_address)
@@ -289,20 +274,13 @@ end
 
 @l1_handler
 func handle_transfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        from_address : felt, block_number : felt, l1_token : felt, rewards_low : felt, rewards_high : felt):
+        from_address : felt, block_number : felt, l1_token : felt, l2_token : felt, rewards_low : felt, rewards_high : felt):
 
-    with_attr error_message("Expected transfer call from L1 token {l1_token}"):
-        assert from_address = l1_token
-    end
-
-    let (l2_token) = l1_token_to_l2_token.read(l1_token)
-    with_attr error_message("L2 token {l2_token} not found"):
-        assert_not_zero(l2_token)
-    end
+    auth_l1_handler(from_address_=from_address)
 
     let rewards = Uint256(low=rewards_low, high=rewards_high)
 
-    IL2Token.push_acc_rewards_per_token(contract_address=l2_token, block=block_number, acc_rewards_per_token=rewards)
+    IETHStaticAToken.push_acc_rewards_per_token(contract_address=l2_token, block=block_number, acc_rewards_per_token=rewards)
 
     return ()
 end

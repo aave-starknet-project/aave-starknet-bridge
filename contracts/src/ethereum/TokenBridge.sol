@@ -71,6 +71,9 @@ contract TokenBridge is
     // The selector of the "handle_deposit" l1_handler on L2.
     uint256 constant DEPOSIT_HANDLER =
         1285101517810983806491589552491143496277809242732141897358598292095611420389;
+    // The selector of the "handle_transfer" l1_handler on L2.
+    uint256 constant TRANSFER_HANDLER = 409823391644842124523313878360395433109668121458318209154056251312401670311;
+
     uint256 constant TRANSFER_FROM_STARKNET = 0;
     uint256 constant BRIDGE_REWARD_MESSAGE = 1;
     uint256 constant UINT256_PART_SIZE_BITS = 128;
@@ -110,6 +113,20 @@ contract TokenBridge is
         (payload[2], payload[3]) = toSplitUint(amount);
 
         messagingContract.sendMessageToL2(l2TokenBridge, DEPOSIT_HANDLER, payload);
+    }
+
+    function sendMessageStaticAToken(address l1Token, uint256 accRewards) 
+        external
+        isApprovedToken(l1Token)
+    {
+      uint256 l2Token = l1TokentoL2Token[l1Token];
+
+      uint256[] memory payload = new uint256[](4);
+      payload[0] = block.number;
+      payload[1] = l2Token;
+      (payload[2], payload[3]) = toSplitUint(accRewards);
+
+      messagingContract.sendMessageToL2(l2TokenBridge, TRANSFER_HANDLER, payload);
     }
 
     function consumeMessage(address l1Token, address recipient, uint256 amount) internal {

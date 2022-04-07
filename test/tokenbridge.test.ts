@@ -69,7 +69,7 @@ describe('TokenBridge', async function() {
 
     l2user = await starknet.deployAccount("OpenZeppelin");
 
-    TokenBridgeL2 = await starknet.getContractFactory('token_bridge');
+    TokenBridgeL2 = await starknet.getContractFactory('rewaave/token_bridge');
     tokenBridgeL2 = await TokenBridgeL2.deploy({ governor_address: BigInt(l2user.starknetContract.address) });
 
     const rewAaveContractFactory = await starknet.getContractFactory('rewAAVE');
@@ -94,6 +94,7 @@ describe('TokenBridge', async function() {
         });
     l2tokenB = await L2TokenFactory.deploy(
         { name: 4321, symbol: 321, decimals: 18, initial_supply: {high:0, low:1000}, recipient: BigInt(tokenBridgeL2.address), controller: BigInt(tokenBridgeL2.address)});
+
     // L1 deployments
 
     [signer, l1user] = await ethers.getSigners();

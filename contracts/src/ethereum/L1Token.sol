@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract L1Token is ERC20 {
 
-    ERC20 public REWARD_TOKEN;
+    RewAAVE public REWARD_TOKEN;
 
     constructor(uint256 amount, address rewardToken) ERC20("L1Token", "L1T") {
         _mint(msg.sender, amount);

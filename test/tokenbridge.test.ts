@@ -47,7 +47,7 @@ describe('TokenBridge', async function() {
   let l2tokenB: StarknetContract;
   let TokenBridgeL2: StarknetContractFactory;
   let tokenBridgeL2: StarknetContract;
-  let rewAaveToken: StarknetContract;
+  let rewAaveTokenL2: StarknetContract;
   // L1
   let MockStarknetMessaging: ContractFactory;
   let mockStarknetMessaging: Contract;
@@ -60,7 +60,7 @@ describe('TokenBridge', async function() {
   let proxy: Contract;
   let proxied: Contract;
   let L1RewAaveFactory: ContractFactory;
-  let rewAaveL1: Contract;
+  let rewAaveTokenL1: Contract;
 
   before(async function () {
 
@@ -72,7 +72,7 @@ describe('TokenBridge', async function() {
     tokenBridgeL2 = await TokenBridgeL2.deploy({ governor_address: BigInt(l2user.starknetContract.address) });
 
     const rewAaveContractFactory = await starknet.getContractFactory('rewAAVE');
-    rewAaveToken = await rewAaveContractFactory.deploy({
+    rewAaveTokenL2 = await rewAaveContractFactory.deploy({
       name: 444,
       symbol: 444,
       decimals: 8,
@@ -105,11 +105,11 @@ describe('TokenBridge', async function() {
     await mockStarknetMessaging.deployed();
 
     L1RewAaveFactory = await ethers.getContractFactory('RewAAVE', signer);
-    rewAaveL1 = await L1RewAaveFactory.deploy(1000);
+    rewAaveTokenL1 = await L1RewAaveFactory.deploy(1000);
 
     L1TokenFactory = await ethers.getContractFactory('L1Token', signer);
-    l1tokenA = await L1TokenFactory.deploy(1000, rewAaveL1.address);
-    l1tokenB = await L1TokenFactory.deploy(1000, rewAaveL1.address);
+    l1tokenA = await L1TokenFactory.deploy(1000, rewAaveTokenL1.address);
+    l1tokenB = await L1TokenFactory.deploy(1000, rewAaveTokenL1.address);
 
     TokenBridgeL1 = await ethers.getContractFactory('TokenBridge', signer);
     tokenBridgeL1 = await TokenBridgeL1.deploy();
@@ -144,7 +144,7 @@ describe('TokenBridge', async function() {
     expect(retrievedBridgeAddress).to.equal(BigInt(proxied.address));
 
     // map L1 tokens to L2 tokens on L2 bridge
-    await l2user.invoke(tokenBridgeL2, 'set_reward_token', { reward_token: BigInt(rewAaveToken.address) });
+    await l2user.invoke(tokenBridgeL2, 'set_reward_token', { reward_token: BigInt(rewAaveTokenL2.address) });
     await l2user.invoke(tokenBridgeL2, 'approve_bridge', { l1_token: BigInt(l1tokenA.address), l2_token: BigInt(l2tokenA.address) });
     await l2user.invoke(tokenBridgeL2, 'approve_bridge', { l1_token: BigInt(l1tokenB.address), l2_token: BigInt(l2tokenB.address) });
   })
@@ -213,8 +213,8 @@ describe('TokenBridge', async function() {
 
   it('L2 users send back reward accrued to L1 user', async () => {
     // Give TokenBridge 100 reward token
-    await rewAaveL1.connect(l1user).approve(proxied.address, MAX_UINT256);
-    await rewAaveL1.transfer(proxied.address, 1000);
+    await rewAaveTokenL1.connect(l1user).approve(proxied.address, MAX_UINT256);
+    await rewAaveTokenL1.transfer(proxied.address, 1000);
 
     // Initiate bridge back rewards from L2
     await l2user.invoke(tokenBridgeL2, 'bridge_rewards', {l2_token: BigInt(l2tokenA.address), l1_recipient: BigInt(l1user.address), amount: {high: 0, low: 30}});
@@ -229,6 +229,6 @@ describe('TokenBridge', async function() {
     await proxied.connect(l1user).receiveRewards(l1tokenA.address, l1user.address, 30);
 
     // check that the l1 user received reward tokens
-    expect(await rewAaveL1.balanceOf(l1user.address)).to.be.equal(30);
+    expect(await rewAaveTokenL1.balanceOf(l1user.address)).to.be.equal(30);
   })
 });

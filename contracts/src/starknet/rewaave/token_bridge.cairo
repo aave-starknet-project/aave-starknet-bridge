@@ -29,7 +29,7 @@ func l2_token_to_l1_token(l2_token : felt) -> (l1_token : felt):
 end
 
 @storage_var
-func rewAave() -> (address : felt):
+func rewAAVE() -> (address : felt):
 end
 
 @event
@@ -106,7 +106,7 @@ func set_reward_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
         assert caller_address = governor_
     end
 
-    rewAave.write(reward_token)
+    rewAAVE.write(reward_token)
     return ()
 end
 
@@ -181,7 +181,7 @@ func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 
     let (token_owner) = get_caller_address()
 
-    let (reward_token) = rewAave.read()
+    let (reward_token) = rewAAVE.read()
 
     # BURN REWARD TOKEN
     IERC20.burn(contract_address=reward_token, account=token_owner, amount=amount)

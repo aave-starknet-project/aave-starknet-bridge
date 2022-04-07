@@ -7,7 +7,6 @@ describe('ETHStaticAToken', function () {
   this.timeout(TIMEOUT);
 
   let tokenContract: StarknetContract;
-  let rewAaveToken: StarknetContract;
   let owner: Account;
   let user1: Account;
 
@@ -17,7 +16,7 @@ describe('ETHStaticAToken', function () {
   });
 
   it('should deploy', async () => {
-    const tokenContractFactory = await starknet.getContractFactory('ETHstaticAToken');
+    const tokenContractFactory : StarknetContractFactory= await starknet.getContractFactory('ETHstaticAToken');
     tokenContract = await tokenContractFactory.deploy({
       name: 666,
       symbol: 666,

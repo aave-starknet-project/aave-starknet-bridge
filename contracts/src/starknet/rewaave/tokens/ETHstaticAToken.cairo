@@ -14,7 +14,7 @@ from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner,
 
 from openzeppelin.utils.constants import TRUE
 
-from src.starknet.rewaave.tokens.claimable import (
+from rewaave.tokens.claimable import (
     claimable_claim_rewards, claimable_push_acc_rewards_per_token, claimable_before_token_transfer,
     claimable_get_acc_rewards_per_token)
 

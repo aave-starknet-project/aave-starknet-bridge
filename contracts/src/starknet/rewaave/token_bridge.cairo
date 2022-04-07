@@ -7,7 +7,7 @@ from starkware.cairo.common.uint256 import Uint256
 from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address, get_contract_address
 
-from src.starknet.rewaave.tokens.IERC20 import IERC20
+from rewaave.tokens.IERC20 import IERC20
 
 const WITHDRAW_MESSAGE = 0
 const ETH_ADDRESS_BOUND = 2 ** 160
@@ -49,7 +49,6 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
         governor_address : felt, rewAAVE : felt):
     assert_not_zero(governor_address)
     governor.write(value=governor_address)
-    rewAAVE_token.write(rewAAVE)
     return ()
 end
 

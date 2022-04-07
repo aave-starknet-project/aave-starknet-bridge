@@ -134,7 +134,6 @@ describe("ETHStaticAToken", function () {
         user: user1.starknetContract.address,
         recipient: user1.starknetContract.address,
       });
-      //expect.fail("non-owner was able to update rewards");
     } catch (e) {}
   });
 

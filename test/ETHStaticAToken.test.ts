@@ -154,10 +154,18 @@ describe("ETHStaticAToken", function () {
         user: user1.starknetContract.address,
         recipient: user1.starknetContract.address,
       });
+
+      const { userPendingRewards } = await tokenContract.call(
+        "get_user_pending_rewards",
+        {
+          account: BigInt(user1.starknetContract.address),
+        }
+      );
       const { userRewardsBalance } = await rewAaveTokenL2.call("balanceOf", {
         account: BigInt(user1.starknetContract.address),
       });
-      expect(userRewardsBalance).to.equal({});
+
+      expect(userRewardsBalance).to.equal(userPendingRewards);
     } catch (e) {}
   });
 

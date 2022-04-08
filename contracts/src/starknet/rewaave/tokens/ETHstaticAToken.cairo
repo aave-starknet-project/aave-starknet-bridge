@@ -16,7 +16,8 @@ from openzeppelin.utils.constants import TRUE
 
 from rewaave.tokens.claimable import (
     claimable_claim_rewards, claimable_push_acc_rewards_per_token, claimable_before_token_transfer,
-    claimable_get_acc_rewards_per_token, claimable_get_user_acc_rewards_per_token)
+    claimable_get_acc_rewards_per_token, claimable_get_user_acc_rewards_per_token,
+    get_pending_rewards)
 
 @contract_interface
 namespace ITokenBridge:
@@ -190,5 +191,11 @@ end
 func get_user_acc_rewards_per_token{
         syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt) -> (
         user_acc_rewards_per_token : Uint256):
-    return claimable_get_user_acc_rewards_per_token()
+    return claimable_get_user_acc_rewards_per_token(user)
+end
+
+@external
+func get_user_pending_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        user : felt) -> (user_pending_rewards : Uint256):
+    return get_pending_rewards(user)
 end

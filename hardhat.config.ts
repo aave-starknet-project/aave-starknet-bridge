@@ -1,8 +1,8 @@
-import { HardhatUserConfig } from "hardhat/types";
+import {HardhatUserConfig} from "hardhat/types";
 import "@shardlabs/starknet-hardhat-plugin";
 import "@nomiclabs/hardhat-ethers";
 import chai from "chai";
-import { solidity } from "ethereum-waffle";
+import {solidity} from "ethereum-waffle";
 
 chai.use(solidity);
 
@@ -14,9 +14,21 @@ const config: HardhatUserConfig = {
     compilers: [
       {
         version: '0.6.12',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        },
       },
       {
         version: '0.8.9',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        },
       },
     ],
   },

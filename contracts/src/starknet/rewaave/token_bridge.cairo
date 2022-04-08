@@ -5,7 +5,8 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math import assert_lt_felt, assert_not_zero
 from starkware.cairo.common.uint256 import Uint256
 from starkware.starknet.common.messages import send_message_to_l1
-from starkware.starknet.common.syscalls import get_caller_address, get_contract_address
+from starkware.starknet.common.syscalls import get_caller_address
+
 from rewaave.tokens.IERC20 import IERC20
 from rewaave.tokens.IETHstaticAToken import IETHstaticAToken
 
@@ -47,18 +48,6 @@ end
 
 @event
 func bridged_rewards(l2_token : felt, acocunt : felt, amount : Uint256):
-end
-
-# Constructor.
-
-# To finish the init you have to initialize the L2 token contract and the L1 bridge contract.
-@constructor
-func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    governor_address : felt
-):
-    assert_not_zero(governor_address)
-    governor.write(value=governor_address)
-    return ()
 end
 
 # Getters.
@@ -109,6 +98,15 @@ func auth_l1_handler{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
 end
 
 # Externals.
+
+# To finish the init you have to initialize the L2 token contract and the L1 bridge contract.
+@external
+func initialize_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        governor_address : felt):
+    assert_not_zero(governor_address)
+    governor.write(value=governor_address)
+    return ()
+end
 
 @external
 func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(

@@ -28,7 +28,7 @@ func constructor{
 end
 
 @external
-func initialize{
+func initialize_proxy{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         range_check_ptr

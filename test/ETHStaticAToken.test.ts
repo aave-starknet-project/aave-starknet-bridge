@@ -14,6 +14,7 @@ describe("ETHStaticAToken", function () {
   let bridgeContract: StarknetContract;
   let owner: Account;
   let user1: Account;
+  let rewAaveTokenL2: StarknetContract;
 
   before(async () => {
     owner = await starknet.deployAccount("OpenZeppelin");
@@ -38,6 +39,16 @@ describe("ETHStaticAToken", function () {
       initial_supply: { high: 0, low: 0 },
       recipient: BigInt(owner.starknetContract.address),
       controller: bridgeContract.address,
+    });
+
+    const rewAaveContractFactory = await starknet.getContractFactory("rewAAVE");
+    rewAaveTokenL2 = await rewAaveContractFactory.deploy({
+      name: 444,
+      symbol: 444,
+      decimals: 8,
+      initial_supply: { high: 0, low: 0 },
+      recipient: BigInt(user1.starknetContract.address),
+      owner: BigInt(bridgeContract.address),
     });
   });
 
@@ -125,7 +136,16 @@ describe("ETHStaticAToken", function () {
   });
 
   it("updatesUserAccRewardsPerToken", async () => {
-    expect.fail("not implemented yet");
+    try {
+      await owner.call(tokenContract, "push_acc_rewards_per_token", {
+        block: 0,
+        acc_rewards_per_token: {
+          high: 0,
+          low: 2,
+        },
+      });
+      expect.fail("accRewards accepted for old block number");
+    } catch (e) {}
   });
 
   it("claims rewards to user", async () => {
@@ -134,6 +154,10 @@ describe("ETHStaticAToken", function () {
         user: user1.starknetContract.address,
         recipient: user1.starknetContract.address,
       });
+      const { userRewardsBalance } = await rewAaveTokenL2.call("balanceOf", {
+        account: BigInt(user1.starknetContract.address),
+      });
+      expect(userRewardsBalance).to.equal({});
     } catch (e) {}
   });
 

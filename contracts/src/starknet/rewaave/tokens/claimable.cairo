@@ -118,3 +118,9 @@ func claimable_get_acc_rewards_per_token{
         syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (res : Uint256):
     return acc_rewards_per_token.read()
 end
+
+func claimable_get_user_acc_rewards_per_token{
+        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt) -> (
+        res : Uint256):
+    return user_snapshot_rewards_per_token.read(user)
+end

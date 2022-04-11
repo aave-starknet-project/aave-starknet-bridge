@@ -8,7 +8,7 @@ from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address, get_contract_address
 
 from rewaave.tokens.IERC20 import IERC20
-from rewaave.tokens.IETHStaticAToken import IETHStaticAToken
+from rewaave.tokens.IETHstaticAToken import IETHstaticAToken
 
 const WITHDRAW_MESSAGE = 0
 const BRIDGE_REWARD_MESSAGE = 1
@@ -41,14 +41,15 @@ func deposit_handled(l2_token : felt, account : felt, amount : Uint256):
 end
 
 @event
-func bridged_rewards(l2_token: felt, acocunt: felt, amount: Uint256):
+func bridged_rewards(l2_token : felt, acocunt : felt, amount : Uint256):
 end
 # Constructor.
 
 # To finish the init you have to initialize the L2 token contract and the L1 bridge contract.
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        governor_address : felt):
+    governor_address : felt
+):
     assert_not_zero(governor_address)
     governor.write(value=governor_address)
     return ()
@@ -58,14 +59,16 @@ end
 
 @view
 func get_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-        res : felt):
+    res : felt
+):
     let (res) = governor.read()
     return (res)
 end
 
 @view
 func get_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-        res : felt):
+    res : felt
+):
     let (res) = l1_token_bridge.read()
     return (res)
 end
@@ -74,7 +77,8 @@ end
 
 @external
 func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        l1_bridge_address : felt):
+    l1_bridge_address : felt
+):
     # The call is restricted to the governor.
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
@@ -97,7 +101,8 @@ end
 
 @external
 func set_reward_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        reward_token : felt):
+    reward_token : felt
+):
     alloc_locals
     # The call is restricted to the governor.
     let (caller_address) = get_caller_address()
@@ -112,7 +117,8 @@ end
 
 @external
 func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        l1_token : felt, l2_token : felt):
+    l1_token : felt, l2_token : felt
+):
     # The call is restricted to the governor.
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
@@ -135,7 +141,8 @@ end
 
 @external
 func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        l2_token : felt, l1_recipient : felt, amount : Uint256):
+    l2_token : felt, l1_recipient : felt, amount : Uint256
+):
     # The amount is validated (i.e. amount.low, amount.high < 2**128) by an inner call to
     # IMintableToken permissionedBurn function.
 
@@ -154,7 +161,7 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     # Call burn on l2_token contract.
     let (caller_address) = get_caller_address()
 
-    IETHStaticAToken.burn(contract_address=l2_token, account=caller_address, amount=amount)
+    IETHstaticAToken.burn(contract_address=l2_token, account=caller_address, amount=amount)
 
     # Send the message.
     let (message_payload : felt*) = alloc()
@@ -171,7 +178,8 @@ end
 
 @external
 func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        l2_token : felt, l1_recipient : felt, amount : Uint256):
+    l2_token : felt, l1_recipient : felt, amount : Uint256
+):
     let (to_address) = get_l1_token_bridge()
 
     let (l1_token) = l2_token_to_l1_token.read(l2_token)
@@ -202,8 +210,8 @@ end
 
 @l1_handler
 func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        from_address : felt, l2_recipient : felt, l2_token : felt, amount_low : felt,
-        amount_high : felt):
+    from_address : felt, l2_recipient : felt, l2_token : felt, amount_low : felt, amount_high : felt
+):
     # The amount is validated (i.e. amount_low, amount_high < 2**128) by an inner call to
     # IMintableToken permissionedMint function.
 

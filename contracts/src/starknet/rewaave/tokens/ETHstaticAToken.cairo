@@ -150,7 +150,7 @@ func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
         user : felt, recipient : felt) -> (success : felt):
     let (caller) = get_caller_address()
 
-    with_attr error_message("user address should be {caller}"):
+    with_attr error_message("user should be {caller}"):
         assert caller = user
     end
     let (rewards) = claimable_claim_rewards(user)

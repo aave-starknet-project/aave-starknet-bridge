@@ -14,11 +14,13 @@ describe("ETHStaticAToken", function () {
   let bridgeContract: StarknetContract;
   let owner: Account;
   let user1: Account;
+  let user2: Account;
   let rewAaveTokenL2: StarknetContract;
 
   before(async () => {
     owner = await starknet.deployAccount("OpenZeppelin");
     user1 = await starknet.deployAccount("OpenZeppelin");
+    user2 = await starknet.deployAccount("OpenZeppelin");
   });
 
   it("should deploy", async () => {
@@ -169,6 +171,61 @@ describe("ETHStaticAToken", function () {
     } catch (e) {}
   });
 
+  it("updates acc rewards and checks for the exact value on the user", async () => {
+    try {
+      await owner.call(tokenContract, "push_acc_rewards_per_token", {
+        block: 4,
+        acc_rewards_per_token: {
+          high: 0,
+          low: 3,
+        },
+      });
+
+      const { userAccruedRewards } = await tokenContract.call(
+        "get_user_acc_rewards_per_token",
+        {
+          account: BigInt(user1.starknetContract.address),
+        }
+      );
+      expect(userAccruedRewards).to.equal({
+        high: 0,
+        low: 3,
+      });
+    } catch (e) {}
+  });
+
+  it("distributes rewards correctly", async () => {
+    await user1.call(tokenContract, "claim_rewards", {
+      user: user1.starknetContract.address,
+      recipient: user1.starknetContract.address,
+    });
+    await user2.call(tokenContract, "claim_rewards", {
+      user: user2.starknetContract.address,
+      recipient: user2.starknetContract.address,
+    });
+
+    const { user1PendingRewards } = await tokenContract.call(
+      "get_user_pending_rewards",
+      {
+        account: BigInt(user1.starknetContract.address),
+      }
+    );
+    const { user2PendingRewards } = await tokenContract.call(
+      "get_user_pending_rewards",
+      {
+        account: BigInt(user2.starknetContract.address),
+      }
+    );
+    const { user1RewardsBalance } = await rewAaveTokenL2.call("balanceOf", {
+      account: BigInt(user1.starknetContract.address),
+    });
+    const { user2RewardsBalance } = await rewAaveTokenL2.call("balanceOf", {
+      account: BigInt(user2.starknetContract.address),
+    });
+
+    expect(user1RewardsBalance).to.equal(user1PendingRewards);
+    expect(user2RewardsBalance).to.equal(user2PendingRewards);
+  });
   it("tracks unclaimed rewards", async () => {
     expect.fail("not implemented yet");
   });

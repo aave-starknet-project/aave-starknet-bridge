@@ -81,7 +81,7 @@ func initialize_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, r
         governor_address : felt):
     let (governor_) = governor.read()
     with_attr error_message("Bridge already initialized"):
-      assert_not_zero(governor_)
+      assert governor_ = 0
     end
     assert_not_zero(governor_address)
     governor.write(value=governor_address)

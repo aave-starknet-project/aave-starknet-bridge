@@ -223,9 +223,9 @@ describe('TokenBridge', async function() {
     await proxied.connect(l1user).deposit(l1tokenA.address, BigInt(l2user.starknetContract.address), 30);
     await proxied.connect(l1user).deposit(l1tokenB.address, BigInt(l2user.starknetContract.address), 40);
     expect(await l1tokenA.balanceOf(l1user.address)).to.equal(170);
-    expect(await l1tokenB.balanceOf(l1user.address)).to.equal(260);    
+    expect(await l1tokenB.balanceOf(l1user.address)).to.equal(260);
     expect(await l1tokenA.balanceOf(proxied.address)).to.equal(30);
-    expect(await l1tokenB.balanceOf(proxied.address)).to.equal(40);    
+    expect(await l1tokenB.balanceOf(proxied.address)).to.equal(40);
 
     // flush L1 messages to be consumed by L2
     const flushL1Response = await starknet.devnet.flush();
@@ -240,8 +240,8 @@ describe('TokenBridge', async function() {
     expectAddressEquality(flushL1Messages[1].address, mockStarknetMessagingAddress);
 
     // check balance of L2 tokens
-    expect(await proxiedL2TokenA.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  30n } });
-    expect(await proxiedL2TokenB.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  40n } });
+    expect(await l2user.call(proxiedL2TokenA, 'balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  30n } });
+    expect(await l2user.call(proxiedL2TokenB, 'balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  40n } });
   })
 
   // it('L2 user sends back tokens A and tokens B to L1 user', async () => {

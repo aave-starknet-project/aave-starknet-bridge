@@ -94,7 +94,7 @@ end
 #
 
 @external
-func set_admin{
+func change_proxy_admin{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         range_check_ptr

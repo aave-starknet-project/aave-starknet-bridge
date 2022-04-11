@@ -48,4 +48,10 @@ namespace IETHstaticAToken:
 
     func burn(account : felt, amount : Uint256):
     end
-end
+
+    func initialize_ETHstaticAToken(
+            name : felt, symbol : felt, decimals : felt, initial_supply : Uint256, recipient : felt,
+            controller : felt):
+    end
+
+  end

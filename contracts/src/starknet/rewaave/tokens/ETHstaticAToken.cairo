@@ -147,16 +147,12 @@ func burn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
 end
 
 func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        user : felt, recipient : felt) -> (success : felt):
+        recipient : felt):
     let (caller) = get_caller_address()
-
-    with_attr error_message("user should be {caller}"):
-        assert caller = user
-    end
-    let (rewards) = claimable_claim_rewards(user)
+    let (rewards) = claimable_claim_rewards(caller)
     let (l2_token_bridge_) = Ownable_get_owner()
     ITokenBridge.mint_rewards(l2_token_bridge_, recipient, rewards)
-    return (TRUE)
+    return ()
 end
 
 @external

@@ -54,24 +54,6 @@ func set_l2_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
     return ()
 end
 
-@constructor
-func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    name : felt,
-    symbol : felt,
-    decimals : felt,
-    initial_supply : Uint256,
-    recipient : felt,
-    controller : felt,
-):
-    ERC20_initializer(name, symbol, decimals)
-    ERC20_mint(recipient, initial_supply)
-    Ownable_initializer(controller)
-    # TODO we either need to configure the last_update here, or pause the contract
-    # until the first update somehow.
-    # Actually we can just rely on the first bridger to give us the right rewards!
-    return ()
-end
-
 @storage_var
 func last_update() -> (block_number : felt):
 end
@@ -135,6 +117,20 @@ end
 #
 # Externals
 #
+
+@external
+func initialize_ETHstaticAToken{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        name : felt, symbol : felt, decimals : felt, initial_supply : Uint256, recipient : felt,
+        controller : felt):
+    # TODO add initialized check
+    ERC20_initializer(name, symbol, decimals)
+    ERC20_mint(recipient, initial_supply)
+    Ownable_initializer(controller)
+    # TODO we either need to configure the last_update here, or pause the contract
+    # until the first update somehow.
+    # Actually we can just rely on the first bridger to give us the right rewards!
+    return ()
+end
 
 @external
 func transfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(

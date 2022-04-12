@@ -30,6 +30,7 @@ jobs:
           make
 
       - name: Lint
+        run: |
           yarn lint
           git diff-index --quiet HEAD
 

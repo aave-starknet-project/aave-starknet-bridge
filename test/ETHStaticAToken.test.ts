@@ -111,16 +111,4 @@ describe('ETHStaticAToken', function () {
     } catch (e) {
     }
   });
-
-  it('updatesUserAccRewardsPerToken', async () => {
-    expect.fail("not implemented yet")
-  });
-
-  it('distributes rewards correctly', async () => {
-    expect.fail("not implemented yet")
-  });
-
-  it('tracks unclaimed rewards', async () => {
-    expect.fail("not implemented yet")
-  });
 })

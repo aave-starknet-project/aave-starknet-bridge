@@ -4,13 +4,13 @@ import {
   Account,
 } from "hardhat/types";
 import { starknet } from "hardhat";
-import { TIMEOUT } from "./constants";
+import { TIMEOUT, L1_TEST_ADDRESS } from "./constants";
 import { expect } from "chai";
 
 describe("ETHStaticAToken", function () {
   this.timeout(TIMEOUT);
 
-  let tokenContract: StarknetContract;
+  let l2token: StarknetContract;
   let bridgeContract: StarknetContract;
   let rewAaveTokenL2: StarknetContract;
   let owner: Account;
@@ -24,26 +24,25 @@ describe("ETHStaticAToken", function () {
   });
 
   it("should deploy", async () => {
-    const tokenContractFactory = await starknet.getContractFactory(
-      "ETHstaticAToken"
-    );
+    const l2tokenFactory = await starknet.getContractFactory("ETHstaticAToken");
+    const rewAaveContractFactory = await starknet.getContractFactory("rewAAVE");
     const bridgeContractFactory = await starknet.getContractFactory(
       "token_bridge"
     );
+
     bridgeContract = await bridgeContractFactory.deploy({
       governor_address: BigInt(owner.starknetContract.address),
     });
 
-    tokenContract = await tokenContractFactory.deploy({
+    l2token = await l2tokenFactory.deploy({
       name: 666,
       symbol: 666,
       decimals: 4,
       initial_supply: { high: 0, low: 0 },
-      recipient: BigInt(owner.starknetContract.address),
-      controller: bridgeContract.address,
+      recipient: BigInt(user1.starknetContract.address),
+      controller: BigInt(owner.starknetContract.address),
     });
 
-    const rewAaveContractFactory = await starknet.getContractFactory("rewAAVE");
     rewAaveTokenL2 = await rewAaveContractFactory.deploy({
       name: 444,
       symbol: 444,
@@ -52,10 +51,25 @@ describe("ETHStaticAToken", function () {
       recipient: BigInt(user1.starknetContract.address),
       owner: BigInt(bridgeContract.address),
     });
+    //set rewAave address on l2 token bridge
+    await owner.invoke(bridgeContract, "set_reward_token", {
+      reward_token: BigInt(rewAaveTokenL2.address),
+    });
+    //approve l1_l2 token bridge
+    await owner.invoke(bridgeContract, "approve_bridge", {
+      l1_token: BigInt(L1_TEST_ADDRESS),
+      l2_token: BigInt(l2token.address),
+    });
+  });
+
+  it("sets l2 token bridge", async () => {
+    await owner.invoke(l2token, "set_l2_token_bridge", {
+      l2_token_bridge_: BigInt(bridgeContract.address),
+    });
   });
 
   it("allows owner to mint", async () => {
-    await owner.invoke(tokenContract, "mint", {
+    await owner.invoke(l2token, "mint", {
       recipient: BigInt(user1.starknetContract.address),
       amount: {
         high: 0n,
@@ -63,212 +77,181 @@ describe("ETHStaticAToken", function () {
       },
     });
 
-    const { totalSupply } = await tokenContract.call("totalSupply");
-    const { balanceOfRecipient } = await tokenContract.call("balanceOf", {
-      account: BigInt(user1.starknetContract.address),
+    const { totalSupply } = await l2token.call("totalSupply");
+    expect(totalSupply).to.deep.equal({
+      high: 0n,
+      low: 100n,
     });
-    expect(totalSupply).to.deep.equal({ high: 0n, low: 100n });
-    expect(balanceOfRecipient).to.deep.equal({ high: 0n, low: 100n });
+    expect(
+      await l2token.call("balanceOf", {
+        account: BigInt(user1.starknetContract.address),
+      })
+    ).to.deep.equal({ balance: { high: 0n, low: 100n } });
   });
 
-  it("dissalows non-owner to mint", async () => {
+  it("disallows non-owner to mint", async () => {
     try {
-      await user1.call(tokenContract, "mint", {
+      await user1.invoke(l2token, "mint", {
         recipient: BigInt(user1.starknetContract.address),
         amount: {
           high: 0n,
           low: 100n,
         },
       });
-      expect.fail("non-owner was able to mint");
-    } catch (e) {}
+    } catch (err: any) {
+      expect(err.message).to.contain("Ownable: caller is not the owner");
+    }
   });
 
   it("allows owner to update accRewards", async () => {
-    await owner.invoke(tokenContract, "push_acc_rewards_per_token", {
+    await owner.invoke(l2token, "push_acc_rewards_per_token", {
       block: 1,
       acc_rewards_per_token: {
         high: 0,
-        low: 1,
+        low: 2,
       },
     });
 
-    const { acc_rewards_per_token } = await tokenContract.call(
+    const { acc_rewards_per_token } = await l2token.call(
       "get_acc_rewards_per_token"
     );
     expect(acc_rewards_per_token).to.deep.equal({
       high: 0n,
-      low: 1n,
+      low: 2n,
     });
   });
 
-  it("dissalows non-owner to update accRewards", async () => {
+  it("disallows non-owner to update accRewards", async () => {
     try {
-      await user1.call(tokenContract, "push_acc_rewards_per_token", {
+      await user1.invoke(l2token, "push_acc_rewards_per_token", {
         block: 2,
         acc_rewards_per_token: {
           high: 0n,
-          low: 100n,
+          low: 2n,
         },
       });
-      expect.fail("non-owner was able to update rewards");
-    } catch (e) {}
+    } catch (err: any) {
+      expect(err.message).to.contain("Ownable: caller is not the owner");
+    }
   });
 
   it("only allows increases in accRewards", async () => {
     try {
-      await owner.call(tokenContract, "push_acc_rewards_per_token", {
+      await owner.invoke(l2token, "push_acc_rewards_per_token", {
         block: 3,
         acc_rewards_per_token: {
           high: 0,
           low: 0,
         },
       });
-      expect.fail("accRewards was decreased");
-    } catch (e) {}
+    } catch (e) {
+      expect.fail("allows decreasing accRewards");
+    }
   });
 
   it("rejects old block numbers", async () => {
     try {
-      await owner.call(tokenContract, "push_acc_rewards_per_token", {
+      await owner.invoke(l2token, "push_acc_rewards_per_token", {
         block: 0,
         acc_rewards_per_token: {
           high: 0,
           low: 2,
         },
       });
+    } catch (e) {
       expect.fail("accRewards accepted for old block number");
-    } catch (e) {}
+    }
   });
 
-  it("allows user to claim pending rewards to self", async () => {
-    try {
-      const { userPendingRewards } = await tokenContract.call(
-        "get_user_pending_rewards",
-        {
-          account: BigInt(user1.starknetContract.address),
-        }
-      );
-      await user1.call(tokenContract, "claim_rewards", {
-        recipient: user1.starknetContract.address,
-      });
+  it("claims pending rewards and mints correct amount of rewards tokens when recipient is caller", async () => {
+    const { userPendingRewards } = await l2token.call(
+      "get_user_pending_rewards",
+      {
+        user: BigInt(user1.starknetContract.address),
+      }
+    );
 
-      const { userRewardsBalance } = await rewAaveTokenL2.call("balanceOf", {
-        account: BigInt(user1.starknetContract.address),
-      });
+    await user1.invoke(l2token, "claim_rewards", {
+      recipient: BigInt(user1.starknetContract.address),
+    });
 
-      const { userPendingRewardsAfterClaim } = await tokenContract.call(
-        "get_user_pending_rewards",
-        {
-          account: BigInt(user1.starknetContract.address),
-        }
-      );
+    const { userRewardsBalance } = await rewAaveTokenL2.call("balanceOf", {
+      account: BigInt(user1.starknetContract.address),
+    });
 
-      expect(userRewardsBalance).to.equal(userPendingRewards);
-      expect(userPendingRewardsAfterClaim).to.equal({ high: 0, low: 0 });
-    } catch (e) {}
+    expect(userRewardsBalance).to.equal(userPendingRewards);
   });
 
-  it("shows correct user accrued rewards token before update", async () => {
-    try {
-      const { userAccruedRewards } = await tokenContract.call(
-        "get_user_acc_rewards_per_token",
-        {
-          account: BigInt(user1.starknetContract.address),
-        }
-      );
-      expect(userAccruedRewards).to.equal({
-        high: 0,
-        low: 2,
-      });
-    } catch (e) {}
+  it("returns correct user pending rewards after claim", async () => {
+    const { userPendingRewards } = await l2token.call(
+      "get_user_pending_rewards",
+      {
+        user: BigInt(user1.starknetContract.address),
+      }
+    );
+    expect(userPendingRewards.user_pending_rewards).to.deep.equal({
+      high: 0n,
+      low: 0n,
+    });
   });
 
-  it("updates acc rewards and checks for the exact value on the user", async () => {
-    try {
-      await owner.call(tokenContract, "push_acc_rewards_per_token", {
-        block: 4,
-        acc_rewards_per_token: {
-          high: 0,
-          low: 3,
-        },
-      });
+  it("returns correct user accumulated rewards per token after claim", async () => {
+    const { userAccruedRewards } = await l2token.call(
+      "get_user_acc_rewards_per_token",
+      {
+        user: BigInt(user1.starknetContract.address),
+      }
+    );
+    expect(userAccruedRewards.user_acc_rewards_per_token).to.deep.equal({
+      high: 0n,
+      low: 2n,
+    });
+  });
 
-      const { userAccruedRewards } = await tokenContract.call(
-        "get_user_acc_rewards_per_token",
-        {
-          account: BigInt(user1.starknetContract.address),
-        }
-      );
-      expect(userAccruedRewards).to.equal({
+  it("mints rewards correctly to recipient different than caller", async () => {
+    const { user2RewAaveBalanceBeforeClaim } = await rewAaveTokenL2.call(
+      "balanceOf",
+      {
+        account: BigInt(user2.starknetContract.address),
+      }
+    );
+
+    //check that balance is indeed null
+    expect(user2RewAaveBalanceBeforeClaim).to.deep.equal({
+      balance: {
+        high: 0n,
+        low: 0n,
+      },
+    });
+
+    await owner.invoke(l2token, "push_acc_rewards_per_token", {
+      block: 2,
+      acc_rewards_per_token: {
         high: 0,
         low: 3,
-      });
-    } catch (e) {}
-  });
+      },
+    });
 
-  it("mints rewards correctly to provided recipient", async () => {
-    try {
-      const { recipientRewAaveBalanceBeforeClaim } = await rewAaveTokenL2.call(
-        "balanceOf",
-        {
-          account: BigInt(user2.starknetContract.address),
-        }
-      );
-      const { userPendingRewards } = await tokenContract.call(
-        "get_user_pending_rewards",
-        {
-          account: BigInt(user1.starknetContract.address),
-        }
-      );
+    const { user1PendingRewards } = await l2token.call(
+      "get_user_pending_rewards",
+      {
+        user: BigInt(user1.starknetContract.address),
+      }
+    );
 
-      await user1.call(tokenContract, "claim_rewards", {
-        recipient: user2.starknetContract.address,
-      });
+    await user1.invoke(l2token, "claim_rewards", {
+      recipient: BigInt(user2.starknetContract.address),
+    });
 
-      const { recipientRewAaveBalanceAfterClaim } = await rewAaveTokenL2.call(
-        "balanceOf",
-        {
-          account: BigInt(user2.starknetContract.address),
-        }
-      );
-      //check that balance is indeed null
-      expect(recipientRewAaveBalanceBeforeClaim).equal({ high: 0, low: 0 });
-      expect(userPendingRewards).to.equal(recipientRewAaveBalanceAfterClaim);
-    } catch (e) {}
-  });
+    const { user2RewAaveBalanceAfterClaim } = await rewAaveTokenL2.call(
+      "balanceOf",
+      {
+        account: BigInt(user2.starknetContract.address),
+      }
+    );
 
-  it("tracks unclaimed rewards before and after accRewardPerToken update", async () => {
-    try {
-      const { userPendingRewardsBeforeUpdate } = await tokenContract.call(
-        "get_user_pending_rewards",
-        {
-          account: BigInt(user1.starknetContract.address),
-        }
-      );
-      expect(userPendingRewardsBeforeUpdate).equal({ high: 0, low: 0 });
-
-      await owner.call(tokenContract, "push_acc_rewards_per_token", {
-        block: 5,
-        acc_rewards_per_token: {
-          high: 0,
-          low: 4,
-        },
-      });
-
-      const { userPendingRewardsAfterUpdate } = await tokenContract.call(
-        "get_user_pending_rewards",
-        {
-          account: BigInt(user1.starknetContract.address),
-        }
-      );
-
-      expect(userPendingRewardsAfterUpdate.low).to.be.greaterThanOrEqual(
-        userPendingRewardsBeforeUpdate.low
-      );
-      expect(userPendingRewardsAfterUpdate.high).to.be.greaterThanOrEqual(
-        userPendingRewardsBeforeUpdate.high
-      );
-    } catch (e) {}
+    expect(user1PendingRewards.user_pending_rewards).to.deep.equal(
+      user2RewAaveBalanceAfterClaim.balance
+    );
   });
 });

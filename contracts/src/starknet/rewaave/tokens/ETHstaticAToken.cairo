@@ -25,6 +25,17 @@ namespace ITokenBridge:
     end
 end
 
+@storage_var
+func l2_token_bridge() -> (address : felt):
+end
+
+@external
+func set_l2_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        l2_token_bridge_ : felt):
+    l2_token_bridge.write(l2_token_bridge_)
+    return ()
+end
+
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         name : felt, symbol : felt, decimals : felt, initial_supply : Uint256, recipient : felt,
@@ -146,11 +157,13 @@ func burn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     return ()
 end
 
+@external
 func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         recipient : felt):
+    alloc_locals
     let (caller) = get_caller_address()
     let (rewards) = claimable_claim_rewards(caller)
-    let (l2_token_bridge_) = Ownable_get_owner()
+    let (l2_token_bridge_) = l2_token_bridge.read()
     ITokenBridge.mint_rewards(l2_token_bridge_, recipient, rewards)
     return ()
 end

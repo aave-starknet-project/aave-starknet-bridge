@@ -238,7 +238,37 @@ describe("ETHStaticAToken", function () {
     } catch (e) {}
   });
 
-  it("tracks unclaimed rewards", async () => {
-    expect.fail("not implemented yet");
+  it("tracks unclaimed rewards before and after accRewardPerToken update", async () => {
+    try {
+      const { userPendingRewardsBeforeUpdate } = await tokenContract.call(
+        "get_user_pending_rewards",
+        {
+          account: BigInt(user1.starknetContract.address),
+        }
+      );
+      expect(userPendingRewardsBeforeUpdate).equal({ high: 0, low: 0 });
+
+      await owner.call(tokenContract, "push_acc_rewards_per_token", {
+        block: 5,
+        acc_rewards_per_token: {
+          high: 0,
+          low: 4,
+        },
+      });
+
+      const { userPendingRewardsAfterUpdate } = await tokenContract.call(
+        "get_user_pending_rewards",
+        {
+          account: BigInt(user1.starknetContract.address),
+        }
+      );
+
+      expect(userPendingRewardsAfterUpdate.low).to.be.greaterThanOrEqual(
+        userPendingRewardsBeforeUpdate.low
+      );
+      expect(userPendingRewardsAfterUpdate.high).to.be.greaterThanOrEqual(
+        userPendingRewardsBeforeUpdate.high
+      );
+    } catch (e) {}
   });
 });

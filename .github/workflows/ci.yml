@@ -32,7 +32,6 @@ jobs:
       - name: Lint
         run: |
           yarn lint
-          git diff-index --quiet HEAD
 
       - name: Start the devnet
         run: |

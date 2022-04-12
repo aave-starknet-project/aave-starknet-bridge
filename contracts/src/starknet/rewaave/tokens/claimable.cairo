@@ -2,7 +2,12 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.uint256 import (
-    Uint256, uint256_add, uint256_sub, uint256_mul, uint256_unsigned_div_rem)
+    Uint256,
+    uint256_add,
+    uint256_sub,
+    uint256_mul,
+    uint256_unsigned_div_rem,
+)
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.math_cmp import is_le
 
@@ -24,7 +29,8 @@ func unclaimed_rewards(user : felt) -> (unclaimed : Uint256):
 end
 
 func update_user_snapshot_rewards_per_token{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(user : felt):
     let (acc_rewards_per_token_) = acc_rewards_per_token.read()
     user_snapshot_rewards_per_token.write(user, acc_rewards_per_token_)
     return ()
@@ -47,7 +53,8 @@ func update_user{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
 end
 
 func claimable_before_token_transfer{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(from_ : felt, to : felt):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(from_ : felt, to : felt):
     alloc_locals
     if from_ == 0:
         # do nothing
@@ -69,20 +76,23 @@ func claimable_before_token_transfer{
 end
 
 func get_pending_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        user : felt) -> (pending_rewards : Uint256):
+    user : felt
+) -> (pending_rewards : Uint256):
     alloc_locals
     let (balance) = ERC20_balanceOf(user)
     let (supply) = ERC20_totalSupply()
     let (accRewardsPerToken_) = acc_rewards_per_token.read()
     let (user_snapshot_rewards_per_token_) = user_snapshot_rewards_per_token.read(user)
     let (accrued_since_last_interaction) = uint256_sub(
-        accRewardsPerToken_, user_snapshot_rewards_per_token_)
+        accRewardsPerToken_, user_snapshot_rewards_per_token_
+    )
     let (pending_rewards) = ray_mul_no_rounding(accrued_since_last_interaction, balance)
     return (pending_rewards)
 end
 
 func get_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        user : felt) -> (claimable_rewards : Uint256):
+    user : felt
+) -> (claimable_rewards : Uint256):
     alloc_locals
     let (unclaimed_rewards_) = unclaimed_rewards.read(user)
     let (pending) = get_pending_rewards(user)
@@ -93,7 +103,8 @@ func get_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
 end
 
 func claimable_claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        user : felt, recipient : felt) -> (claimed : Uint256):
+    user : felt, recipient : felt
+) -> (claimed : Uint256):
     let (claimed) = get_claimable_rewards(user)
     let (rewardsController_) = Ownable_get_owner()
 
@@ -110,14 +121,15 @@ func claimable_claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, r
 end
 
 func claimable_push_acc_rewards_per_token{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        acc_rewards_per_token_ : Uint256):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(acc_rewards_per_token_ : Uint256):
     alloc_locals
     acc_rewards_per_token.write(acc_rewards_per_token_)
     return ()
 end
 
 func claimable_get_acc_rewards_per_token{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (res : Uint256):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}() -> (res : Uint256):
     return acc_rewards_per_token.read()
 end

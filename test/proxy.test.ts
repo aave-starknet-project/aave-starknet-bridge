@@ -1,4 +1,4 @@
-import { StarknetContract, StarknetContractFactory, Account } from 'hardhat/types';
+import { StarknetContract, Account } from 'hardhat/types';
 import {starknet} from 'hardhat';
 import {TIMEOUT} from './constants';
 import {expect} from 'chai';
@@ -6,8 +6,6 @@ import {expect} from 'chai';
 describe('Proxy', function () {
   this.timeout(TIMEOUT);
 
-  let TokenContractFactory: StarknetContractFactory;
-  let ProxyFactory: StarknetContractFactory;
   let tokenContractA: StarknetContract;
   let tokenContractB: StarknetContract;
   let proxyTokenContract: StarknetContract;
@@ -16,10 +14,11 @@ describe('Proxy', function () {
   let randomUser: Account;
 
   before(async () => {
+    const TokenContractFactory = await starknet.getContractFactory('ETHstaticAToken');
+    const ProxyFactory = await starknet.getContractFactory('proxy');
+
     owner = await starknet.deployAccount('OpenZeppelin');
     randomUser = await starknet.deployAccount('OpenZeppelin');
-    TokenContractFactory = await starknet.getContractFactory('ETHstaticAToken');
-    ProxyFactory = await starknet.getContractFactory('proxy');
 
     tokenContractA = await TokenContractFactory.deploy();
     tokenContractB = await TokenContractFactory.deploy();
@@ -28,7 +27,6 @@ describe('Proxy', function () {
 
     await owner.invoke(proxyTokenContract, 'initialize_proxy', { implementation_address: BigInt(tokenContractA.address) });
     proxiedTokenContract = TokenContractFactory.getContractAt(proxyTokenContract.address);
-
   });
 
   it('Verify that owner is the proxy admin', async () => {

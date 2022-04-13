@@ -115,6 +115,7 @@ describe("ETHStaticAToken", function () {
     const { acc_rewards_per_token } = await l2token.call(
       "get_acc_rewards_per_token"
     );
+
     expect(acc_rewards_per_token).to.deep.equal({
       high: 0n,
       low: 2n,
@@ -163,32 +164,29 @@ describe("ETHStaticAToken", function () {
     }
   });
 
-  it("claims pending rewards and mints correct amount of rewards tokens when recipient is caller", async () => {
-    const { userPendingRewards } = await l2token.call(
-      "get_user_pending_rewards",
-      {
-        user: BigInt(user1.starknetContract.address),
-      }
-    );
+  it("claims pending rewards and mints correct amount of rewards tokens to self", async () => {
+    const user1PendingRewards = await l2token.call("get_user_pending_rewards", {
+      user: BigInt(user1.starknetContract.address),
+    });
 
     await user1.invoke(l2token, "claim_rewards", {
       recipient: BigInt(user1.starknetContract.address),
     });
 
-    const { userRewardsBalance } = await rewAaveTokenL2.call("balanceOf", {
+    const user1RewardsBalance = await rewAaveTokenL2.call("balanceOf", {
       account: BigInt(user1.starknetContract.address),
     });
 
-    expect(userRewardsBalance).to.equal(userPendingRewards);
+    expect(user1RewardsBalance.balance).to.equal(
+      user1PendingRewards.user_pending_rewards
+    );
   });
 
   it("returns correct user pending rewards after claim", async () => {
-    const { userPendingRewards } = await l2token.call(
-      "get_user_pending_rewards",
-      {
-        user: BigInt(user1.starknetContract.address),
-      }
-    );
+    const userPendingRewards = await l2token.call("get_user_pending_rewards", {
+      user: BigInt(user1.starknetContract.address),
+    });
+
     expect(userPendingRewards.user_pending_rewards).to.deep.equal({
       high: 0n,
       low: 0n,
@@ -196,20 +194,21 @@ describe("ETHStaticAToken", function () {
   });
 
   it("returns correct user accumulated rewards per token after claim", async () => {
-    const { userAccruedRewards } = await l2token.call(
+    const userAccruedRewards = await l2token.call(
       "get_user_acc_rewards_per_token",
       {
         user: BigInt(user1.starknetContract.address),
       }
     );
+
     expect(userAccruedRewards.user_acc_rewards_per_token).to.deep.equal({
       high: 0n,
       low: 2n,
     });
   });
 
-  it("mints rewards correctly to recipient different than caller", async () => {
-    const { user2RewAaveBalanceBeforeClaim } = await rewAaveTokenL2.call(
+  it("mints rewards correctly to recipient", async () => {
+    const user2RewAaveBalanceBeforeClaim = await rewAaveTokenL2.call(
       "balanceOf",
       {
         account: BigInt(user2.starknetContract.address),
@@ -217,11 +216,9 @@ describe("ETHStaticAToken", function () {
     );
 
     //check that balance is indeed null
-    expect(user2RewAaveBalanceBeforeClaim).to.deep.equal({
-      balance: {
-        high: 0n,
-        low: 0n,
-      },
+    expect(user2RewAaveBalanceBeforeClaim.balance).to.deep.equal({
+      high: 0n,
+      low: 0n,
     });
 
     await owner.invoke(l2token, "push_acc_rewards_per_token", {
@@ -232,18 +229,15 @@ describe("ETHStaticAToken", function () {
       },
     });
 
-    const { user1PendingRewards } = await l2token.call(
-      "get_user_pending_rewards",
-      {
-        user: BigInt(user1.starknetContract.address),
-      }
-    );
-
+    const user1PendingRewards = await l2token.call("get_user_pending_rewards", {
+      user: BigInt(user1.starknetContract.address),
+    });
+    //claim rewards to user2
     await user1.invoke(l2token, "claim_rewards", {
       recipient: BigInt(user2.starknetContract.address),
     });
 
-    const { user2RewAaveBalanceAfterClaim } = await rewAaveTokenL2.call(
+    const user2RewAaveBalanceAfterClaim = await rewAaveTokenL2.call(
       "balanceOf",
       {
         account: BigInt(user2.starknetContract.address),

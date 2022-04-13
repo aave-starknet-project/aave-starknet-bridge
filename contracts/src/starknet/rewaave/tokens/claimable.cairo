@@ -72,7 +72,6 @@ func get_pending_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
         user : felt) -> (pending_rewards : Uint256):
     alloc_locals
     let (balance) = ERC20_balanceOf(user)
-    let (supply) = ERC20_totalSupply()
     let (accRewardsPerToken_) = acc_rewards_per_token.read()
     let (user_snapshot_rewards_per_token_) = user_snapshot_rewards_per_token.read(user)
     let (accrued_since_last_interaction) = uint256_sub(
@@ -94,8 +93,8 @@ end
 
 func claimable_claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         user : felt) -> (rewards : Uint256):
+    alloc_locals
     let (rewards) = get_claimable_rewards(user)
-
     unclaimed_rewards.write(user, Uint256(0, 0))
 
     if rewards.high + rewards.low == 0:

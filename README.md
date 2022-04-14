@@ -37,7 +37,7 @@ pip install cairo-lang starknet-devnet
 It's wise to do this in two separate shells
 
 ```bash
-yarn hardhat node
+yarn hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/<alchemy_key>
 ```
 
 ```bash

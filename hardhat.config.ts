@@ -3,8 +3,11 @@ import "@shardlabs/starknet-hardhat-plugin";
 import "@nomiclabs/hardhat-ethers";
 import chai from "chai";
 import {solidity} from "ethereum-waffle";
+require('dotenv').config();
 
 chai.use(solidity);
+
+const { ALCHEMY_KEY } = process.env;
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -12,6 +15,7 @@ chai.use(solidity);
 const config: HardhatUserConfig = {
   solidity: {
     compilers: [
+      // for @swp0x0/protocol-v2 contracts
       {
         version: '0.6.12',
         settings: {
@@ -21,6 +25,7 @@ const config: HardhatUserConfig = {
           }
         },
       },
+      // for @joriksch/sg-contracts contracts
       {
         version: '0.8.9',
         settings: {
@@ -30,8 +35,18 @@ const config: HardhatUserConfig = {
           }
         },
       },
+      // for @aave-v3 contracts
+      {
+        version: '0.8.10',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        },
+      },
     ],
-  },
+},
   starknet: {
     venv: ".venv",
     network: "devnet",
@@ -45,8 +60,15 @@ const config: HardhatUserConfig = {
   },
   networks: {
     devnet: {
-      url: "http://localhost:5000"
+      url: "http://localhost:5000",
     },
+    // hardhat: {
+    //   chainId: 31337,
+    //   forking: {
+    //     url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,
+    //     blockNumber: 14581203
+    //   }
+    // },
   },
 };
 

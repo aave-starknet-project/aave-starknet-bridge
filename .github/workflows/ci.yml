@@ -29,10 +29,8 @@ jobs:
           source .venv/bin/activate
           make
 
-      - name: Start the devnet
-        run: |
-          .venv/bin/starknet-devnet &
-          yarn hardhat node &
+#       - name: Start the devnet
+#         run: |
 
       - name: Compile Cairo
         run: |
@@ -40,4 +38,6 @@ jobs:
 
       - name: Run tests
         run: |
+          .venv/bin/starknet-devnet &
+          yarn hardhat node &
           yarn test

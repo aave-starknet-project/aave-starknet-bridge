@@ -7,6 +7,8 @@ import { starknet } from "hardhat";
 import { TIMEOUT, L1_TEST_ADDRESS } from "./constants";
 import { expect } from "chai";
 
+const WAD = 10 ** 18;
+
 describe("ETHStaticAToken", function () {
   this.timeout(TIMEOUT);
 
@@ -73,20 +75,16 @@ describe("ETHStaticAToken", function () {
       recipient: BigInt(user1.starknetContract.address),
       amount: {
         high: 0n,
-        low: 100n,
+        low: 100 * WAD,
       },
     });
 
     const { totalSupply } = await l2token.call("totalSupply");
+
     expect(totalSupply).to.deep.equal({
       high: 0n,
-      low: 100n,
+      low: 100000000000000000000n,
     });
-    expect(
-      await l2token.call("balanceOf", {
-        account: BigInt(user1.starknetContract.address),
-      })
-    ).to.deep.equal({ balance: { high: 0n, low: 100n } });
   });
 
   it("disallows non-owner to mint", async () => {
@@ -95,7 +93,7 @@ describe("ETHStaticAToken", function () {
         recipient: BigInt(user1.starknetContract.address),
         amount: {
           high: 0n,
-          low: 100n,
+          low: 100 * WAD,
         },
       });
     } catch (err: any) {
@@ -108,7 +106,7 @@ describe("ETHStaticAToken", function () {
       block: 1,
       acc_rewards_per_token: {
         high: 0,
-        low: 2,
+        low: 2 * WAD,
       },
     });
 
@@ -118,7 +116,7 @@ describe("ETHStaticAToken", function () {
 
     expect(acc_rewards_per_token).to.deep.equal({
       high: 0n,
-      low: 2n,
+      low: 2000000000000000000n,
     });
   });
 
@@ -128,7 +126,7 @@ describe("ETHStaticAToken", function () {
         block: 2,
         acc_rewards_per_token: {
           high: 0n,
-          low: 2n,
+          low: 2 * WAD,
         },
       });
     } catch (err: any) {
@@ -156,7 +154,7 @@ describe("ETHStaticAToken", function () {
         block: 0,
         acc_rewards_per_token: {
           high: 0,
-          low: 2,
+          low: 2 * WAD,
         },
       });
     } catch (e) {
@@ -164,10 +162,27 @@ describe("ETHStaticAToken", function () {
     }
   });
 
-  it("claims pending rewards and mints correct amount of rewards tokens to self", async () => {
-    const user1PendingRewards = await l2token.call("get_user_pending_rewards", {
-      user: BigInt(user1.starknetContract.address),
+  it("returns correct user pending rewards before claim", async () => {
+    const userClaimableRewards = await l2token.call(
+      "get_user_claimable_rewards",
+      {
+        user: BigInt(user1.starknetContract.address),
+      }
+    );
+
+    expect(userClaimableRewards.user_claimable_rewards).to.deep.equal({
+      high: 0n,
+      low: 200n,
     });
+  });
+
+  it("claims rewards and mints correct amount of rewards tokens to self", async () => {
+    const user1ClaimableRewards = await l2token.call(
+      "get_user_claimable_rewards",
+      {
+        user: BigInt(user1.starknetContract.address),
+      }
+    );
 
     await user1.invoke(l2token, "claim_rewards", {
       recipient: BigInt(user1.starknetContract.address),
@@ -177,37 +192,42 @@ describe("ETHStaticAToken", function () {
       account: BigInt(user1.starknetContract.address),
     });
 
-    expect(user1RewardsBalance.balance).to.equal(
-      user1PendingRewards.user_pending_rewards
+    expect(user1RewardsBalance.balance).to.deep.equal(
+      user1ClaimableRewards.user_claimable_rewards
     );
   });
 
   it("returns correct user pending rewards after claim", async () => {
-    const userPendingRewards = await l2token.call("get_user_pending_rewards", {
-      user: BigInt(user1.starknetContract.address),
-    });
+    const userClaimableRewards = await l2token.call(
+      "get_user_claimable_rewards",
+      {
+        user: BigInt(user1.starknetContract.address),
+      }
+    );
 
-    expect(userPendingRewards.user_pending_rewards).to.deep.equal({
+    expect(userClaimableRewards.user_claimable_rewards).to.deep.equal({
       high: 0n,
       low: 0n,
     });
   });
 
-  it("returns correct user accumulated rewards per token after claim", async () => {
-    const userAccruedRewards = await l2token.call(
+  it("updates user accumulated rewards per token after claim", async () => {
+    const userAccruedRewardsPerToken = await l2token.call(
       "get_user_acc_rewards_per_token",
       {
         user: BigInt(user1.starknetContract.address),
       }
     );
 
-    expect(userAccruedRewards.user_acc_rewards_per_token).to.deep.equal({
-      high: 0n,
-      low: 2n,
-    });
+    expect(userAccruedRewardsPerToken.user_acc_rewards_per_token).to.deep.equal(
+      {
+        high: 0n,
+        low: 2000000000000000000n,
+      }
+    );
   });
 
-  it("mints rewards correctly to recipient", async () => {
+  it("mints rewards correctly to different user", async () => {
     const user2RewAaveBalanceBeforeClaim = await rewAaveTokenL2.call(
       "balanceOf",
       {
@@ -215,23 +235,28 @@ describe("ETHStaticAToken", function () {
       }
     );
 
-    //check that balance is indeed null
+    //check that balance is indeed zero
     expect(user2RewAaveBalanceBeforeClaim.balance).to.deep.equal({
       high: 0n,
       low: 0n,
     });
 
+    //Update the acc rewards per token first
     await owner.invoke(l2token, "push_acc_rewards_per_token", {
       block: 2,
       acc_rewards_per_token: {
         high: 0,
-        low: 3,
+        low: 3 * WAD,
       },
     });
 
-    const user1PendingRewards = await l2token.call("get_user_pending_rewards", {
-      user: BigInt(user1.starknetContract.address),
-    });
+    const user1ClaimableRewards = await l2token.call(
+      "get_user_claimable_rewards",
+      {
+        user: BigInt(user1.starknetContract.address),
+      }
+    );
+
     //claim rewards to user2
     await user1.invoke(l2token, "claim_rewards", {
       recipient: BigInt(user2.starknetContract.address),
@@ -244,8 +269,8 @@ describe("ETHStaticAToken", function () {
       }
     );
 
-    expect(user1PendingRewards.user_pending_rewards).to.deep.equal(
-      user2RewAaveBalanceAfterClaim.balance
+    expect(user2RewAaveBalanceAfterClaim.balance).to.deep.equal(
+      user1ClaimableRewards.user_claimable_rewards
     );
   });
 });

@@ -49,8 +49,7 @@ describe('TokenBridge', async function() {
   let tokenBridgeL2: StarknetContract;
   let rewAaveTokenL2: StarknetContract;
   // L1
-  let MockStarknetMessaging: ContractFactory;
-  let mockStarknetMessaging: Contract;
+  let mockStarknetMessagingAddress: string;
   let L1TokenFactory: ContractFactory;
   let l1tokenA: Contract;
   let l1tokenB: Contract;
@@ -97,12 +96,6 @@ describe('TokenBridge', async function() {
 
     [signer, l1user] = await ethers.getSigners();
 
-    MockStarknetMessaging = await ethers.getContractFactory(
-      'MockStarknetMessaging',
-      signer,
-    );
-    mockStarknetMessaging = await MockStarknetMessaging.deploy();
-    await mockStarknetMessaging.deployed();
 
     L1RewAaveFactory = await ethers.getContractFactory('RewAAVE', signer);
     rewAaveTokenL1 = await L1RewAaveFactory.deploy(1000);
@@ -121,16 +114,16 @@ describe('TokenBridge', async function() {
 
     // load L1 <--> L2 messaging contract
 
-    await starknet.devnet.loadL1MessagingContract(networkUrl, mockStarknetMessaging.address);
+    mockStarknetMessagingAddress = (await starknet.devnet.loadL1MessagingContract(networkUrl)).address;
   });
 
   it('set L1 token bridge as implementation contract', async () => {
-    const initData = abiCoder.encode([ "address", "uint256", "address"], ["0x0000000000000000000000000000000000000000", tokenBridgeL2.address, mockStarknetMessaging.address]);
+    const initData = abiCoder.encode([ "address", "uint256", "address"], ["0x0000000000000000000000000000000000000000", tokenBridgeL2.address, mockStarknetMessagingAddress]);
     await proxy.addImplementation(tokenBridgeL1.address, initData, false)
     await proxy.upgradeTo(tokenBridgeL1.address, initData, false);
     expect(await proxy.implementation()).to.eq(tokenBridgeL1.address);
     proxied = await ethers.getContractAt("TokenBridge", proxy.address, signer)
-    expect(await proxied.messagingContract()).to.eq(mockStarknetMessaging.address);
+    expect(await proxied.messagingContract()).to.eq(mockStarknetMessagingAddress);
   })
 
   it('initialize the bridge on L1 and L2', async () => {
@@ -175,10 +168,10 @@ describe('TokenBridge', async function() {
     expect(flushL1Messages).to.have.a.lengthOf(2);
     expectAddressEquality(flushL1Messages[0].args.from_address, proxied.address);
     expectAddressEquality(flushL1Messages[0].args.to_address, tokenBridgeL2.address);
-    expectAddressEquality(flushL1Messages[0].address, mockStarknetMessaging.address);
+    expectAddressEquality(flushL1Messages[0].address, mockStarknetMessagingAddress);
     expectAddressEquality(flushL1Messages[1].args.from_address, proxied.address);
     expectAddressEquality(flushL1Messages[1].args.to_address, tokenBridgeL2.address);
-    expectAddressEquality(flushL1Messages[1].address, mockStarknetMessaging.address);
+    expectAddressEquality(flushL1Messages[1].address, mockStarknetMessagingAddress);
 
     // check balance of L2 tokens
     expect(await l2tokenA.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  30n } });

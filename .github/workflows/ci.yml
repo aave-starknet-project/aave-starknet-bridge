@@ -29,9 +29,13 @@ jobs:
           source .venv/bin/activate
           make
 
+      - name: Lint
+        run: |
+          yarn lint
+
       - name: Start the devnet
         run: |
-          .venv/bin/starknet-devnet --host 0.0.0.0 &
+          .venv/bin/starknet-devnet --host 0.0.0.0 --lite-mode &
           yarn hardhat node &
 
       - name: Compile Cairo

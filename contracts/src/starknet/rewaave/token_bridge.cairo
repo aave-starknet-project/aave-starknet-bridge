@@ -8,7 +8,6 @@ from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address, get_contract_address
 from rewaave.tokens.IERC20 import IERC20
 
-
 const WITHDRAW_MESSAGE = 0
 const BRIDGE_REWARD_MESSAGE = 1
 const ETH_ADDRESS_BOUND = 2 ** 160
@@ -166,9 +165,7 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     # Call burn on l2_token contract.
     let (caller_address) = get_caller_address()
 
-
     IERC20.burn(contract_address=l2_token, account=caller_address, amount=amount)
-
 
     # Send the message.
     let (message_payload : felt*) = alloc()
@@ -217,9 +214,12 @@ end
 
 @l1_handler
 func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        from_address : felt, l2_recipient : felt, l2_token_address : felt, amount_low : felt,
-        amount_high : felt):
-
+    from_address : felt,
+    l2_recipient : felt,
+    l2_token_address : felt,
+    amount_low : felt,
+    amount_high : felt,
+):
     # The amount is validated (i.e. amount_low, amount_high < 2**128) by an inner call to
     # IMintableToken permissionedMint function.
 
@@ -240,7 +240,8 @@ end
 
 @external
 func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        recipient : felt, amount : Uint256):
+    recipient : felt, amount : Uint256
+):
     # get the address of the ETHStaticAToken
     let (l2_token) = get_caller_address()
     # Verify that it's a valid token by checking for its counterpart on l1

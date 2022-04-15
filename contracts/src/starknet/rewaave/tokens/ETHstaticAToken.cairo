@@ -27,9 +27,13 @@ from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner,
 from openzeppelin.utils.constants import TRUE
 
 from rewaave.tokens.claimable import (
-    claimable_claim_rewards, claimable_push_acc_rewards_per_token, claimable_before_token_transfer,
-    claimable_get_acc_rewards_per_token, claimable_get_user_acc_rewards_per_token,
-    get_claimable_rewards)
+    claimable_claim_rewards,
+    claimable_push_acc_rewards_per_token,
+    claimable_before_token_transfer,
+    claimable_get_acc_rewards_per_token,
+    claimable_get_user_acc_rewards_per_token,
+    get_claimable_rewards,
+)
 
 @contract_interface
 namespace ITokenBridge:
@@ -43,11 +47,11 @@ end
 
 @external
 func set_l2_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        l2_token_bridge_ : felt):
+    l2_token_bridge_ : felt
+):
     l2_token_bridge.write(l2_token_bridge_)
     return ()
 end
-
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -188,7 +192,8 @@ end
 
 @external
 func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        recipient : felt):
+    recipient : felt
+):
     alloc_locals
     let (caller) = get_caller_address()
     let (rewards) = claimable_claim_rewards(caller)
@@ -228,13 +233,14 @@ end
 
 @external
 func get_user_acc_rewards_per_token{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt) -> (
-        user_acc_rewards_per_token : Uint256):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(user : felt) -> (user_acc_rewards_per_token : Uint256):
     return claimable_get_user_acc_rewards_per_token(user)
 end
 
 @external
 func get_user_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        user : felt) -> (user_claimable_rewards : Uint256):
+    user : felt
+) -> (user_claimable_rewards : Uint256):
     return get_claimable_rewards(user)
 end

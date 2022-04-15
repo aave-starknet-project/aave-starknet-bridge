@@ -10,7 +10,6 @@ from starkware.cairo.common.uint256 import (
 )
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.math_cmp import is_le
-
 from rewaave.math.wad_ray_math import wad_to_ray, ray_mul_no_rounding, ray_to_wad_no_rounding
 from openzeppelin.token.erc20.library import ERC20_totalSupply, ERC20_balanceOf, ERC20_mint
 from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner, Ownable_get_owner
@@ -84,7 +83,8 @@ func get_pending_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
     let (accRewardsPerToken_) = acc_rewards_per_token.read()
     let (user_snapshot_rewards_per_token_) = user_snapshot_rewards_per_token.read(user)
     let (accrued_since_last_interaction) = uint256_sub(
-        accRewardsPerToken_, user_snapshot_rewards_per_token_)
+        accRewardsPerToken_, user_snapshot_rewards_per_token_
+    )
     let (pending_rewards) = ray_mul_no_rounding(accrued_since_last_interaction, balance_in_ray)
 
     return (pending_rewards)
@@ -103,8 +103,8 @@ func get_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
 end
 
 func claimable_claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-
-        user : felt) -> (rewards : Uint256):
+    user : felt
+) -> (rewards : Uint256):
     alloc_locals
     let (rewards) = get_claimable_rewards(user)
 
@@ -133,7 +133,7 @@ func claimable_get_acc_rewards_per_token{
 end
 
 func claimable_get_user_acc_rewards_per_token{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt) -> (
-        res : Uint256):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(user : felt) -> (res : Uint256):
     return user_snapshot_rewards_per_token.read(user)
 end

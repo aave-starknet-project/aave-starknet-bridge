@@ -63,6 +63,8 @@ describe('TokenBridge', async function() {
 
   before(async function () {
 
+    mockStarknetMessagingAddress = (await starknet.devnet.loadL1MessagingContract(networkUrl)).address;
+
     // L2 deployments
 
     l2user = await starknet.deployAccount("OpenZeppelin");
@@ -114,7 +116,6 @@ describe('TokenBridge', async function() {
 
     // load L1 <--> L2 messaging contract
 
-    mockStarknetMessagingAddress = (await starknet.devnet.loadL1MessagingContract(networkUrl)).address;
   });
 
   it('set L1 token bridge as implementation contract', async () => {

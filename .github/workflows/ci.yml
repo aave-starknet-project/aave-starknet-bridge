@@ -38,6 +38,6 @@ jobs:
 
       - name: Run tests
         run: |
-          .venv/bin/starknet-devnet &
+          .venv/bin/starknet-devnet --host 0.0.0.0 &
           yarn hardhat node &
           yarn test

@@ -12,3 +12,5 @@ __pycache__
 #Starknet plugin
 starknet-artifacts
 
+# yarn stuff
+yarn-error.log

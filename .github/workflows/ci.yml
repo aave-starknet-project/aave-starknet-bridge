@@ -31,8 +31,8 @@ jobs:
 
       - name: Start the devnet
         run: |
-          .venv/bin/starknet-devnet &
-          yarn hardhat node > /dev/null &
+          .venv/bin/starknet-devnet --host 0.0.0.0 &
+          yarn hardhat node &
 
       - name: Compile Cairo
         run: |

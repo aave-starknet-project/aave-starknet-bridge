@@ -181,6 +181,7 @@ describe("ETHStaticAToken", function () {
     }
   });
 
+
   it("returns correct user pending rewards before claim", async () => {
     const userClaimableRewards = await l2token.call(
       "get_user_claimable_rewards",
@@ -294,3 +295,4 @@ describe("ETHStaticAToken", function () {
     );
   });
 });
+

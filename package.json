@@ -6,6 +6,7 @@
   "scripts": {
     "test": "hardhat --network localhost test",
     "compile": "hardhat starknet-compile --cairo-path 'node_modules/@joriksch/oz-cairo:contracts/src/starknet'",
+    "compile:tests": "hardhat starknet-compile --cairo-path 'node_modules/@joriksch/oz-cairo:contracts/src/starknet' contracts/test",
     "deploy:account": "yarn hardhat starknet-deploy-account --starknet-network devnet --wallet OpenZeppelin",
     "compile:starkgate": "hardhat starknet-compile --cairo-path 'starkgate-contracts/src' starkgate-contracts",
     "compile:fossil": "hardhat starknet-compile node_modules/@joriksch/fossil/contracts --cairo-path node_modules/@joriksch/fossil/contracts",

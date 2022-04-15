@@ -40,7 +40,7 @@ yarn hardhat node
 ```
 
 ```bash
-starknet-devnet
+starknet-devnet --host 0.0.0.0
 ```
 
 ### Build the cairo files

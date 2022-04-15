@@ -5,7 +5,7 @@ import "@joriksch/sg-contracts/src/starkware/contracts/components/GenericGoverna
 import "@joriksch/sg-contracts/src/starkware/contracts/interfaces/ContractInitializer.sol";
 import "@joriksch/sg-contracts/src/starkware/contracts/interfaces/ProxySupport.sol";
 import "@joriksch/sg-contracts/src/starkware/cairo/eth/CairoConstants.sol";
-import "@joriksch/sg-contracts/src/starkware/starknet/eth/StarknetMessaging.sol";
+import "../../test/IStarknetMessaging.sol";
 
 import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IStaticATokenLM} from "@swp0x0/protocol-v2/contracts/interfaces/IStaticATokenLM.sol";
@@ -21,7 +21,7 @@ contract TokenBridge is
     event LogBridgeAdded(address l1Token, uint256 l2Token);
 
     mapping(address => uint256) public l1TokentoL2Token;
-    StarknetMessaging public messagingContract;
+    IStarknetMessaging public messagingContract;
     uint256 l2TokenBridge;
 
     constructor() public GenericGovernance("AAVE_BRIDGE_GOVERNANCE") {}
@@ -33,7 +33,7 @@ contract TokenBridge is
     }
 
     function isInitialized() internal view override returns (bool) {
-        return messagingContract != StarknetMessaging(0);
+        return messagingContract != IStarknetMessaging(0);
     }
 
     function numOfSubContracts() internal pure override returns (uint256) {
@@ -57,9 +57,9 @@ contract TokenBridge is
       and sets the storage slot accordingly.
     */
     function initializeContractState(bytes calldata data) internal override {
-        (uint256 l2TokenBridge_, StarknetMessaging messagingContract_) = abi.decode(
+        (uint256 l2TokenBridge_, IStarknetMessaging messagingContract_) = abi.decode(
             data,
-            (uint256, StarknetMessaging)
+            (uint256, IStarknetMessaging)
         );
 
         require((l2TokenBridge_ != 0) && (l2TokenBridge_ < CairoConstants.FIELD_PRIME), "L2_ADDRESS_OUT_OF_RANGE");

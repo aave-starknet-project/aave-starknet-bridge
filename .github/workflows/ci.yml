@@ -1,0 +1,43 @@
+name: aave-starknet-bridge CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16.x'
+          cache: 'yarn'
+
+      - name: Setup Python
+        uses: actions/setup-python@v2.2.2
+        with:
+          python-version: 3.7 # Cairo was tested with this version
+
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          make
+
+      - name: Start the devnet
+        run: |
+          .venv/bin/starknet-devnet --host 0.0.0.0 &
+          yarn hardhat node &
+
+      - name: Compile Cairo
+        run: |
+          yarn compile
+
+      - name: Run tests
+        run: |
+          yarn test

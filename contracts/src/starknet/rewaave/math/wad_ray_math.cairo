@@ -9,7 +9,7 @@ const HALF_WAD = WAD / 2
 const RAY = 10 ** 27
 const HALF_RAY = RAY / 2
 
-const UINT128_MAX = 2 ** 129 - 1
+const UINT128_MAX = 2 ** 128 - 1
 
 # WAD_RAY_RATIO = 1 * 10 ^ 9
 const WAD_RAY_RATIO = 10 ** 9
@@ -82,7 +82,7 @@ func wad_div{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
     let (UINT256_MAX) = uint256_max()
     let (WAD_UINT) = wad()
 
-    with_attr error_message("WAD multiplication overflow"):
+    with_attr error_message("WAD div overflow"):
         let (bound) = uint256_sub(UINT256_MAX, halfB)
         let (quo, _) = uint256_unsigned_div_rem(bound, WAD_UINT)
         let (le) = uint256_le(a, quo)
@@ -108,7 +108,7 @@ func ray_mul{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
     let (HALF_RAY_UINT) = half_ray()
     let (RAY_UINT) = ray()
 
-    with_attr error_message("RAY multiplication overflow"):
+    with_attr error_message("RAY div overflow"):
         let (bound) = uint256_sub(UINT256_MAX, HALF_RAY_UINT)
         let (quotient, rem) = uint256_unsigned_div_rem(bound, b)
         let (le) = uint256_le(a, quotient)

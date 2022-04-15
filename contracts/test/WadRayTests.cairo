@@ -3,8 +3,20 @@
 from starkware.cairo.common.uint256 import Uint256, uint256_add, uint256_sub
 
 from rewaave.math.wad_ray_math import (
-    wad_mul, wad_div, ray_mul, ray_div, ray_to_wad, wad_to_ray, ray_mul_no_rounding,
-    ray_to_wad_no_rounding, ray, wad, uint256_max, half_wad, half_ray)
+    wad_mul,
+    wad_div,
+    ray_mul,
+    ray_div,
+    ray_to_wad,
+    wad_to_ray,
+    ray_mul_no_rounding,
+    ray_to_wad_no_rounding,
+    ray,
+    wad,
+    uint256_max,
+    half_wad,
+    half_ray,
+)
 
 @view
 func test_wad_mul{range_check_ptr}():
@@ -190,7 +202,6 @@ func test_ray_to_wad{range_check_ptr}():
 
     let (res) = ray_to_wad(ray_)
     assert res = wad_
-
 
     return ()
 end

@@ -1,5 +1,11 @@
 from starkware.cairo.common.uint256 import (
-    Uint256, uint256_add, uint256_sub, uint256_mul, uint256_unsigned_div_rem, uint256_le)
+    Uint256,
+    uint256_add,
+    uint256_sub,
+    uint256_mul,
+    uint256_unsigned_div_rem,
+    uint256_le,
+)
 
 # WAD = 1 * 10 ^ 18
 const WAD = 10 ** 18

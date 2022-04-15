@@ -87,6 +87,25 @@ describe("ETHStaticAToken", function () {
     });
   });
 
+  it("allows owner to burn", async () => {
+    await owner.invoke(l2token, "burn", {
+      account: BigInt(user1.starknetContract.address),
+      amount: {
+        high: 0n,
+        low: 50 * WAD,
+      },
+    });
+
+    const { balance } = await l2token.call("balanceOf", {
+      account: BigInt(user1.starknetContract.address),
+    });
+
+    expect(balance).to.deep.equal({
+      high: 0n,
+      low: 50000000000000000000n,
+    });
+  });
+
   it("disallows non-owner to mint", async () => {
     try {
       await user1.invoke(l2token, "mint", {
@@ -170,9 +189,10 @@ describe("ETHStaticAToken", function () {
       }
     );
 
+    //expect claimable rewards amount in RAY
     expect(userClaimableRewards.user_claimable_rewards).to.deep.equal({
       high: 0n,
-      low: 200n,
+      low: 100000000000n,
     });
   });
 

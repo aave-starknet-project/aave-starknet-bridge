@@ -166,7 +166,7 @@ func wad_to_ray{range_check_ptr}(a : Uint256) -> (res : Uint256):
     let (WAD_RAY_RATIO_UINT) = wad_ray_ratio()
 
     let (res, overflow) = uint256_mul(a, WAD_RAY_RATIO_UINT)
-    with_attr error_message("ray_to_wad overflow"):
+    with_attr error_message("wad_to_ray overflow"):
         assert overflow.high + overflow.low = 0
     end
     return (res)

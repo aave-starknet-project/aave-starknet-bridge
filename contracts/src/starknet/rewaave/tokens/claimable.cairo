@@ -72,11 +72,12 @@ func get_pending_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
         user : felt) -> (pending_rewards : Uint256):
     alloc_locals
     let (balance) = ERC20_balanceOf(user)
+    let (balance_in_ray) = wad_to_ray(balance)
     let (accRewardsPerToken_) = acc_rewards_per_token.read()
     let (user_snapshot_rewards_per_token_) = user_snapshot_rewards_per_token.read(user)
     let (accrued_since_last_interaction) = uint256_sub(
         accRewardsPerToken_, user_snapshot_rewards_per_token_)
-    let (pending_rewards) = ray_mul_no_rounding(accrued_since_last_interaction, balance)
+    let (pending_rewards) = ray_mul_no_rounding(accrued_since_last_interaction, balance_in_ray)
     return (pending_rewards)
 end
 
@@ -87,8 +88,8 @@ func get_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
     let (pending) = get_pending_rewards(user)
     let (claimable_rewards, overflow) = uint256_add(unclaimed_rewards_, pending)
     assert overflow = 0
-    let (claimable_rewards) = ray_to_wad_no_rounding(claimable_rewards)
-    return (claimable_rewards)
+    let (claimable_rewards_) = ray_to_wad_no_rounding(claimable_rewards)
+    return (claimable_rewards_)
 end
 
 func claimable_claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(

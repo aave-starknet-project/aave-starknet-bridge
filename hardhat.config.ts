@@ -27,14 +27,18 @@ const config: HardhatUserConfig = {
       OpenZeppelin: {
         accountName: "OpenZeppelin",
         modulePath: "starkware.starknet.wallets.open_zeppelin.OpenZeppelinAccount",
-        accountPath: "~/.starknet_accounts"
+        accountPath: "~/.starknet_accounts",
       }
     }
   },
   networks: {
     devnet: {
-      url: "http://localhost:5000"
+      url: "http://localhost:5000",
     },
+  },
+  paths: {
+    sources: "./rewaave",
+    starknetSources: "./rewaave",
   },
 };
 

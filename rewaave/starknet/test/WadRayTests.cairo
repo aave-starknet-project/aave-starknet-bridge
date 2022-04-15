@@ -2,7 +2,7 @@
 
 from starkware.cairo.common.uint256 import Uint256, uint256_add, uint256_sub
 
-from rewaave.math.wad_ray_math import (
+from rewaave.starknet.math.wad_ray_math import (
     wad_mul,
     wad_div,
     ray_mul,

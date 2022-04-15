@@ -7,8 +7,8 @@ from starkware.cairo.common.uint256 import Uint256
 from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address, get_contract_address
 
-from rewaave.tokens.IERC20 import IERC20
-from rewaave.tokens.IETHstaticAToken import IETHstaticAToken
+from rewaave.starknet.tokens.IERC20 import IERC20
+from rewaave.starknet.tokens.IETHstaticAToken import IETHstaticAToken
 
 const WITHDRAW_MESSAGE = 0
 const BRIDGE_REWARD_MESSAGE = 1

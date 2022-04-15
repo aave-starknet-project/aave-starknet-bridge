@@ -11,7 +11,7 @@ from starkware.cairo.common.uint256 import (
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.math_cmp import is_le
 
-from rewaave.math.wad_ray_math import ray_mul_no_rounding, ray_to_wad_no_rounding
+from rewaave.starknet.math.wad_ray_math import ray_mul_no_rounding, ray_to_wad_no_rounding
 from openzeppelin.token.erc20.library import ERC20_totalSupply, ERC20_balanceOf, ERC20_mint
 from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner, Ownable_get_owner
 

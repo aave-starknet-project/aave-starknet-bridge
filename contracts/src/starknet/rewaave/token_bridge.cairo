@@ -267,8 +267,6 @@ func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
     # write block number event
     l1_block_number.write(value=block_number)
 
-    deposit_handled.emit(l2_token, l2_recipient, amount)
-
     return ()
 end
 

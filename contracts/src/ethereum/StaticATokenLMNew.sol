@@ -3,13 +3,25 @@ pragma solidity ^0.6.12;
 pragma experimental ABIEncoderV2;
 
 import {StaticATokenLM} from "@swp0x0/protocol-v2/contracts/protocol/tokenization/StaticATokenLM.sol";
-// import "./mocks/StaticATokenLMMock.sol";
+import {ILendingPool} from "@swp0x0/protocol-v2/contracts/interfaces/ILendingPool.sol";
 
 contract StaticATokenLMNew is StaticATokenLM {
     address private _l1TokenBridge;
 
-    constructor(address l1TokenBridge) public StaticATokenLM() {
+    function initialize(
+        address pool,
+        address aToken,
+        string calldata staticATokenName,
+        string calldata staticATokenSymbol,
+        address l1TokenBridge
+    ) external initializer {
         _l1TokenBridge = l1TokenBridge;
+        this.initialize(
+            ILendingPool(pool),
+            aToken,
+            staticATokenName,
+            staticATokenSymbol
+        );
     }
 
     function _transfer(

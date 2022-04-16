@@ -3,11 +3,8 @@ import "@shardlabs/starknet-hardhat-plugin";
 import "@nomiclabs/hardhat-ethers";
 import chai from "chai";
 import {solidity} from "ethereum-waffle";
-require('dotenv').config();
 
 chai.use(solidity);
-
-const { ALCHEMY_KEY } = process.env;
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -50,15 +47,8 @@ const config: HardhatUserConfig = {
   },
   networks: {
     devnet: {
-      url: "http://localhost:5000",
+      url: "http://localhost:5000"
     },
-    // hardhat: {
-    //   chainId: 31337,
-    //   forking: {
-    //     url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,
-    //     blockNumber: 14581203
-    //   }
-    // },
   },
 };
 

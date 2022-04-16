@@ -1,16 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.6.12;
 
-import "@openzeppelin/contracts/proxy/Proxy.sol";
+import "@swp0x0/protocol-v2/contracts/protocol/libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
 
-contract ProxyToken {
-    address public implementation;
-
-    constructor(address implementation_) {
-        implementation = implementation_;
-    }
-
-    function _implementation() internal view virtual returns (address) {
-        return implementation;
-    }
+contract ProxyToken is InitializableImmutableAdminUpgradeabilityProxy {
+    constructor(address admin)
+        public
+        InitializableImmutableAdminUpgradeabilityProxy(admin)
+    {}
 }

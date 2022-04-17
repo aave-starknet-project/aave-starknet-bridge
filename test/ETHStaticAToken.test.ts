@@ -6,7 +6,7 @@ import {
 import { starknet } from "hardhat";
 import { TIMEOUT, L1_TEST_ADDRESS } from "./constants";
 import { expect } from "chai";
-
+import { wadToRay, decimalToWad } from "../helpers/rayMath";
 const WAD = 10 ** 18;
 
 describe("ETHStaticAToken", function () {
@@ -64,26 +64,34 @@ describe("ETHStaticAToken", function () {
     });
   });
 
-  it("sets l2 token bridge", async () => {
+  it("allows owner to set l2 token bridge", async () => {
     await owner.invoke(l2token, "set_l2_token_bridge", {
       l2_token_bridge_: BigInt(bridgeContract.address),
     });
   });
-
+  it("disallows non-owner to set l2 token bridge", async () => {
+    try {
+      await user1.invoke(l2token, "set_l2_token_bridge", {
+        l2_token_bridge_: BigInt(bridgeContract.address),
+      });
+    } catch (err: any) {
+      expect(err.message).to.contain("Ownable: caller is not the owner");
+    }
+  });
   it("allows owner to mint", async () => {
     await owner.invoke(l2token, "mint", {
       recipient: BigInt(user1.starknetContract.address),
       amount: {
         high: 0n,
-        low: 100 * WAD,
+        low: BigInt(decimalToWad(100)),
       },
     });
 
     const { totalSupply } = await l2token.call("totalSupply");
-
+    console.log(totalSupply, "total");
     expect(totalSupply).to.deep.equal({
       high: 0n,
-      low: 100000000000000000000n,
+      low: BigInt(decimalToWad(100)),
     });
   });
 
@@ -92,7 +100,7 @@ describe("ETHStaticAToken", function () {
       account: BigInt(user1.starknetContract.address),
       amount: {
         high: 0n,
-        low: 50 * WAD,
+        low: BigInt(decimalToWad(50)),
       },
     });
 
@@ -102,7 +110,7 @@ describe("ETHStaticAToken", function () {
 
     expect(balance).to.deep.equal({
       high: 0n,
-      low: 50000000000000000000n,
+      low: BigInt(decimalToWad(50)),
     });
   });
 
@@ -112,7 +120,7 @@ describe("ETHStaticAToken", function () {
         recipient: BigInt(user1.starknetContract.address),
         amount: {
           high: 0n,
-          low: 100 * WAD,
+          low: BigInt(decimalToWad(100)),
         },
       });
     } catch (err: any) {
@@ -125,7 +133,7 @@ describe("ETHStaticAToken", function () {
       block: 1,
       acc_rewards_per_token: {
         high: 0,
-        low: 2 * WAD,
+        low: BigInt(decimalToWad(2)),
       },
     });
 
@@ -135,7 +143,7 @@ describe("ETHStaticAToken", function () {
 
     expect(acc_rewards_per_token).to.deep.equal({
       high: 0n,
-      low: 2000000000000000000n,
+      low: BigInt(decimalToWad(2)),
     });
   });
 
@@ -145,7 +153,7 @@ describe("ETHStaticAToken", function () {
         block: 2,
         acc_rewards_per_token: {
           high: 0n,
-          low: 2 * WAD,
+          low: BigInt(decimalToWad(2)),
         },
       });
     } catch (err: any) {
@@ -173,14 +181,13 @@ describe("ETHStaticAToken", function () {
         block: 0,
         acc_rewards_per_token: {
           high: 0,
-          low: 2 * WAD,
+          low: BigInt(decimalToWad(2)),
         },
       });
     } catch (e) {
       expect.fail("accRewards accepted for old block number");
     }
   });
-
 
   it("returns correct user pending rewards before claim", async () => {
     const userClaimableRewards = await l2token.call(
@@ -193,7 +200,7 @@ describe("ETHStaticAToken", function () {
     //expect claimable rewards amount in RAY
     expect(userClaimableRewards.user_claimable_rewards).to.deep.equal({
       high: 0n,
-      low: 100000000000n,
+      low: BigInt(wadToRay(100)),
     });
   });
 
@@ -243,7 +250,7 @@ describe("ETHStaticAToken", function () {
     expect(userAccruedRewardsPerToken.user_acc_rewards_per_token).to.deep.equal(
       {
         high: 0n,
-        low: 2000000000000000000n,
+        low: BigInt(decimalToWad(2)),
       }
     );
   });
@@ -267,7 +274,7 @@ describe("ETHStaticAToken", function () {
       block: 2,
       acc_rewards_per_token: {
         high: 0,
-        low: 3 * WAD,
+        low: BigInt(decimalToWad(3)),
       },
     });
 
@@ -295,4 +302,3 @@ describe("ETHStaticAToken", function () {
     );
   });
 });
-

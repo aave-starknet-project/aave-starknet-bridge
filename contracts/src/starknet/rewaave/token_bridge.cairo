@@ -39,7 +39,7 @@ func deposit_handled(l2_token : felt, account : felt, amount : Uint256):
 end
 
 @event
-func rewards_minted(l2_reward_token : felt, account : felt, amount : Uint256):
+func minted_rewards(l2_reward_token : felt, account : felt, amount : Uint256):
 end
 
 @event
@@ -66,6 +66,14 @@ func get_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
 ):
     let (res) = governor.read()
     return (res)
+end
+
+func is_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(l2_token : felt):
+    let (l1_token) = l2_token_to_l1_token.read(l2_token)
+    with_attr error_message("No l1 token found for {l2_token}"):
+        assert_not_zero(l1_token)
+    end
+    return ()
 end
 
 @view
@@ -186,10 +194,9 @@ func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 ):
     let (to_address) = get_l1_token_bridge()
 
+    is_token(l2_token)
+
     let (l1_token) = l2_token_to_l1_token.read(l2_token)
-    with_attr error_message("L1 token {l1_token} not found"):
-        assert_not_zero(l1_token)
-    end
 
     let (token_owner) = get_caller_address()
 
@@ -245,13 +252,10 @@ func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
     # get the address of the ETHStaticAToken
     let (l2_token) = get_caller_address()
     # Verify that it's a valid token by checking for its counterpart on l1
-    let (l1_token) = l2_token_to_l1_token.read(l2_token)
-    with_attr error_message("No l1 token found for {l2_token}"):
-        assert_not_zero(l1_token)
-    end
+    is_token(l2_token)
     let (reward_token) = rewAAVE.read()
     # mints rewAAVE for user
     IERC20.mint(reward_token, recipient, amount)
-    rewards_minted.emit(reward_token, recipient, amount)
+    minted_rewards.emit(reward_token, recipient, amount)
     return ()
 end

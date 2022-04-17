@@ -49,8 +49,11 @@ export function rayToWad(a: BigNumberValue): BigNumber {
   return halfRatio.plus(a).div(WAD_RAY_RATIO);
 }
 
-export function wadToRay(a: BigNumberValue): BigNumber {
-  return valueToZDBigNumber(a).multipliedBy(WAD_RAY_RATIO).decimalPlaces(0);
+export function wadToRay(a: BigNumberValue): number {
+  return valueToZDBigNumber(a)
+    .multipliedBy(WAD_RAY_RATIO)
+    .decimalPlaces(0)
+    .toNumber();
 }
 
 export function rayPow(a: BigNumberValue, p: BigNumberValue): BigNumber {
@@ -68,6 +71,10 @@ export function rayPow(a: BigNumberValue, p: BigNumberValue): BigNumber {
   return z;
 }
 
-export function rayToDecimal(a: BigNumberValue): BigNumber {
-  return valueToZDBigNumber(a).dividedBy(RAY);
+export function rayToDecimal(a: BigNumberValue): number {
+  return valueToZDBigNumber(a).dividedBy(RAY).toNumber();
+}
+
+export function decimalToWad(a: BigNumberValue): number {
+  return valueToZDBigNumber(a).multipliedBy(WAD).toNumber();
 }

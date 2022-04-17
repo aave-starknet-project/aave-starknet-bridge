@@ -49,6 +49,7 @@ end
 func set_l2_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l2_token_bridge_ : felt
 ):
+    Ownable_only_owner()
     l2_token_bridge.write(l2_token_bridge_)
     return ()
 end

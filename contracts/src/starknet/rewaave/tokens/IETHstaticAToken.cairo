@@ -53,7 +53,12 @@ namespace IETHstaticAToken:
     end
 
     func initialize_ETHstaticAToken(
-            name : felt, symbol : felt, decimals : felt, initial_supply : Uint256, recipient : felt,
-            controller : felt):
+        name : felt,
+        symbol : felt,
+        decimals : felt,
+        initial_supply : Uint256,
+        recipient : felt,
+        controller : felt,
+    ):
     end
 end

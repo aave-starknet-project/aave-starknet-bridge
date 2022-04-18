@@ -120,8 +120,13 @@ end
 
 @external
 func initialize_ETHstaticAToken{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        name : felt, symbol : felt, decimals : felt, initial_supply : Uint256, recipient : felt,
-        controller : felt):
+    name : felt,
+    symbol : felt,
+    decimals : felt,
+    initial_supply : Uint256,
+    recipient : felt,
+    controller : felt,
+):
     # TODO add initialized check
     ERC20_initializer(name, symbol, decimals)
     ERC20_mint(recipient, initial_supply)

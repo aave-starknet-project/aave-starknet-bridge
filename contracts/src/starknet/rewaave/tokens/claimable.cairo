@@ -10,8 +10,7 @@ from starkware.cairo.common.uint256 import (
 )
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.math_cmp import is_le
-
-from rewaave.math.wad_ray_math import ray_mul_no_rounding, ray_to_wad_no_rounding
+from rewaave.math.wad_ray_math import wad_to_ray, ray_mul_no_rounding, ray_to_wad_no_rounding
 from openzeppelin.token.erc20.library import ERC20_totalSupply, ERC20_balanceOf, ERC20_mint
 from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner, Ownable_get_owner
 
@@ -80,13 +79,14 @@ func get_pending_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
 ) -> (pending_rewards : Uint256):
     alloc_locals
     let (balance) = ERC20_balanceOf(user)
-    let (supply) = ERC20_totalSupply()
+    let (balance_in_ray) = wad_to_ray(balance)
     let (accRewardsPerToken_) = acc_rewards_per_token.read()
     let (user_snapshot_rewards_per_token_) = user_snapshot_rewards_per_token.read(user)
     let (accrued_since_last_interaction) = uint256_sub(
         accRewardsPerToken_, user_snapshot_rewards_per_token_
     )
-    let (pending_rewards) = ray_mul_no_rounding(accrued_since_last_interaction, balance)
+    let (pending_rewards) = ray_mul_no_rounding(accrued_since_last_interaction, balance_in_ray)
+
     return (pending_rewards)
 end
 
@@ -98,25 +98,23 @@ func get_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
     let (pending) = get_pending_rewards(user)
     let (claimable_rewards, overflow) = uint256_add(unclaimed_rewards_, pending)
     assert overflow = 0
-    let (claimable_rewards) = ray_to_wad_no_rounding(claimable_rewards)
-    return (claimable_rewards)
+    let (claimable_rewards_) = ray_to_wad_no_rounding(claimable_rewards)
+    return (claimable_rewards_)
 end
 
 func claimable_claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    user : felt, recipient : felt
-) -> (claimed : Uint256):
-    let (claimed) = get_claimable_rewards(user)
-    let (rewardsController_) = Ownable_get_owner()
+    user : felt
+) -> (rewards : Uint256):
+    alloc_locals
+    let (rewards) = get_claimable_rewards(user)
 
     unclaimed_rewards.write(user, Uint256(0, 0))
 
-    # TODO implement claiming
-
-    if claimed.high + claimed.low == 0:
+    if rewards.high + rewards.low == 0:
         return (Uint256(0, 0))
     else:
         update_user_snapshot_rewards_per_token(user)
-        return (claimed)
+        return (rewards)
     end
 end
 
@@ -132,4 +130,10 @@ func claimable_get_acc_rewards_per_token{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }() -> (res : Uint256):
     return acc_rewards_per_token.read()
+end
+
+func claimable_get_user_acc_rewards_per_token{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(user : felt) -> (res : Uint256):
+    return user_snapshot_rewards_per_token.read(user)
 end

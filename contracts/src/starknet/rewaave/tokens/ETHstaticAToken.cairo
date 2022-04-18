@@ -31,7 +31,28 @@ from rewaave.tokens.claimable import (
     claimable_push_acc_rewards_per_token,
     claimable_before_token_transfer,
     claimable_get_acc_rewards_per_token,
+    claimable_get_user_acc_rewards_per_token,
+    get_claimable_rewards,
 )
+
+@contract_interface
+namespace ITokenBridge:
+    func mint_rewards(recipient : felt, amount : Uint256):
+    end
+end
+
+@storage_var
+func l2_token_bridge() -> (address : felt):
+end
+
+@external
+func set_l2_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    l2_token_bridge_ : felt
+):
+    Ownable_only_owner()
+    l2_token_bridge.write(l2_token_bridge_)
+    return ()
+end
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -170,11 +191,16 @@ func burn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     return ()
 end
 
+@external
 func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    user : felt, recipient : felt
-) -> (claimed : Uint256):
-    Ownable_only_owner()
-    return claimable_claim_rewards(user, recipient)
+    recipient : felt
+):
+    alloc_locals
+    let (caller) = get_caller_address()
+    let (rewards) = claimable_claim_rewards(caller)
+    let (l2_token_bridge_) = l2_token_bridge.read()
+    ITokenBridge.mint_rewards(l2_token_bridge_, recipient, rewards)
+    return ()
 end
 
 @external
@@ -204,4 +230,18 @@ end
 func get_acc_rewards_per_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     ) -> (acc_rewards_per_token : Uint256):
     return claimable_get_acc_rewards_per_token()
+end
+
+@external
+func get_user_acc_rewards_per_token{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(user : felt) -> (user_acc_rewards_per_token : Uint256):
+    return claimable_get_user_acc_rewards_per_token(user)
+end
+
+@external
+func get_user_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    user : felt
+) -> (user_claimable_rewards : Uint256):
+    return get_claimable_rewards(user)
 end

@@ -78,10 +78,11 @@ end
 # To finish the init you have to initialize the L2 token contract and the L1 bridge contract.
 @external
 func initialize_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        governor_address : felt):
+    governor_address : felt
+):
     let (governor_) = governor.read()
     with_attr error_message("Bridge already initialized"):
-      assert governor_ = 0
+        assert governor_ = 0
     end
     assert_not_zero(governor_address)
     governor.write(value=governor_address)

@@ -25,7 +25,7 @@ brew install gmp # mac
 nvm install 16
 
 yarn
-yarn run prepare # to setup the pre-commit hook
+yarn prepare # to setup the pre-commit hook
 
 python3.7 -m venv .venv
 source .venv/bin/activate
@@ -44,7 +44,13 @@ yarn hardhat node
 starknet-devnet --host 0.0.0.0
 ```
 
-### Build the cairo files
+### Build contracts in solidity
+
+```bash
+yarn hardhat compile
+```
+
+### Build contracts in cairo
 
 ```bash
 yarn hardhat starknet-compile

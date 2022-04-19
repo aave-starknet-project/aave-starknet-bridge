@@ -44,13 +44,7 @@ yarn hardhat node
 starknet-devnet --host 0.0.0.0
 ```
 
-### Build contracts in solidity
-
-```bash
-yarn hardhat compile
-```
-
-### Build contracts in cairo
+### Build the cairo files
 
 ```bash
 yarn hardhat starknet-compile

@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "hardhat --network localhost test",
+    "lint init": "find contracts/ -iname *.cairo -exec .venv/bin/cairo-format -i {} +",
     "lint": "find contracts/ -iname *.cairo -exec .venv/bin/cairo-format -c {} +",
     "compile": "hardhat starknet-compile --cairo-path 'node_modules/@joriksch/oz-cairo:contracts/src/starknet'",
     "compile:tests": "hardhat starknet-compile --cairo-path 'node_modules/@joriksch/oz-cairo:contracts/src/starknet' contracts/test",

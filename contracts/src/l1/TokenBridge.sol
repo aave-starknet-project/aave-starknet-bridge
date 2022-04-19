@@ -165,14 +165,17 @@ contract TokenBridge is
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
 
-    function deposit(address l1Token_, uint256 l2Recipient, uint256 amount) onlyApprovedToken(l1Token_) external {
+    function deposit(address l1Token_, uint256 l2Recipient, uint256 amount, uint16 refferalCode, bool fromUnderlying) onlyApprovedToken(l1Token) external {
         IStaticATokenLM l1Token = IStaticATokenLM(l1Token_);
+        if (fromUnderlying) {
+          amount = l1Token.deposit(msg.sender, amount, refferalCode, fromUnderlying);
+        }
         l1Token.transferFrom(msg.sender, address(this), amount);
         sendMessage(l1Token_, msg.sender, l2Recipient, amount);
     }
 
     function withdraw(address l1Token_, uint256 l2sender, address recipient, uint256 amount) onlyApprovedToken(l1Token_) external {
-        consumeMessage(l1Token_, l2sender, recipient, amount);
+        consumeMessage(l1Token_, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
         IStaticATokenLM l1Token = IStaticATokenLM(l1Token_);
         require(l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender), "UNDERFLOW");

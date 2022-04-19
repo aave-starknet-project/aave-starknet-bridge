@@ -98,7 +98,9 @@ func auth_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     return ()
 end
 
-func auth_l1_handler{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(from_address_ : felt):
+func auth_l1_handler{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    from_address_ : felt
+):
     let (expected_from_address) = get_l1_token_bridge()
     with_attr error_message("Expected deposit from l1_token_bridge: {expected_from_address}"):
         assert from_address_ = expected_from_address
@@ -110,7 +112,8 @@ end
 
 @external
 func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        l1_bridge_address : felt):
+    l1_bridge_address : felt
+):
     # The call is restricted to the governor.
     auth_governor()
 
@@ -272,13 +275,20 @@ end
 
 @l1_handler
 func handle_transfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        from_address : felt, block_number : felt, l1_token : felt, l2_token : felt, rewards_low : felt, rewards_high : felt):
-
+    from_address : felt,
+    block_number : felt,
+    l1_token : felt,
+    l2_token : felt,
+    rewards_low : felt,
+    rewards_high : felt,
+):
     auth_l1_handler(from_address_=from_address)
 
     let rewards = Uint256(low=rewards_low, high=rewards_high)
 
-    IETHStaticAToken.push_acc_rewards_per_token(contract_address=l2_token, block=block_number, acc_rewards_per_token=rewards)
+    IETHStaticAToken.push_acc_rewards_per_token(
+        contract_address=l2_token, block=block_number, acc_rewards_per_token=rewards
+    )
 
     return ()
 end

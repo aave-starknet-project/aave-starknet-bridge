@@ -8,14 +8,15 @@
 
 :warning: This codebase is still in an experimental phase, has not been audited, might contain bugs and should not be used in production.
 
-## Overview
+## Overview!
+
 
 The bridge allows users to deposit and withdraw `staticATokens` - wrappers converting balance-increasing [aTokens]( https://docs.aave.com/developers/tokens/atoken) into exchange-rate-increasing staticATokens - on StarkNet and get wrapped tokens `ETHStaticATokens` that allow users to keep enjoying the same rewards as in L1. 
 
 
 ## Architecture
 
-![Starknet AAVE rewards architectural diagram](resources/architecture.png)
+![aave_bridge](https://user-images.githubusercontent.com/37840702/164104354-cea99b88-4e7e-411e-af89-d3b3f2f53603.png)
 
 ## Contracts
 

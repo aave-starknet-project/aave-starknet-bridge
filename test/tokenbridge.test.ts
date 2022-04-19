@@ -126,7 +126,7 @@ describe('TokenBridge', async function() {
 
     pool = await ethers.getContractAt("LendingPool", LENDING_POOL)
     incentives = await ethers.getContractAt("IncentivesControllerMock", INCENTIVES_CONTROLLER)
-    rewAaveTokenL1 = await ethers.getContractAt("RewAAVE", await incentives.REWARD_TOKEN());
+    rewAaveTokenL1 = await ethers.getContractAt("ERC20Mock", await incentives.REWARD_TOKEN());
 
     aDai = await ethers.getContractAt("AToken", A_DAI);
     dai = await ethers.getContractAt("ERC20Mock", DAI);

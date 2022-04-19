@@ -40,6 +40,5 @@
   },
   "husky": {
     "hooks": {}
-  },
-  "devDependencies": {}
+  }
 }

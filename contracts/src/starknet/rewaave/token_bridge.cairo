@@ -96,7 +96,7 @@ end
 func auth_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
-    with_attr error_message("Called address should be {governor_}"):
+    with_attr error_message("Caller address should be {governor_}"):
         assert caller_address = governor_
     end
     return ()

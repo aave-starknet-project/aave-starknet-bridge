@@ -12,3 +12,5 @@ __pycache__
 #Starknet plugin
 starknet-artifacts
 
+#NPM lock file
+package-lock.json

@@ -25,6 +25,7 @@ brew install gmp # mac
 nvm install 16
 
 yarn
+yarn run prepare # to setup the pre-commit hook
 
 python3.7 -m venv .venv
 source .venv/bin/activate

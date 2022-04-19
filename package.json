@@ -11,7 +11,8 @@
     "deploy:account": "yarn hardhat starknet-deploy-account --starknet-network devnet --wallet OpenZeppelin",
     "compile:starkgate": "hardhat starknet-compile --cairo-path 'starkgate-contracts/src' starkgate-contracts",
     "compile:fossil": "hardhat starknet-compile node_modules/@joriksch/fossil/contracts --cairo-path node_modules/@joriksch/fossil/contracts",
-    "compile:openzeppelin": "yarn hardhat starknet-compile node_modules/@joriksch/oz-cairo --cairo-path node_modules/@joriksch/oz-cairo/"
+    "compile:openzeppelin": "yarn hardhat starknet-compile node_modules/@joriksch/oz-cairo --cairo-path node_modules/@joriksch/oz-cairo/",
+    "prepare": "husky install"
   },
   "author": "AAVE",
   "license": "Apache-2.0",

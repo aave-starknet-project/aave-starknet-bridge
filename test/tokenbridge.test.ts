@@ -214,43 +214,39 @@ describe('TokenBridge', async function() {
     await l2user.invoke(tokenBridgeL2, 'approve_bridge', { l1_token: BigInt(l1tokenUsdc.address), l2_token: BigInt(l2tokenB.address) });
   })
 
-  // it('L1 user sends tokens A and tokens B to L2 user', async () => {
-  //   // approve L1 bridge with max uint256 amount
-  //   await l1tokenDai.connect(l1user).approve(tokenBridgeL1Proxied.address, MAX_UINT256);
-  //   await l1tokenUsdc.connect(l1user).approve(tokenBridgeL1Proxied.address, MAX_UINT256);
+  it('L1 user sends tokens A and tokens B to L2 user', async () => {
+    // approve L1 bridge with max uint256 amount
+    await l1tokenDai.connect(l1user).approve(tokenBridgeL1Proxied.address, MAX_UINT256);
+    await l1tokenUsdc.connect(l1user).approve(tokenBridgeL1Proxied.address, MAX_UINT256);
 
-  //   // on L1: send 200 tokens A and 300 tokens B to l1user
-  //   await l1tokenDai.transfer(l1user.address, 200);
-  //   await l1tokenUsdc.transfer(l1user.address, 300);
-  //   expect(await l1tokenDai.balanceOf(l1user.address)).to.equal(200);
-  //   expect(await l1tokenUsdc.balanceOf(l1user.address)).to.equal(300);
+    // l1user deposits 30 tokens A and 50 tokens B on L1 for l2user on L2
+    const l1tokenDaiInitialBalance = await l1tokenDai.balanceOf(l1user.address);
+    const l1tokenUsdcInitialBalance = await l1tokenUsdc.balanceOf(l1user.address);
+    await tokenBridgeL1Proxied.connect(l1user).deposit(l1tokenDai.address, BigInt(l2user.starknetContract.address), 30);
+    await tokenBridgeL1Proxied.connect(l1user).deposit(l1tokenUsdc.address, BigInt(l2user.starknetContract.address), 40);
+    expect(await l1tokenDai.balanceOf(l1user.address)).to.equal(l1tokenDaiInitialBalance-30);
+    expect(await l1tokenUsdc.balanceOf(l1user.address)).to.equal(l1tokenUsdcInitialBalance-40);
+    expect(await l1tokenDai.balanceOf(tokenBridgeL1Proxied.address)).to.equal(30);
+    expect(await l1tokenUsdc.balanceOf(tokenBridgeL1Proxied.address)).to.equal(40);    
 
-  //   // l1user deposits 30 tokens A and 50 tokens B on L1 for l2user on L2
-  //   await tokenBridgeL1Proxied.connect(l1user).deposit(l1tokenDai.address, BigInt(l2user.starknetContract.address), 30);
-  //   await tokenBridgeL1Proxied.connect(l1user).deposit(l1tokenUsdc.address, BigInt(l2user.starknetContract.address), 40);
-  //   expect(await l1tokenDai.balanceOf(l1user.address)).to.equal(170);
-  //   expect(await l1tokenUsdc.balanceOf(l1user.address)).to.equal(260);
-  //   expect(await l1tokenDai.balanceOf(tokenBridgeL1Proxied.address)).to.equal(30);
-  //   expect(await l1tokenUsdc.balanceOf(tokenBridgeL1Proxied.address)).to.equal(40);    
+    // flush L1 messages to be consumed by L2
+    expect(await l2tokenA.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  0n } });
+    expect(await l2tokenB.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  0n } });
+    const flushL1Response = await starknet.devnet.flush();
+    const flushL1Messages = flushL1Response.consumed_messages.from_l1;
+    expect(flushL1Response.consumed_messages.from_l2).to.be.empty;
+    expect(flushL1Messages).to.have.a.lengthOf(2);
+    expectAddressEquality(flushL1Messages[0].args.from_address, tokenBridgeL1Proxied.address);
+    expectAddressEquality(flushL1Messages[0].args.to_address, tokenBridgeL2.address);
+    expectAddressEquality(flushL1Messages[0].address, mockStarknetMessagingAddress);
+    expectAddressEquality(flushL1Messages[1].args.from_address, tokenBridgeL1Proxied.address);
+    expectAddressEquality(flushL1Messages[1].args.to_address, tokenBridgeL2.address);
+    expectAddressEquality(flushL1Messages[1].address, mockStarknetMessagingAddress);
 
-  //   // flush L1 messages to be consumed by L2
-  //   expect(await l2tokenA.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  0n } });
-  //   expect(await l2tokenB.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  0n } });
-  //   const flushL1Response = await starknet.devnet.flush();
-  //   const flushL1Messages = flushL1Response.consumed_messages.from_l1;
-  //   expect(flushL1Response.consumed_messages.from_l2).to.be.empty;
-  //   expect(flushL1Messages).to.have.a.lengthOf(2);
-  //   expectAddressEquality(flushL1Messages[0].args.from_address, tokenBridgeL1Proxied.address);
-  //   expectAddressEquality(flushL1Messages[0].args.to_address, tokenBridgeL2.address);
-  //   expectAddressEquality(flushL1Messages[0].address, mockStarknetMessagingAddress);
-  //   expectAddressEquality(flushL1Messages[1].args.from_address, tokenBridgeL1Proxied.address);
-  //   expectAddressEquality(flushL1Messages[1].args.to_address, tokenBridgeL2.address);
-  //   expectAddressEquality(flushL1Messages[1].address, mockStarknetMessagingAddress);
-
-  //   // check balance of L2 tokens
-  //   expect(await l2tokenA.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  30n } });
-  //   expect(await l2tokenB.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  40n } });
-  // })
+    // check balance of L2 tokens
+    expect(await l2tokenA.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  30n } });
+    expect(await l2tokenB.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  40n } });
+  })
 
   // it('L2 user sends back tokens A and tokens B to L1 user', async () => {
   //   // approve L2 bridge with given amount

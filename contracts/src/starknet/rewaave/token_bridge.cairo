@@ -293,7 +293,7 @@ func handle_rewards_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
     )
 
     # write block number
-    l1_block_number.write(value=block_number)    
+    l1_block_number.write(value=block_number)
 
     return ()
 end

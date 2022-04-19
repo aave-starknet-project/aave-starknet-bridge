@@ -16,7 +16,8 @@ The bridge allows users to deposit and withdraw `staticATokens` - wrappers conve
 
 ## Architecture
 
-![aave_bridge](https://user-images.githubusercontent.com/37840702/164104354-cea99b88-4e7e-411e-af89-d3b3f2f53603.png)
+
+![aave_bridge_2](https://user-images.githubusercontent.com/37840702/164106887-8da4cafe-0d86-4299-95fc-edd3fbbdbee0.png)
 
 ## Contracts
 
@@ -107,3 +108,11 @@ hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin) and
 ```
 yarn test
 ```
+
+Contributors
+
+<a href = "https://github.com/aave-starknet-project/aave-starknet-bridge/graphs/contributors">
+<img src = "https://contrib.rocks/image?repo=aave-starknet-project/aave-starknet-bridge"/>
+</a>
+
+

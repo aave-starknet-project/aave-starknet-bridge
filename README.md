@@ -1,16 +1,40 @@
-# Starknet AAVE rewards
 
-A staticAToken bridge to Starknet for cheap AAVE rewards collection and token
-exchange.
+
+# AAVE Starknet Bridge
+
+[![Tests](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/ci.yml)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/cdnjs/cdnjs.svg?style=flat)](https://github.com/aave-starknet-project/aave-starknet-bridge/pulls)
+[![Issues](https://img.shields.io/github/issues-raw/tterb/PlayMusic.svg?maxAge=25000)](https://github.com/aave-starknet-project/aave-starknet-bridge/issues)
+
+:warning: This codebase is still in an experimental phase, has not been audited, might contain bugs and should not be used in production.
+
+## Overview
+
+The bridge allows users to deposit and withdraw `staticATokens` - wrappers converting balance-increasing [aTokens]( https://docs.aave.com/developers/tokens/atoken) into exchange-rate-increasing staticATokens - on StarkNet and get wrapped tokens `ETHStaticATokens` that allow users to keep enjoying the same rewards as in L1. 
+
 
 ## Architecture
 
 ![Starknet AAVE rewards architectural diagram](resources/architecture.png)
-## Testing
 
-The project is tested using [hardhat](https://hardhat.org/), the [starknet
-hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin) and
-[starknet-devnet](https://github.com/Shard-Labs/starknet-devnet).
+## Contracts
+
+`L1`
+  * `StaticATokenLMNew` - an updated implementation of staticATokens which makes it possible to update its respective L2 token by sending the latest `accRewardsPerToken` on token transfer or when explicitly triggered to do so.
+  *  `TokenBridge` -  handles rewards update on L2 and deposit of staticAToken on L2
+  *  `Proxy`
+
+
+`L2`
+  * `ETHStaticAToken` - Tokens on Starknet equivalent to each staticAToken on Ethereum mainnet. Contains the same logic for tracking user rewards as staticATokens and has the same `_accRewardsPerToken`.
+  * `claimable` - tracks users' pending rewards and tracks each user `_accRewardsPerToken`
+  * `token_bridge` - is responsible for:
+    * bridging the staticATokens to and from L2. Minting and burning ETHStaticATokens on message from L1. 
+    * bridging rewAAVE token back to L1
+    * updating `_accRewardsPerToken` for each ETHStaticAToken on message from L1 
+  * `rewAAVE` - a very basic ERC20 to represent the rewards on L2
+  *  `proxy` - a generic implementation of a proxy in starknet
+
 
 ### Prerequisites
 
@@ -25,7 +49,7 @@ brew install gmp # mac
 nvm install 16
 
 yarn
-yarn prepare # to setup the pre-commit hook
+yarn prepare
 
 python3.7 -m venv .venv
 source .venv/bin/activate
@@ -53,6 +77,12 @@ Then load all the environment variables
 ```bash
 source .evn/*
 ```
+To enable lite mode
+
+```bash
+starknet-devnet --lite-mode
+```
+
 
 Then start the testnets. It's wise to do this in two separate shells.
 
@@ -61,17 +91,18 @@ yarn testnet:ganache
 ```
 
 ```bash
+<<<<<<< HEAD
 yarn testnet:starknet
+=======
+yarn compile
+>>>>>>> 36e7e65... WIP
 ```
 
 ### Run the tests
+The project is tested using [hardhat](https://hardhat.org/), the [starknet
+hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin) and
+[starknet-devnet](https://github.com/Shard-Labs/starknet-devnet).
 
 ```
 yarn test
 ```
-
-### Notes
-
-When transferring the token across the bridge the unclaimed rewards to date
-will still be associated with the owners account on L1. These old rewards can
-not be claimed on Starknet.

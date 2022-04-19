@@ -6,6 +6,9 @@ on:
       - main
   pull_request:
 
+env:
+  ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -36,7 +39,7 @@ jobs:
       - name: Start the devnet
         run: |
           .venv/bin/starknet-devnet --host 0.0.0.0 --lite-mode &
-          yarn hardhat node &
+          yarn hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_KEY &
 
       - name: Compile Cairo
         run: |

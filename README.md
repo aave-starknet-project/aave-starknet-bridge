@@ -28,7 +28,8 @@ yarn
 
 python3.7 -m venv .venv
 source .venv/bin/activate
-pip install cairo-lang starknet-devnet
+pip install poetry
+poetry install
 ```
 
 ### Start the testnets

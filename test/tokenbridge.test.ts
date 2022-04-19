@@ -198,21 +198,21 @@ describe('TokenBridge', async function() {
     await l1tokenUsdc.connect(l1user).deposit(l1user.address, 1000, 0, true);
   })
 
-  // it('initialize the bridge on L1 and L2', async () => {
-  //   // map L2 tokens to L1 tokens on L1 bridge
-  //   await tokenBridgeL1Proxied.approveBridge(l1tokenDai.address, l2tokenA.address);
-  //   await tokenBridgeL1Proxied.approveBridge(l1tokenUsdc.address, l2tokenB.address);
+    it('initialize the bridge on L1 and L2', async () => {
+      // map L2 tokens to L1 tokens on L1 bridge
+      await tokenBridgeL1Proxied.approveBridge(l1tokenDai.address, l2tokenA.address);
+      await tokenBridgeL1Proxied.approveBridge(l1tokenUsdc.address, l2tokenB.address);
 
-  //   // set L1 token bridge from L2 bridge
-  //   await l2user.invoke(tokenBridgeL2, 'set_l1_token_bridge', { l1_bridge_address: BigInt(tokenBridgeL1Proxied.address) });
-  //   const { res: retrievedBridgeAddress } = await tokenBridgeL2.call('get_l1_token_bridge', {});
-  //   expect(retrievedBridgeAddress).to.equal(BigInt(tokenBridgeL1Proxied.address));
+    // set L1 token bridge from L2 bridge
+    await l2user.invoke(tokenBridgeL2, 'set_l1_token_bridge', { l1_bridge_address: BigInt(tokenBridgeL1Proxied.address) });
+    const { res: retrievedBridgeAddress } = await tokenBridgeL2.call('get_l1_token_bridge', {});
+    expect(retrievedBridgeAddress).to.equal(BigInt(tokenBridgeL1Proxied.address));
 
-  //   // map L1 tokens to L2 tokens on L2 bridge
-  //   await l2user.invoke(tokenBridgeL2, 'set_reward_token', { reward_token: BigInt(rewAaveTokenL2.address) });
-  //   await l2user.invoke(tokenBridgeL2, 'approve_bridge', { l1_token: BigInt(l1tokenDai.address), l2_token: BigInt(l2tokenA.address) });
-  //   await l2user.invoke(tokenBridgeL2, 'approve_bridge', { l1_token: BigInt(l1tokenUsdc.address), l2_token: BigInt(l2tokenB.address) });
-  // })
+    // map L1 tokens to L2 tokens on L2 bridge
+    await l2user.invoke(tokenBridgeL2, 'set_reward_token', { reward_token: BigInt(rewAaveTokenL2.address) });
+    await l2user.invoke(tokenBridgeL2, 'approve_bridge', { l1_token: BigInt(l1tokenDai.address), l2_token: BigInt(l2tokenA.address) });
+    await l2user.invoke(tokenBridgeL2, 'approve_bridge', { l1_token: BigInt(l1tokenUsdc.address), l2_token: BigInt(l2tokenB.address) });
+  })
 
   // it('L1 user sends tokens A and tokens B to L2 user', async () => {
   //   // approve L1 bridge with max uint256 amount

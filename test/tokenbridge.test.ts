@@ -54,7 +54,8 @@ describe('TokenBridge', async function() {
   const networkUrl: string = (network.config as HttpNetworkConfig).url;
   console.log(networkUrl)
   const abiCoder = new ethers.utils.AbiCoder();
-  let blockNumber: providers.Block;
+  let blockNumberDai: number;
+  let blockNumberUsdc: number;
   // L2
   let L2TokenFactory: StarknetContractFactory;
   let l2tokenA: StarknetContract;
@@ -195,9 +196,13 @@ describe('TokenBridge', async function() {
     // l1user deposits tokens and gets staticATokens
     await dai.connect(l1user).approve(l1tokenDai.address, MAX_UINT256);
     await l1tokenDai.connect(l1user).deposit(l1user.address, 1000, 0, true);
-    blockNumber = await hre.ethers.provider.getBlock("latest");
+    blockNumberDai = await hre.ethers.provider.getBlockNumber();
+    for (let i = 0; i < 5; i++) {
+      await ethers.provider.send('evm_mine', []);
+    }
     await usdc.connect(l1user).approve(l1tokenUsdc.address, MAX_UINT256);
     await l1tokenUsdc.connect(l1user).deposit(l1user.address, 1000, 0, true);
+    blockNumberUsdc = await hre.ethers.provider.getBlockNumber();
   })
 
   it('initialize the bridge on L1 and L2', async () => {

@@ -31,10 +31,6 @@ end
 func rewAAVE() -> (address : felt):
 end
 
-@storage_var
-func l1_block_number() -> (block : felt):
-end
-
 # Events.
 
 @event
@@ -278,7 +274,6 @@ end
 func handle_rewards_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     from_address : felt,
     block_number : felt,
-    l1_token : felt,
     l2_token : felt,
     rewards_low : felt,
     rewards_high : felt,
@@ -291,9 +286,6 @@ func handle_rewards_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
     IETHstaticAToken.push_acc_rewards_per_token(
         contract_address=l2_token, block=block_number, acc_rewards_per_token=rewards
     )
-
-    # write block number
-    l1_block_number.write(value=block_number)
 
     return ()
 end

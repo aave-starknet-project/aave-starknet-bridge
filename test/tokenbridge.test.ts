@@ -54,6 +54,7 @@ describe('TokenBridge', async function() {
   const networkUrl: string = (network.config as HttpNetworkConfig).url;
   console.log(networkUrl)
   const abiCoder = new ethers.utils.AbiCoder();
+  let blockNumber: providers.Block;
   // L2
   let L2TokenFactory: StarknetContractFactory;
   let l2tokenA: StarknetContract;
@@ -194,14 +195,15 @@ describe('TokenBridge', async function() {
     // l1user deposits tokens and gets staticATokens
     await dai.connect(l1user).approve(l1tokenDai.address, MAX_UINT256);
     await l1tokenDai.connect(l1user).deposit(l1user.address, 1000, 0, true);
+    blockNumber = await hre.ethers.provider.getBlock("latest");
     await usdc.connect(l1user).approve(l1tokenUsdc.address, MAX_UINT256);
     await l1tokenUsdc.connect(l1user).deposit(l1user.address, 1000, 0, true);
   })
 
-    it('initialize the bridge on L1 and L2', async () => {
-      // map L2 tokens to L1 tokens on L1 bridge
-      await tokenBridgeL1Proxied.approveBridge(l1tokenDai.address, l2tokenA.address);
-      await tokenBridgeL1Proxied.approveBridge(l1tokenUsdc.address, l2tokenB.address);
+  it('initialize the bridge on L1 and L2', async () => {
+    // map L2 tokens to L1 tokens on L1 bridge
+    await tokenBridgeL1Proxied.approveBridge(l1tokenDai.address, l2tokenA.address);
+    await tokenBridgeL1Proxied.approveBridge(l1tokenUsdc.address, l2tokenB.address);
 
     // set L1 token bridge from L2 bridge
     await l2user.invoke(tokenBridgeL2, 'set_l1_token_bridge', { l1_bridge_address: BigInt(tokenBridgeL1Proxied.address) });
@@ -235,7 +237,7 @@ describe('TokenBridge', async function() {
     const flushL1Response = await starknet.devnet.flush();
     const flushL1Messages = flushL1Response.consumed_messages.from_l1;
     expect(flushL1Response.consumed_messages.from_l2).to.be.empty;
-    expect(flushL1Messages).to.have.a.lengthOf(2);
+    expect(flushL1Messages).to.have.a.lengthOf(4);
     expectAddressEquality(flushL1Messages[0].args.from_address, tokenBridgeL1Proxied.address);
     expectAddressEquality(flushL1Messages[0].args.to_address, tokenBridgeL2.address);
     expectAddressEquality(flushL1Messages[0].address, mockStarknetMessagingAddress);

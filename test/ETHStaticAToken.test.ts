@@ -15,6 +15,11 @@ describe("ETHStaticAToken", function () {
   let l2token: StarknetContract;
   let bridgeContract: StarknetContract;
   let rewAaveTokenL2: StarknetContract;
+  let ProxyFactoryL2: StarknetContractFactory;
+  let proxyTokenBridgeL2: StarknetContract;
+  let proxiedTokenBridgeL2: StarknetContract;
+  let proxyL2Token: StarknetContract;
+  let proxiedL2Token: StarknetContract;
   let owner: Account;
   let user1: Account;
   let user2: Account;
@@ -26,23 +31,47 @@ describe("ETHStaticAToken", function () {
   });
 
   it("should deploy", async () => {
-    const l2tokenFactory = await starknet.getContractFactory("ETHstaticAToken");
+    const L2TokenFactory = await starknet.getContractFactory("ETHstaticAToken");
     const rewAaveContractFactory = await starknet.getContractFactory("rewAAVE");
     const bridgeContractFactory = await starknet.getContractFactory(
       "token_bridge"
     );
+    ProxyFactoryL2 = await starknet.getContractFactory("proxy");
 
-    bridgeContract = await bridgeContractFactory.deploy({
-      governor_address: BigInt(owner.starknetContract.address),
+    proxyTokenBridgeL2 = await ProxyFactoryL2.deploy({
+      proxy_admin: BigInt(owner.starknetContract.address),
+    });
+    proxyL2Token = await ProxyFactoryL2.deploy({
+      proxy_admin: BigInt(owner.starknetContract.address),
     });
 
-    l2token = await l2tokenFactory.deploy({
-      name: 666,
-      symbol: 666,
-      decimals: 4,
-      initial_supply: { high: 0, low: 0 },
+    bridgeContract = await bridgeContractFactory.deploy();
+
+    l2token = await L2TokenFactory.deploy();
+
+    proxiedL2Token = L2TokenFactory.getContractAt(proxyL2Token.address);
+    proxiedTokenBridgeL2 = bridgeContractFactory.getContractAt(
+      proxyTokenBridgeL2.address
+    );
+
+    await owner.invoke(proxyTokenBridgeL2, "initialize_proxy", {
+      implementation_address: BigInt(bridgeContract.address),
+    });
+    await owner.invoke(proxyL2Token, "initialize_proxy", {
+      implementation_address: BigInt(l2token.address),
+    });
+
+    await owner.invoke(proxiedL2Token, "initialize_ETHstaticAToken", {
+      name: 1234n,
+      symbol: 123n,
+      decimals: 18n,
+      initial_supply: { high: 0n, low: 0n },
       recipient: BigInt(user1.starknetContract.address),
       controller: BigInt(owner.starknetContract.address),
+    });
+
+    await owner.invoke(proxiedTokenBridgeL2, "initialize_token_bridge", {
+      governor_address: BigInt(owner.starknetContract.address),
     });
 
     rewAaveTokenL2 = await rewAaveContractFactory.deploy({
@@ -51,27 +80,31 @@ describe("ETHStaticAToken", function () {
       decimals: 8,
       initial_supply: { high: 0, low: 0 },
       recipient: BigInt(user1.starknetContract.address),
-      owner: BigInt(bridgeContract.address),
+      owner: BigInt(proxyTokenBridgeL2.address),
     });
+
     //set rewAave address on l2 token bridge
-    await owner.invoke(bridgeContract, "set_reward_token", {
+    await owner.invoke(proxiedTokenBridgeL2, "set_reward_token", {
       reward_token: BigInt(rewAaveTokenL2.address),
     });
+    console.log(l2token.address);
+    console.log(proxiedL2Token.address);
+
     //approve l1_l2 token bridge
-    await owner.invoke(bridgeContract, "approve_bridge", {
+    await owner.invoke(proxiedTokenBridgeL2, "approve_bridge", {
       l1_token: BigInt(L1_TEST_ADDRESS),
-      l2_token: BigInt(l2token.address),
+      l2_token: BigInt(proxiedL2Token.address),
     });
   });
 
   it("allows owner to set l2 token bridge", async () => {
-    await owner.invoke(l2token, "set_l2_token_bridge", {
-      l2_token_bridge_: BigInt(bridgeContract.address),
+    await owner.invoke(proxiedL2Token, "set_l2_token_bridge", {
+      l2_token_bridge_: BigInt(proxiedTokenBridgeL2.address),
     });
   });
   it("disallows non-owner to set l2 token bridge", async () => {
     try {
-      await user1.invoke(l2token, "set_l2_token_bridge", {
+      await user1.invoke(proxiedL2Token, "set_l2_token_bridge", {
         l2_token_bridge_: BigInt(bridgeContract.address),
       });
     } catch (err: any) {
@@ -79,7 +112,7 @@ describe("ETHStaticAToken", function () {
     }
   });
   it("allows owner to mint", async () => {
-    await owner.invoke(l2token, "mint", {
+    await owner.invoke(proxiedL2Token, "mint", {
       recipient: BigInt(user1.starknetContract.address),
       amount: {
         high: 0n,
@@ -87,8 +120,8 @@ describe("ETHStaticAToken", function () {
       },
     });
 
-    const { totalSupply } = await l2token.call("totalSupply");
-    console.log(totalSupply, "total");
+    const { totalSupply } = await user1.call(proxiedL2Token, "totalSupply");
+
     expect(totalSupply).to.deep.equal({
       high: 0n,
       low: BigInt(decimalToWad(100)),
@@ -96,7 +129,7 @@ describe("ETHStaticAToken", function () {
   });
 
   it("allows owner to burn", async () => {
-    await owner.invoke(l2token, "burn", {
+    await owner.invoke(proxiedL2Token, "burn", {
       account: BigInt(user1.starknetContract.address),
       amount: {
         high: 0n,
@@ -104,7 +137,7 @@ describe("ETHStaticAToken", function () {
       },
     });
 
-    const { balance } = await l2token.call("balanceOf", {
+    const { balance } = await user1.call(proxiedL2Token, "balanceOf", {
       account: BigInt(user1.starknetContract.address),
     });
 
@@ -116,7 +149,7 @@ describe("ETHStaticAToken", function () {
 
   it("disallows non-owner to mint", async () => {
     try {
-      await user1.invoke(l2token, "mint", {
+      await user1.invoke(proxiedL2Token, "mint", {
         recipient: BigInt(user1.starknetContract.address),
         amount: {
           high: 0n,
@@ -129,7 +162,7 @@ describe("ETHStaticAToken", function () {
   });
 
   it("allows owner to update accRewards", async () => {
-    await owner.invoke(l2token, "push_acc_rewards_per_token", {
+    await owner.invoke(proxiedL2Token, "push_acc_rewards_per_token", {
       block: 1,
       acc_rewards_per_token: {
         high: 0,
@@ -137,7 +170,8 @@ describe("ETHStaticAToken", function () {
       },
     });
 
-    const { acc_rewards_per_token } = await l2token.call(
+    const { acc_rewards_per_token } = await user1.call(
+      proxiedL2Token,
       "get_acc_rewards_per_token"
     );
 
@@ -149,7 +183,7 @@ describe("ETHStaticAToken", function () {
 
   it("disallows non-owner to update accRewards", async () => {
     try {
-      await user1.invoke(l2token, "push_acc_rewards_per_token", {
+      await user1.invoke(proxiedL2Token, "push_acc_rewards_per_token", {
         block: 2,
         acc_rewards_per_token: {
           high: 0n,
@@ -163,7 +197,7 @@ describe("ETHStaticAToken", function () {
 
   it("only allows increases in accRewards", async () => {
     try {
-      await owner.invoke(l2token, "push_acc_rewards_per_token", {
+      await owner.invoke(proxiedL2Token, "push_acc_rewards_per_token", {
         block: 3,
         acc_rewards_per_token: {
           high: 0,
@@ -177,7 +211,7 @@ describe("ETHStaticAToken", function () {
 
   it("rejects old block numbers", async () => {
     try {
-      await owner.invoke(l2token, "push_acc_rewards_per_token", {
+      await owner.invoke(proxiedL2Token, "push_acc_rewards_per_token", {
         block: 0,
         acc_rewards_per_token: {
           high: 0,
@@ -190,7 +224,8 @@ describe("ETHStaticAToken", function () {
   });
 
   it("returns correct user pending rewards before claim", async () => {
-    const userClaimableRewards = await l2token.call(
+    const userClaimableRewards = await user1.call(
+      proxiedL2Token,
       "get_user_claimable_rewards",
       {
         user: BigInt(user1.starknetContract.address),
@@ -205,14 +240,15 @@ describe("ETHStaticAToken", function () {
   });
 
   it("claims rewards and mints correct amount of rewards tokens to self", async () => {
-    const user1ClaimableRewards = await l2token.call(
+    const user1ClaimableRewards = await user1.call(
+      proxiedL2Token,
       "get_user_claimable_rewards",
       {
         user: BigInt(user1.starknetContract.address),
       }
     );
 
-    await user1.invoke(l2token, "claim_rewards", {
+    await user1.invoke(proxiedL2Token, "claim_rewards", {
       recipient: BigInt(user1.starknetContract.address),
     });
 
@@ -226,7 +262,8 @@ describe("ETHStaticAToken", function () {
   });
 
   it("returns correct user pending rewards after claim", async () => {
-    const userClaimableRewards = await l2token.call(
+    const userClaimableRewards = await user1.call(
+      proxiedL2Token,
       "get_user_claimable_rewards",
       {
         user: BigInt(user1.starknetContract.address),
@@ -240,7 +277,8 @@ describe("ETHStaticAToken", function () {
   });
 
   it("updates user accumulated rewards per token after claim", async () => {
-    const userAccruedRewardsPerToken = await l2token.call(
+    const userAccruedRewardsPerToken = await user1.call(
+      proxiedL2Token,
       "get_user_acc_rewards_per_token",
       {
         user: BigInt(user1.starknetContract.address),
@@ -270,7 +308,7 @@ describe("ETHStaticAToken", function () {
     });
 
     //Update the acc rewards per token first
-    await owner.invoke(l2token, "push_acc_rewards_per_token", {
+    await owner.invoke(proxiedL2Token, "push_acc_rewards_per_token", {
       block: 2,
       acc_rewards_per_token: {
         high: 0,
@@ -278,7 +316,8 @@ describe("ETHStaticAToken", function () {
       },
     });
 
-    const user1ClaimableRewards = await l2token.call(
+    const user1ClaimableRewards = await user1.call(
+      proxiedL2Token,
       "get_user_claimable_rewards",
       {
         user: BigInt(user1.starknetContract.address),
@@ -286,7 +325,7 @@ describe("ETHStaticAToken", function () {
     );
 
     //claim rewards to user2
-    await user1.invoke(l2token, "claim_rewards", {
+    await user1.invoke(proxiedL2Token, "claim_rewards", {
       recipient: BigInt(user2.starknetContract.address),
     });
 

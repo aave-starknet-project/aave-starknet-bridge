@@ -165,19 +165,26 @@ contract TokenBridge is
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
 
-    function deposit(address l1Token_, uint256 l2Recipient, uint256 amount, uint16 refferalCode, bool fromUnderlying) onlyApprovedToken(l1Token) external {
-        IStaticATokenLM l1Token = IStaticATokenLM(l1Token_);
-        if (fromUnderlying) {
-          amount = l1Token.deposit(msg.sender, amount, refferalCode, fromUnderlying);
-        }
-        l1Token.transferFrom(msg.sender, address(this), amount);
-        sendMessage(l1Token_, msg.sender, l2Recipient, amount);
+    function depositUnderlying(IERC20 l1Token, uint256 l2Recipient, uint256 amount, uint16 refferalCode, bool fromAsset) external {
+        amount = l1Token.deposit(msg.sender, amount, refferalCode, fromAsset);
+        deposit(l1Token, l2Recipient, amount);
     }
 
-    function withdraw(address l1Token_, uint256 l2sender, address recipient, uint256 amount) onlyApprovedToken(l1Token_) external {
-        consumeMessage(l1Token_, recipient, amount);
+    function deposit(IERC20 l1Token, uint256 l2Recipient, uint256 amount) onlyApprovedToken(l1Token) external {
+        l1Token.transferFrom(msg.sender, address(this), amount);
+        sendMessage(l1Token, msg.sender, l2Recipient, amount);
+    }
+
+    function withdrawUnderlying(IERC20 l1Token, uint256 l2sender, address recipient, uint256 amount, bool toAsset) onlyApprovedToken(l1Token) external {
+        consumeMessage(l2sender, l1Token, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
-        IStaticATokenLM l1Token = IStaticATokenLM(l1Token_);
+        require(l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender), "UNDERFLOW");
+        l1Token.withdraw(msg.sender, recipient, 0, amount, toAsset);
+    }
+
+    function withdraw(IERC20 l1Token, uint256 l2sender, address recipient, uint256 amount) onlyApprovedToken(l1Token) external {
+        consumeMessage(l2sender, l1Token, recipient, amount);
+        require(recipient != address(0x0), "INVALID_RECIPIENT");
         require(l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender), "UNDERFLOW");
         l1Token.transfer(recipient, amount);
     }

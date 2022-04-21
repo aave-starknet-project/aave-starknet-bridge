@@ -127,15 +127,14 @@ func initialize_ETHstaticAToken{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*
     recipient : felt,
     controller : felt,
 ):
-    # TODO add initialized check
-    let (name) = ERC20_name()
-    let (symbol) = ERC20_symbol()
-    let (decimals) = ERC20_decimals()
+    let (name_) = ERC20_name()
+    let (symbol_) = ERC20_symbol()
+    let (decimals_) = ERC20_decimals()
 
     with_attr error_message("ETHstaticAToken already initialized"):
-        assert name = 0
-        assert symbol = 0
-        assert decimals = 0
+        assert name_ = 0
+        assert symbol_ = 0
+        assert decimals_ = 0
     end
 
     ERC20_initializer(name, symbol, decimals)

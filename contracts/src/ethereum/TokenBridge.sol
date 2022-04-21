@@ -144,7 +144,7 @@ contract TokenBridge is
     }
 
     function deposit(address l1Token_, uint256 l2Recipient, uint256 amount) external {
-        IERC20 l1Token = IERC20(l1Token_);
+        IStaticATokenLM l1Token = IStaticATokenLM(l1Token_);
         l1Token.transferFrom(msg.sender, address(this), amount);
         sendMessage(l1Token_, l2Recipient, amount);
     }
@@ -152,7 +152,7 @@ contract TokenBridge is
     function withdraw(address l1Token_, address recipient, uint256 amount) isApprovedToken(l1Token_) external {
         consumeMessage(l1Token_, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
-        IERC20 l1Token = IERC20(l1Token_);
+        IStaticATokenLM l1Token = IStaticATokenLM(l1Token_);
         require(l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender), "UNDERFLOW");
         l1Token.transfer(recipient, amount);
     }

@@ -81,6 +81,14 @@ end
 #
 
 @view
+func get_last_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    block_number : felt
+):
+    let (block_number) = last_update.read()
+    return (block_number)
+end
+
+@view
 func name{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (name : felt):
     let (name) = ERC20_name()
     return (name)

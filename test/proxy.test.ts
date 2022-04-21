@@ -56,10 +56,9 @@ describe('Proxy', function () {
 
   it('diasllows random user to upgrade',async () => {
     try {
-      randomUser.invoke(proxyTokenContract, 'upgrade_implementation',
+      await randomUser.invoke(proxyTokenContract, 'upgrade_implementation',
           { new_implementation: BigInt(tokenContractB.address) }
       );
-      expect.fail("Random user cannot upgrade");
     } catch(e: any) {
       expect(e.message).to.contain("Proxy: caller is not admin");
     }

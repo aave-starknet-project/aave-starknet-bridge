@@ -47,7 +47,7 @@ func minted_rewards(l2_reward_token : felt, account : felt, amount : Uint256):
 end
 
 @event
-func bridged_rewards(l2_token : felt, acocunt : felt, amount : Uint256):
+func bridged_rewards(l1_recipient : felt, amount : Uint256):
 end
 
 # Getters.
@@ -204,13 +204,9 @@ end
 
 @external
 func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    l2_token : felt, l1_recipient : felt, amount : Uint256
+    l1_recipient : felt, amount : Uint256
 ):
     let (to_address) = get_l1_token_bridge()
-
-    is_token(l2_token)
-
-    let (l1_token) = l2_token_to_l1_token.read(l2_token)
 
     let (token_owner) = get_caller_address()
 
@@ -222,13 +218,12 @@ func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     # Send message for bridging tokens
     let (message_payload : felt*) = alloc()
     assert message_payload[0] = BRIDGE_REWARD_MESSAGE
-    assert message_payload[1] = l1_token
-    assert message_payload[2] = l1_recipient
-    assert message_payload[3] = amount.low
-    assert message_payload[4] = amount.high
+    assert message_payload[1] = l1_recipient
+    assert message_payload[2] = amount.low
+    assert message_payload[3] = amount.high
 
-    send_message_to_l1(to_address=to_address, payload_size=5, payload=message_payload)
-    bridged_rewards.emit(l2_token, l1_recipient, amount)
+    send_message_to_l1(to_address=to_address, payload_size=4, payload=message_payload)
+    bridged_rewards.emit(l1_recipient, amount)
 
     return ()
 end

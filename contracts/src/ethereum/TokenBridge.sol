@@ -17,12 +17,14 @@ contract TokenBridge is
 {
     event LogDeposit(address sender, address token, uint256 amount, uint256 l2Recipient);
     event LogWithdrawal(address token, address recipient, uint256 amount);
-    event LogBridgeReward(address token, address recipient, uint256 amount);
+    event LogBridgeReward(address recipient, uint256 amount);
     event LogBridgeAdded(address l1Token, uint256 l2Token);
 
     mapping(address => uint256) public l1TokentoL2Token;
     IStarknetMessaging public messagingContract;
     uint256 l2TokenBridge;
+    address[] approvedL1Tokens;
+    IERC20 public rewardToken;
 
     // The selector of the "handle_deposit" l1_handler on L2.
     uint256 constant DEPOSIT_HANDLER =
@@ -52,7 +54,7 @@ contract TokenBridge is
     }
 
     function validateInitData(bytes calldata data) internal pure override {
-        require(data.length == 64, "ILLEGAL_DATA_SIZE");
+        require(data.length == 96, "ILLEGAL_DATA_SIZE");
     }
 
     function processSubContractAddresses(bytes calldata subContractAddresses) internal override {}
@@ -68,15 +70,17 @@ contract TokenBridge is
       and sets the storage slot accordingly.
     */
     function initializeContractState(bytes calldata data) internal override {
-        (uint256 l2TokenBridge_, IStarknetMessaging messagingContract_) = abi.decode(
+        (uint256 l2TokenBridge_, IStarknetMessaging messagingContract_, IERC20 rewardToken_) = abi.decode(
             data,
-            (uint256, IStarknetMessaging)
+            (uint256, IStarknetMessaging, IERC20)
         );
 
         require((l2TokenBridge_ != 0) && (l2TokenBridge_ < CairoConstants.FIELD_PRIME), "L2_ADDRESS_OUT_OF_RANGE");
+        require(address(rewardToken_) != address(0x0), "INVALID ADDRESS FOR REWARD TOKEN");
 
         messagingContract = messagingContract_;
         l2TokenBridge = l2TokenBridge_;
+        rewardToken = rewardToken_;
     }
 
     modifier isValidL2Address(uint256 l2Address) {
@@ -94,8 +98,19 @@ contract TokenBridge is
         uint256 l2Token_ = l1TokentoL2Token[l1Token];
         require(l2Token_ == 0, "l2Token already set");
 
+        require(IStaticATokenLM(l1Token).REWARD_TOKEN() == rewardToken, "L1 TOKEN CONFIGURED WITH WRONG REWARD TOKEN");
+
         emit LogBridgeAdded(l1Token, l2Token);
         l1TokentoL2Token[l1Token] = l2Token;
+        approvedL1Tokens.push(l1Token);
+    }
+
+    function claimOrderSwap(uint256 idx1, uint256 idx2) external {
+      require(idx1 < approvedL1Tokens.length, "INDEX OUT OF RANGE");
+      require(idx2 < approvedL1Tokens.length, "INDEX OUT OF RANGE");
+
+      (approvedL1Tokens[idx1], approvedL1Tokens[idx2]) =
+        (approvedL1Tokens[idx2], approvedL1Tokens[idx1]);
     }
 
     function sendMessage(address l1Token, uint256 l2Recipient, uint256 amount)
@@ -139,7 +154,7 @@ contract TokenBridge is
         (payload[3], payload[4]) = toSplitUint(amount);
 
         // Consume the message from the StarkNet core contract.
-        // This will revert the (Ethereum) transaction if the message does not exist.        
+        // This will revert the (Ethereum) transaction if the message does not exist.
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
 
@@ -148,7 +163,7 @@ contract TokenBridge is
         l1Token.transferFrom(msg.sender, address(this), amount);
         sendMessage(l1Token_, l2Recipient, amount);
     }
-    
+
     function withdraw(address l1Token_, address recipient, uint256 amount) isApprovedToken(l1Token_) external {
         consumeMessage(l1Token_, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
@@ -157,27 +172,42 @@ contract TokenBridge is
         l1Token.transfer(recipient, amount);
     }
 
-     function consumeBridgeRewardMessage(address l1Token, address recipient, uint256 amount) internal {
-        emit LogBridgeReward(l1Token, recipient, amount);
+     function consumeBridgeRewardMessage(address recipient, uint256 amount) internal {
+        emit LogBridgeReward(recipient, amount);
 
-        uint256[] memory payload = new uint256[](5);
+        uint256[] memory payload = new uint256[](4);
         payload[0] = BRIDGE_REWARD_MESSAGE;
-        payload[1] = uint256(l1Token);
-        payload[2] = uint256(recipient);
-        payload[3] = amount & (UINT256_PART_SIZE - 1);
-        payload[4] = amount >> UINT256_PART_SIZE_BITS;
+        payload[1] = uint256(recipient);
+        payload[2] = amount & (UINT256_PART_SIZE - 1);
+        payload[3] = amount >> UINT256_PART_SIZE_BITS;
 
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
 
-    function receiveRewards(address l1Token, address recipient, uint256 amount) isApprovedToken(l1Token) external {
-        consumeBridgeRewardMessage(l1Token, recipient, amount);
+    function receiveRewards(address recipient, uint256 amount) external {
+        consumeBridgeRewardMessage(recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
 
-        IStaticATokenLM staticAToken =  IStaticATokenLM(l1Token);
-        staticAToken.claimRewardsToSelf(true);
+        address self = address(this);
 
-        IERC20 rewardToken = staticAToken.REWARD_TOKEN();
-        rewardToken.transfer(recipient, amount);
+        uint256 rewardBalance = rewardToken.balanceOf(self);
+
+        if (rewardBalance >= amount) {
+          rewardToken.transfer(recipient, amount);
+          return;
+        }
+
+        for (uint256 i = 0; i < approvedL1Tokens.length; ++i) {
+            IStaticATokenLM(approvedL1Tokens[i]).claimRewardsToSelf(true);
+
+            rewardBalance = rewardToken.balanceOf(self);
+
+            if (rewardBalance >= amount) {
+              rewardToken.transfer(recipient, amount);
+              return;
+            }
+        }
+
+        revert("NOT ENOUGH REWARDS");
     }
 }

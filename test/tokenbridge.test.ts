@@ -235,12 +235,13 @@ describe('TokenBridge', async function() {
 
 
   it('set L1 token bridge as implementation contract', async () => {
-    const initData = abiCoder.encode([ "address", "uint256", "address"], ["0x0000000000000000000000000000000000000000", proxyTokenBridgeL2.address, mockStarknetMessagingAddress]);
+    const initData = abiCoder.encode([ "address", "uint256", "address", "address"], ["0x0000000000000000000000000000000000000000", proxyTokenBridgeL2.address, mockStarknetMessagingAddress, rewAaveTokenL1.address]);
     await tokenBridgeL1Proxy.addImplementation(tokenBridgeL1Implementation.address, initData, false)
     await tokenBridgeL1Proxy.upgradeTo(tokenBridgeL1Implementation.address, initData, false);
     expect(await tokenBridgeL1Proxy.implementation()).to.eq(tokenBridgeL1Implementation.address);
     tokenBridgeL1Proxied = await ethers.getContractAt("TokenBridge", tokenBridgeL1Proxy.address, signer)
     expect(await tokenBridgeL1Proxied.messagingContract()).to.eq(mockStarknetMessagingAddress);
+    expect(await tokenBridgeL1Proxied.rewardToken()).to.eq(rewAaveTokenL1.address);
   })
 
   it('initialize StaticATokenLM tokens', async () => {
@@ -380,7 +381,7 @@ describe('TokenBridge', async function() {
     await rewAaveTokenL1.transfer(tokenBridgeL1Proxied.address, 1000);
 
     // Initiate bridge back rewards from L2
-    await l2user.invoke(proxiedTokenBridgeL2, 'bridge_rewards', { l2_token: BigInt(proxiedL2TokenDai.address), l1_recipient: BigInt(l1user.address), amount: {high: 0, low: 30} });
+    await l2user.invoke(proxiedTokenBridgeL2, 'bridge_rewards', { l1_recipient: BigInt(l1user.address), amount: {high: 0, low: 30} });
 
     // flush L2 messages to be consumed by L1
     const flushL2Response = await starknet.devnet.flush();
@@ -389,7 +390,7 @@ describe('TokenBridge', async function() {
     expect(flushL2Messages).to.have.a.lengthOf(1);
 
     // call recieveRewards on L1 to consume messages from L2
-    await tokenBridgeL1Proxied.connect(l1user).receiveRewards(l1tokenDai.address, l1user.address, 30);
+    await tokenBridgeL1Proxied.connect(l1user).receiveRewards(l1user.address, 30);
 
     // check that the l1 user received reward tokens
     expect(await rewAaveTokenL1.balanceOf(l1user.address)).to.be.equal(30);

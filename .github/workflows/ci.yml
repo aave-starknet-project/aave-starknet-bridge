@@ -46,7 +46,8 @@ jobs:
 
       - name: Compile Cairo
         run: |
-          yarn compile
+          ls
+          yarn hardhat starknet-compile
 
       - name: Run tests
         run: |

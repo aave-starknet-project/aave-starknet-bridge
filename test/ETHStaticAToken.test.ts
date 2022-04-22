@@ -87,8 +87,6 @@ describe("ETHStaticAToken", function () {
     await owner.invoke(proxiedTokenBridgeL2, "set_reward_token", {
       reward_token: BigInt(rewAaveTokenL2.address),
     });
-    console.log(l2token.address);
-    console.log(proxiedL2Token.address);
 
     //approve l1_l2 token bridge
     await owner.invoke(proxiedTokenBridgeL2, "approve_bridge", {
@@ -240,8 +238,7 @@ describe("ETHStaticAToken", function () {
   });
 
   it("claims rewards and mints correct amount of rewards tokens to self", async () => {
-    const user1ClaimableRewards = await user1.call(
-      proxiedL2Token,
+    const user1ClaimableRewards = await proxiedL2Token.call(
       "get_user_claimable_rewards",
       {
         user: BigInt(user1.starknetContract.address),

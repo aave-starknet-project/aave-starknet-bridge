@@ -140,9 +140,6 @@ func initialize_ETHstaticAToken{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*
     ERC20_initializer(name, symbol, decimals)
     ERC20_mint(recipient, initial_supply)
     Ownable_initializer(controller)
-    # TODO we either need to configure the last_update here, or pause the contract
-    # until the first update somehow.
-    # Actually we can just rely on the first bridger to give us the right rewards!
     return ()
 end
 

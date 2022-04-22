@@ -25,9 +25,9 @@ jobs:
           cache: "yarn"
 
       - name: Setup Python
-        uses: actions/setup-python@v2.2.2
+        uses: actions/setup-python@v3
         with:
-          python-version: 3.7.5 # Cairo was tested with this version
+          python-version: 3.7 # Cairo was tested with this version
 
       - name: Install dependencies
         run: |
@@ -46,8 +46,7 @@ jobs:
 
       - name: Compile Cairo
         run: |
-          ls
-          yarn hardhat starknet-compile
+          yarn compile
 
       - name: Run tests
         run: |

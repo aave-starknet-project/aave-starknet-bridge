@@ -24,6 +24,17 @@ contract TokenBridge is
     IStarknetMessaging public messagingContract;
     uint256 l2TokenBridge;
 
+    // The selector of the "handle_deposit" l1_handler on L2.
+    uint256 constant DEPOSIT_HANDLER =
+        1285101517810983806491589552491143496277809242732141897358598292095611420389;
+    // The selector of the "handle_rewards_update" l1_handler on L2.
+    uint256 constant REWARDS_UPDATE_HANDLER = 1491809297313944980469767785261053487269663932577403898216430815040935905233;
+
+    uint256 constant TRANSFER_FROM_STARKNET = 0;
+    uint256 constant BRIDGE_REWARD_MESSAGE = 1;
+    uint256 constant UINT256_PART_SIZE_BITS = 128;
+    uint256 constant UINT256_PART_SIZE = 2**UINT256_PART_SIZE_BITS;
+
     constructor() public GenericGovernance("AAVE_BRIDGE_GOVERNANCE") {}
 
     function toSplitUint(uint256 value) internal pure returns (uint256, uint256) {
@@ -67,17 +78,6 @@ contract TokenBridge is
         messagingContract = messagingContract_;
         l2TokenBridge = l2TokenBridge_;
     }
-
-    // The selector of the "handle_deposit" l1_handler on L2.
-    uint256 constant DEPOSIT_HANDLER =
-        1285101517810983806491589552491143496277809242732141897358598292095611420389;
-    // The selector of the "handle_rewards_update" l1_handler on L2.
-    uint256 constant REWARDS_UPDATE_HANDLER = 1491809297313944980469767785261053487269663932577403898216430815040935905233;
-
-    uint256 constant TRANSFER_FROM_STARKNET = 0;
-    uint256 constant BRIDGE_REWARD_MESSAGE = 1;
-    uint256 constant UINT256_PART_SIZE_BITS = 128;
-    uint256 constant UINT256_PART_SIZE = 2**UINT256_PART_SIZE_BITS;
 
     modifier isValidL2Address(uint256 l2Address) {
         require((l2Address != 0) && (l2Address < CairoConstants.FIELD_PRIME), "L2_ADDRESS_OUT_OF_RANGE");
@@ -143,7 +143,7 @@ contract TokenBridge is
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
 
-    function deposit(address l1Token_, uint256 l2Recipient, uint256 amount) external {
+    function deposit(address l1Token_, uint256 l2Recipient, uint256 amount) isApprovedToken(l1Token_) external {
         IStaticATokenLM l1Token = IStaticATokenLM(l1Token_);
         l1Token.transferFrom(msg.sender, address(this), amount);
         sendMessage(l1Token_, l2Recipient, amount);

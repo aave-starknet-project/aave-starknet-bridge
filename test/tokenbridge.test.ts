@@ -36,11 +36,11 @@ function expectAddressEquality(actual: string, expected: string) {
 const LENDING_POOL = '0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9';
 const INCENTIVES_CONTROLLER = '0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5';
 const A_DAI = '0x028171bCA77440897B824Ca71D1c56caC55b68A3';
-const DAI = '0x6B175474E89094C44Da98b954EedeAC495271d0F';
-const DAI_DEPLOYER = '0xdDb108893104dE4E1C6d0E47c42237dB4E617ACc';
 const A_USDC = '0xBcca60bB61934080951369a648Fb03DF4F96263C';
-const USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
-const USDC_DEPLOYER = '0x95Ba4cF87D6723ad9C0Db21737D862bE80e93911';
+
+const STKAAVE_WHALE = '0x32b61bb22cbe4834bc3e73dce85280037d944a4d';
+const DAI_WHALE = '0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0';
+const USDC_WHALE = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 
 describe('TokenBridge', async function() {
   this.timeout(TIMEOUT);
@@ -49,8 +49,9 @@ describe('TokenBridge', async function() {
   let l1user: SignerWithAddress;
   let l2user: Account;
   let signer: SignerWithAddress;
-  let daiDeployer: providers.JsonRpcSigner;
-  let usdcDeployer: providers.JsonRpcSigner;
+  let daiWhale: providers.JsonRpcSigner;
+  let usdcWhale: providers.JsonRpcSigner;
+  let stkaaveWhale: providers.JsonRpcSigner;
   const networkUrl: string = (network.config as HttpNetworkConfig).url;
   console.log(networkUrl)
   const abiCoder = new ethers.utils.AbiCoder();
@@ -135,18 +136,21 @@ describe('TokenBridge', async function() {
     rewAaveTokenL1 = await ethers.getContractAt("ERC20Mock", await incentives.REWARD_TOKEN());
 
     aDai = await ethers.getContractAt("AToken", A_DAI);
-    dai = await ethers.getContractAt("ERC20Mock", DAI);
+    dai = await ethers.getContractAt("ERC20Mock", await aDai.UNDERLYING_ASSET_ADDRESS());
     aUsdc = await ethers.getContractAt("AToken", A_USDC);
-    usdc = await ethers.getContractAt("ERC20Mock", USDC);
+    usdc = await ethers.getContractAt("ERC20Mock", await aUsdc.UNDERLYING_ASSET_ADDRESS());
 
     const provider = new ethers.providers.JsonRpcProvider(networkUrl);
-    // await provider.send("hardhat_impersonateAccount", [DAI_DEPLOYER]);
-    daiDeployer = await provider.getSigner(DAI_DEPLOYER);
-    // await provider.send("hardhat_impersonateAccount", [USDC_DEPLOYER]);
-    usdcDeployer = await provider.getSigner(USDC_DEPLOYER);
+    // await provider.send("hardhat_impersonateAccount", [DAI_WHALE]);
+    daiWhale = await provider.getSigner(DAI_WHALE);
+    // await provider.send("hardhat_impersonateAccount", [USDC_WHALE]);
+    usdcWhale = await provider.getSigner(USDC_WHALE);
+    // await provider.send("hardhat_impersonateAccount", [STKAAVE_WHALE]);
+    stkaaveWhale = await provider.getSigner(STKAAVE_WHALE);
 
-    await signer.sendTransaction({ from: signer.address, to: daiDeployer._address, value: ethers.utils.parseEther("1.0") });
-    await signer.sendTransaction({ from: signer.address, to: usdcDeployer._address, value: ethers.utils.parseEther("1.0") });
+    await signer.sendTransaction({ from: signer.address, to: daiWhale._address, value: ethers.utils.parseEther("1.0") });
+    await signer.sendTransaction({ from: signer.address, to: usdcWhale._address, value: ethers.utils.parseEther("1.0") });
+    await signer.sendTransaction({ from: signer.address, to: stkaaveWhale._address, value: ethers.utils.parseEther("1.0") });
 
     TokenBridgeL1 = await ethers.getContractFactory('TokenBridge', signer);
     tokenBridgeL1Implementation = await TokenBridgeL1.deploy();
@@ -189,15 +193,16 @@ describe('TokenBridge', async function() {
     expect(await l1tokenDai.INCENTIVES_CONTROLLER()).to.eq(INCENTIVES_CONTROLLER);
     expect(await l1tokenDai.LENDING_POOL()).to.eq(LENDING_POOL);
     expect(await l1tokenDai.ATOKEN()).to.eq(A_DAI);
-    expect(await l1tokenDai.ASSET()).to.eq(DAI);
+    expect(await l1tokenDai.ASSET()).to.eq(await aDai.UNDERLYING_ASSET_ADDRESS());
     expect(await l1tokenDai.REWARD_TOKEN()).to.eq(rewAaveTokenL1.address);  
   })
 
   it('l1user receives tokens and converts them to staticATokens', async () => {
     // l1user receives tokens
-    await dai.connect(daiDeployer).transfer(l1user.address, 1000);
-    await usdc.connect(usdcDeployer).transfer(l1user.address, 1000);
-    // l1user deposits tokens and gets staticATokens
+    await dai.connect(daiWhale).transfer(l1user.address, 1000);
+    await usdc.connect(usdcWhale).transfer(l1user.address, 1000);
+    await rewAaveTokenL1.connect(stkaaveWhale).transfer(signer.address, 1000);
+    // l1user deposits dai and usdc and gets corresponding staticATokens
     await dai.connect(l1user).approve(l1tokenDai.address, MAX_UINT256);
     await l1tokenDai.connect(l1user).deposit(l1user.address, 1000, 0, true);
     for (let i = 0; i < 5; i++) {
@@ -301,24 +306,24 @@ describe('TokenBridge', async function() {
     expect(await l2tokenUsdc.call('get_last_update', {})).to.deep.equal({ block_number: BigInt(blockNumberUsdc) });
   })
 
-  // it('L2 users send back reward accrued to L1 user', async () => {
-  //   // Give TokenBridge 100 reward token
-  //   await rewAaveTokenL1.connect(l1user).approve(tokenBridgeL1Proxied.address, MAX_UINT256);
-  //   await rewAaveTokenL1.transfer(tokenBridgeL1Proxied.address, 1000);
+  it('L2 users send back reward accrued to L1 user', async () => {
+    // Give TokenBridge 1000 reward tokens
+    await rewAaveTokenL1.connect(l1user).approve(tokenBridgeL1Proxied.address, MAX_UINT256);
+    await rewAaveTokenL1.transfer(tokenBridgeL1Proxied.address, 1000);
 
-  //   // Initiate bridge back rewards from L2
-  //   await l2user.invoke(tokenBridgeL2, 'bridge_rewards', {l2_token: BigInt(l2tokenDai.address), l1_recipient: BigInt(l1user.address), amount: {high: 0, low: 30}});
+    // Initiate bridge back rewards from L2
+    await l2user.invoke(tokenBridgeL2, 'bridge_rewards', { l2_token: BigInt(l2tokenDai.address), l1_recipient: BigInt(l1user.address), amount: {high: 0, low: 30} });
 
-  //   // flush L2 messages to be consumed by L1
-  //   const flushL2Response = await starknet.devnet.flush();
-  //   const flushL2Messages = flushL2Response.consumed_messages.from_l2;
-  //   expect(flushL2Response.consumed_messages.from_l1).to.be.empty;
-  //   expect(flushL2Messages).to.have.a.lengthOf(1);
+    // flush L2 messages to be consumed by L1
+    const flushL2Response = await starknet.devnet.flush();
+    const flushL2Messages = flushL2Response.consumed_messages.from_l2;
+    expect(flushL2Response.consumed_messages.from_l1).to.be.empty;
+    expect(flushL2Messages).to.have.a.lengthOf(1);
 
-  //   // call recieveRewards on L1 to consume messages from L2
-  //   await tokenBridgeL1Proxied.connect(l1user).receiveRewards(l1tokenDai.address, l1user.address, 30);
+    // call recieveRewards on L1 to consume messages from L2
+    await tokenBridgeL1Proxied.connect(l1user).receiveRewards(l1tokenDai.address, l1user.address, 30);
 
-  //   // check that the l1 user received reward tokens
-  //   expect(await rewAaveTokenL1.balanceOf(l1user.address)).to.be.equal(30);
-  // })
+    // check that the l1 user received reward tokens
+    expect(await rewAaveTokenL1.balanceOf(l1user.address)).to.be.equal(30);
+  })
 });

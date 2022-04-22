@@ -27,6 +27,8 @@ nvm install 16
 yarn
 yarn prepare # to setup the pre-commit hook
 
+npm install -g ganache@7.0.4
+
 python3.7 -m venv .venv
 source .venv/bin/activate
 pip install cairo-lang starknet-devnet
@@ -34,10 +36,10 @@ pip install cairo-lang starknet-devnet
 
 ### Start the testnets
 
-It's wise to do this in two separate shells
+It's wise to do this in two separate shells.
 
 ```bash
-yarn hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/<alchemy_key>
+ganache --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_KEY@$BLOCK_NUMBER --gasPrice 2000000000000 -u $DAI_WHALE -u $USDC_WHALE -u $STKAAVE_WHALE
 ```
 
 ```bash
@@ -47,7 +49,7 @@ starknet-devnet --host 0.0.0.0
 ### Build the cairo files
 
 ```bash
-yarn hardhat starknet-compile
+yarn compile
 ```
 
 ### Run the tests

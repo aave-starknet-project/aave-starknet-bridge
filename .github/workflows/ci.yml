@@ -8,6 +8,7 @@ on:
 
 env:
   ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
+  BLOCK_NUMBER: '14633843'
   DAI_WHALE: '0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0'
   USDC_WHALE: '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503'
   STKAAVE_WHALE: '0x32b61bb22cbe4834bc3e73dce85280037d944a4d'
@@ -42,7 +43,7 @@ jobs:
       - name: Start the devnet
         run: |
           .venv/bin/starknet-devnet --host 0.0.0.0 --lite-mode &
-          ganache --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_KEY --gasPrice 2000000000000 -u $DAI_WHALE -u $USDC_WHALE -u $STKAAVE_WHALE &
+          ganache --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_KEY@$BLOCK_NUMBER --gasPrice 2000000000000 -u $DAI_WHALE -u $USDC_WHALE -u $STKAAVE_WHALE &
 
       - name: Compile Cairo
         run: |

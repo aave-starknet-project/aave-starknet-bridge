@@ -32,7 +32,6 @@
     "chai-bignumber": "^3.0.0",
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.4.6",
-    "ganache": "^7.0.4",
     "git-format-staged": "^3.0.0",
     "hardhat": "2.9.2",
     "husky": "^7.0.4",

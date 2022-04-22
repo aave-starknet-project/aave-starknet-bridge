@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "aave-starknet-bridge"
+version = "0.0.0"
+description = "Bridge staticATokens to Starknet for cheap AAVE rewards collection and token exchange"
+authors = ["AAVE"]
+license = "aave-license"
+
+[tool.poetry.dependencies]
+python = ">=3.7.2,<4.0.0"
+wheel = "^0.37.1"
+starknet-devnet = "0.1.21"
+marshmallow-dataclass = "8.5.3"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -23,11 +23,13 @@ jobs:
         with:
           python-version: 3.7 # Cairo was tested with this version
 
+      - name: Install poetry
+        run: curl -sSL https://install.python-poetry.org | python3 -
+
       - name: Install dependencies
         run: |
-          python -m venv .venv
-          source .venv/bin/activate
-          make
+          poetry install
+          yarn
 
       - name: Lint
         run: |
@@ -35,7 +37,7 @@ jobs:
 
       - name: Start the devnet
         run: |
-          .venv/bin/starknet-devnet --host 0.0.0.0 --lite-mode &
+          poetry run starknet-devnet --host 0.0.0.0 --lite-mode &
           yarn hardhat node &
 
       - name: Compile Cairo

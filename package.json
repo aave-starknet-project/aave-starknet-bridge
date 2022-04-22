@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "hardhat --network localhost test",
-    "lint": "find contracts/ -iname *.cairo -exec .venv/bin/cairo-format -c {} +",
+    "lint": "find contracts/ -iname *.cairo -exec poetry run cairo-format -c {} +",
     "compile": "hardhat starknet-compile --cairo-path 'node_modules/@joriksch/oz-cairo:contracts/src/starknet'",
     "compile:tests": "hardhat starknet-compile --cairo-path 'node_modules/@joriksch/oz-cairo:contracts/src/starknet' contracts/test",
     "deploy:account": "yarn hardhat starknet-deploy-account --starknet-network devnet --wallet OpenZeppelin",

@@ -1,3 +1,4 @@
 wheel
 cairo-lang==0.8.1
 starknet-devnet==0.1.21
+marshmallow-dataclass==8.5.3

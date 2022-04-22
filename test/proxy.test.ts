@@ -54,7 +54,7 @@ describe('Proxy', function () {
     expect(decimals).to.equal(4n);
   });
 
-  it('diasllows random user to upgrade',async () => {
+  it('disallows random user to upgrade',async () => {
     try {
       await randomUser.invoke(proxyTokenContract, 'upgrade_implementation',
           { new_implementation: BigInt(tokenContractB.address) }

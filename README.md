@@ -48,6 +48,12 @@ First get an [alchemy](https://www.alchemy.com/) key and write the following to
 export $ALCHEMY_KEY="<your key>"
 ```
 
+Then loud all the environment variables
+
+```bash
+source .evn/*
+```
+
 Then start the testnets. It's wise to do this in two separate shells.
 
 ```bash

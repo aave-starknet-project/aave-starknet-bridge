@@ -24,6 +24,17 @@ contract TokenBridge is
     IStarknetMessaging public messagingContract;
     uint256 l2TokenBridge;
 
+    // The selector of the "handle_deposit" l1_handler on L2.
+    uint256 constant DEPOSIT_HANDLER =
+        1285101517810983806491589552491143496277809242732141897358598292095611420389;
+    // The selector of the "handle_rewards_update" l1_handler on L2.
+    uint256 constant REWARDS_UPDATE_HANDLER = 1491809297313944980469767785261053487269663932577403898216430815040935905233;
+
+    uint256 constant TRANSFER_FROM_STARKNET = 0;
+    uint256 constant BRIDGE_REWARD_MESSAGE = 1;
+    uint256 constant UINT256_PART_SIZE_BITS = 128;
+    uint256 constant UINT256_PART_SIZE = 2**UINT256_PART_SIZE_BITS;
+
     constructor() public GenericGovernance("AAVE_BRIDGE_GOVERNANCE") {}
 
     function toSplitUint(uint256 value) internal pure returns (uint256, uint256) {
@@ -68,14 +79,6 @@ contract TokenBridge is
         l2TokenBridge = l2TokenBridge_;
     }
 
-    // The selector of the "handle_deposit" l1_handler on L2.
-    uint256 constant DEPOSIT_HANDLER =
-        1285101517810983806491589552491143496277809242732141897358598292095611420389;
-    uint256 constant TRANSFER_FROM_STARKNET = 0;
-    uint256 constant BRIDGE_REWARD_MESSAGE = 1;
-    uint256 constant UINT256_PART_SIZE_BITS = 128;
-    uint256 constant UINT256_PART_SIZE = 2**UINT256_PART_SIZE_BITS;
-
     modifier isValidL2Address(uint256 l2Address) {
         require((l2Address != 0) && (l2Address < CairoConstants.FIELD_PRIME), "L2_ADDRESS_OUT_OF_RANGE");
         _;
@@ -112,6 +115,20 @@ contract TokenBridge is
         messagingContract.sendMessageToL2(l2TokenBridge, DEPOSIT_HANDLER, payload);
     }
 
+    function sendMessageStaticAToken(address l1Token, uint256 accRewards) 
+        external
+        isApprovedToken(l1Token)
+    {
+      uint256 l2Token = l1TokentoL2Token[l1Token];
+
+      uint256[] memory payload = new uint256[](4);
+      payload[0] = block.number;
+      payload[1] = l2Token;
+      (payload[2], payload[3]) = toSplitUint(accRewards);
+
+      messagingContract.sendMessageToL2(l2TokenBridge, REWARDS_UPDATE_HANDLER, payload);
+    }
+
     function consumeMessage(address l1Token, address recipient, uint256 amount) internal {
         emit LogWithdrawal(l1Token, recipient, amount);
 
@@ -126,8 +143,8 @@ contract TokenBridge is
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
 
-    function deposit(address l1Token_, uint256 l2Recipient, uint256 amount) external {
-        IERC20 l1Token = IERC20(l1Token_);
+    function deposit(address l1Token_, uint256 l2Recipient, uint256 amount) isApprovedToken(l1Token_) external {
+        IStaticATokenLM l1Token = IStaticATokenLM(l1Token_);
         l1Token.transferFrom(msg.sender, address(this), amount);
         sendMessage(l1Token_, l2Recipient, amount);
     }
@@ -135,7 +152,7 @@ contract TokenBridge is
     function withdraw(address l1Token_, address recipient, uint256 amount) isApprovedToken(l1Token_) external {
         consumeMessage(l1Token_, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
-        IERC20 l1Token = IERC20(l1Token_);
+        IStaticATokenLM l1Token = IStaticATokenLM(l1Token_);
         require(l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender), "UNDERFLOW");
         l1Token.transfer(recipient, amount);
     }

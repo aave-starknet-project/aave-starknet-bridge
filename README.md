@@ -33,22 +33,29 @@ pip install poetry
 poetry install
 ```
 
-### Start the testnets
-
-It's wise to do this in two separate shells.
-
-```bash
-yarn ganache --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_KEY@$BLOCK_NUMBER --gasPrice 2000000000000 -u $DAI_WHALE -u $USDC_WHALE -u $STKAAVE_WHALE
-```
-
-```bash
-starknet-devnet --host 0.0.0.0
-```
-
 ### Build the cairo files
 
 ```bash
 yarn compile
+```
+
+### Start the testnets
+
+First get an [alchemy](https://www.alchemy.com/) key and write the following to
+`.env/private`
+
+```bash
+export $ALCHEMY_KEY="<your key>"
+```
+
+Then start the testnets. It's wise to do this in two separate shells.
+
+```bash
+yarn testnet:ganache
+```
+
+```bash
+yarn testnet:starknet
 ```
 
 ### Run the tests

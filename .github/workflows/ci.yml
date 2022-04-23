@@ -42,8 +42,8 @@ jobs:
 
       - name: Start the devnet
         run: |
-          .venv/bin/starknet-devnet --host 0.0.0.0 --lite-mode &
-          yarn ganache --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_KEY@$BLOCK_NUMBER --gasPrice 2000000000000 -u $DAI_WHALE -u $USDC_WHALE -u $STKAAVE_WHALE &
+          yarn testnet:starknet &
+          yarn testnet:ganache
 
       - name: Compile Cairo
         run: |

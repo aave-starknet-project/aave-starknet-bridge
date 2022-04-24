@@ -165,25 +165,25 @@ contract TokenBridge is
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
 
-    function depositUnderlying(IERC20 l1Token, uint256 l2Recipient, uint256 amount, uint16 refferalCode, bool fromAsset) external {
+    function depositUnderlying(IStaticATokenLM l1Token, uint256 l2Recipient, uint256 amount, uint16 refferalCode, bool fromAsset) external {
         amount = l1Token.deposit(msg.sender, amount, refferalCode, fromAsset);
         deposit(l1Token, l2Recipient, amount);
     }
 
-    function deposit(IERC20 l1Token, uint256 l2Recipient, uint256 amount) onlyApprovedToken(l1Token) external {
+    function deposit(IStaticATokenLM l1Token, uint256 l2Recipient, uint256 amount) onlyApprovedToken(l1Token) external {
         l1Token.transferFrom(msg.sender, address(this), amount);
         sendMessage(l1Token, msg.sender, l2Recipient, amount);
     }
 
-    function withdrawUnderlying(IERC20 l1Token, uint256 l2sender, address recipient, uint256 amount, bool toAsset) onlyApprovedToken(l1Token) external {
-        consumeMessage(l2sender, l1Token, recipient, amount);
+    function withdrawUnderlying(IStaticATokenLM l1Token, uint256 l2sender, address recipient, uint256 amount, bool toAsset) onlyApprovedToken(l1Token) external {
+        consumeMessage(l2sender, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
         require(l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender), "UNDERFLOW");
-        l1Token.withdraw(msg.sender, recipient, 0, amount, toAsset);
+        l1Token.withdraw(recipient, amount, toAsset);
     }
 
     function withdraw(IERC20 l1Token, uint256 l2sender, address recipient, uint256 amount) onlyApprovedToken(l1Token) external {
-        consumeMessage(l2sender, l1Token, recipient, amount);
+        consumeMessage(l1Token, l2sender, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
         require(l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender), "UNDERFLOW");
         l1Token.transfer(recipient, amount);
@@ -202,9 +202,8 @@ contract TokenBridge is
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
 
-    function receiveRewards(uint256 l2sender, address recipient, uint256 amount) external {
+    function receiveRewards(uint256 l2sender, address recipient, uint256 amount) onlyValidL2Address(l2sender) external {
         consumeBridgeRewardMessage(l2sender, recipient, amount);
-        require(recipient != address(0x0), "INVALID_RECIPIENT");
 
         address self = address(this);
 

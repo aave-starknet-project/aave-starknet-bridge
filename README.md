@@ -43,27 +43,52 @@ The bridge allows users to deposit and withdraw `staticATokens` - wrappers conve
 
 ## Starknet ETHStaticATokens
 
-Natively, on Aave aTokens grow in balance, not in value. To be able to create this kind of model, it is important to wrap them before bridging, converting them in a token that grows in value, not in balance. More information about something similar needed for the Aavegotchi gaming ecosystem can be found here [https://aavegotchi.substack.com/p/aaves-interest-bearing-atokens-on](https://aavegotchi.substack.com/p/aaves-interest-bearing-atokens-on), with ETHStaticATokens being quite close to the wrapped aToken just discussed.
+Natively, on Aave aTokens grow in balance, not in value. To be able to create this kind of model, it is important to wrap them before bridging, converting them in a token that grows in value, not in balance.
 
 ETHStaticATokens on L2 are an implementation of the wrapped aTokens that will continuously increase in value on Starknet because they are backed by the increasing StaticATokens amounts locked in the bridge contract on Ethereum. The ETHStaticATokens can then be converted back to staticATokens + rewards.
 
 Main functions on the ETHStaticATokens: 
  - `claim_rewards` : allows users to claim rewAAVE to the provided recipient, the following function calls the `token_bridge` to mint reward tokens
- - `push_acc_rewards_per_token` : calling this function is restricted to the `token_bridge`
+ - `push_acc_rewards_per_token` : updates the current accumulated rewards per token for the corresponding ETHStaticAToken
  
 ## Bridging tokens from L1 <> L2
 
-
+coming soon
 
 ## Synchronisation of rewards on L1 <> L2
 
+The challenge here was to allow to continue enjoying the same rewards as in L1 by continously updating -whenever is possible- the `acc_rewards_per_token` of all ETHStaticATokens to match the value of their respective StaticATokens on L1. To achieve that we : 
 
-## Claiming & bridging of rewards on L2
 
-coming soon
+-
+
+## Claiming rewards on L2
+
+
+To claim rewards on L2 users need to call `claim_rewards`on ETHStaticAToken contract. The ETHStaticAToken will then call the bridge to mint the due `rewAAVE` tokens to the user.
+
+## Bridging rewards from L2->L1
+
+To bridge their rewards to L1 users will have to call `bridge_rewards` on the L2 `token_bridge` providing the `amount` to be bridged.  
+
+
 
 ## Proxies
 
+All calls made to the following contracts will be handled by a proxy who then delegates the calls to the available implementation of these contracts.
+- Token bridge on L2 
+- ETHStaticATokens 
+- Token bridge on L1 
+
+Using proxies during the early release of the bridge implementation will allow us to upgrade and continuously improve the. 
+
+
+## Governance
+
+* `token_bridge` is controller of all ETHStaticATokens on L2
+* 
+
+## Deployment 
 
 
 ### Prerequisites

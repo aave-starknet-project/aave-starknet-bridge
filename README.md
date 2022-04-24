@@ -27,29 +27,41 @@ nvm install 16
 yarn
 yarn prepare # to setup the pre-commit hook
 
-npm install -g ganache@7.0.4
-
 python3.7 -m venv .venv
 source .venv/bin/activate
-pip install cairo-lang starknet-devnet
-```
-
-### Start the testnets
-
-It's wise to do this in two separate shells.
-
-```bash
-ganache --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_KEY@$BLOCK_NUMBER --gasPrice 2000000000000 -u $DAI_WHALE -u $USDC_WHALE -u $STKAAVE_WHALE
-```
-
-```bash
-starknet-devnet --host 0.0.0.0
+pip install poetry
+poetry install
 ```
 
 ### Build the cairo files
 
 ```bash
 yarn compile
+```
+
+### Start the testnets
+
+First get an [alchemy](https://www.alchemy.com/) key and write the following to
+`.env/private`
+
+```bash
+export $ALCHEMY_KEY="<your key>"
+```
+
+Then load all the environment variables
+
+```bash
+source .evn/*
+```
+
+Then start the testnets. It's wise to do this in two separate shells.
+
+```bash
+yarn testnet:ganache
+```
+
+```bash
+yarn testnet:starknet
 ```
 
 ### Run the tests

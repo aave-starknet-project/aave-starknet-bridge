@@ -4,7 +4,10 @@
   "description": "Bridging staticATokens to Starknet to allow for cheap reward collection and token transfer.",
   "main": "index.js",
   "scripts": {
+    "source": "source .env/*",
     "test": "hardhat --network localhost test",
+    "testnet:starknet": ".venv/bin/starknet-devnet --host 0.0.0.0 --lite-mode",
+    "testnet:ganache": "yarn ganache --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_KEY@$BLOCK_NUMBER --gasPrice 2000000000000 -u $DAI_WHALE -u $USDC_WHALE -u $STKAAVE_WHALE",
     "lint": "find contracts/ -iname *.cairo -exec .venv/bin/cairo-format -c {} +",
     "compile": "hardhat starknet-compile --cairo-path 'node_modules/@joriksch/oz-cairo:contracts/src/starknet'",
     "compile:tests": "hardhat starknet-compile --cairo-path 'node_modules/@joriksch/oz-cairo:contracts/src/starknet' contracts/test",
@@ -32,6 +35,7 @@
     "chai-bignumber": "^3.0.0",
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.4.6",
+    "ganache": "^7.0.5",
     "git-format-staged": "^3.0.0",
     "hardhat": "2.9.2",
     "husky": "^7.0.4",

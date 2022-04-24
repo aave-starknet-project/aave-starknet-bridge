@@ -1,10 +1,12 @@
 
 
+
 # AAVE Starknet Bridge
 
 [![Tests](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/ci.yml)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/cdnjs/cdnjs.svg?style=flat)](https://github.com/aave-starknet-project/aave-starknet-bridge/pulls)
 [![Issues](https://img.shields.io/github/issues-raw/tterb/PlayMusic.svg?maxAge=25000)](https://github.com/aave-starknet-project/aave-starknet-bridge/issues)
+
 
 :warning: This codebase is still in an experimental phase, has not been audited, might contain bugs and should not be used in production.
 
@@ -22,7 +24,7 @@ The bridge allows users to deposit and withdraw `staticATokens` - wrappers conve
 ## Architecture
 
 
-![aave_bridge_2](https://user-images.githubusercontent.com/37840702/164106887-8da4cafe-0d86-4299-95fc-edd3fbbdbee0.png)
+![bridge_aave_v3](https://user-images.githubusercontent.com/37840702/164996342-d6deb978-e850-401f-8fb1-f91a11474784.png)
 
 ## Contracts
 

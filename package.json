@@ -24,7 +24,7 @@
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
     "@openzeppelin/contracts": "^4.5.0",
-    "@shardlabs/starknet-hardhat-plugin": "^0.5.2",
+    "@shardlabs/starknet-hardhat-plugin": "^0.5.3",
     "@swp0x0/protocol-v2": "^1.0.1",
     "@toruslabs/starkware-crypto": "^1.0.0",
     "@types/chai": "^4.2.22",

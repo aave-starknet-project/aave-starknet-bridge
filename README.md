@@ -48,7 +48,7 @@ First get an [alchemy](https://www.alchemy.com/) key and write the following to
 export $ALCHEMY_KEY="<your key>"
 ```
 
-Then loud all the environment variables
+Then load all the environment variables
 
 ```bash
 source .evn/*

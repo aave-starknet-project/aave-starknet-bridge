@@ -206,11 +206,11 @@ describe('TokenBridge', async function() {
         });
 
     {
-      const { name } = await l2user.call(proxiedL2TokenDai, 'name');
+      const { name } = await proxiedL2TokenDai.call('name');
       expect(name).to.equal(1234n);
-      const { symbol } = await l2user.call(proxiedL2TokenDai, 'symbol');
+      const { symbol } = await proxiedL2TokenDai.call('symbol');
       expect(symbol).to.equal(123n);
-      const { decimals } = await l2user.call(proxiedL2TokenDai, 'decimals');
+      const { decimals } = await proxiedL2TokenDai.call('decimals');
       expect(decimals).to.equal(18n);
     }
 
@@ -224,11 +224,11 @@ describe('TokenBridge', async function() {
     });
 
     {
-      const { name } = await l2user.call(proxiedL2TokenUsdc, 'name');
+      const { name } = await proxiedL2TokenUsdc.call('name');
       expect(name).to.equal(4321n);
-      const { symbol } = await l2user.call(proxiedL2TokenUsdc, 'symbol');
+      const { symbol } = await proxiedL2TokenUsdc.call('symbol');
       expect(symbol).to.equal(321n);
-      const { decimals } = await l2user.call(proxiedL2TokenUsdc, 'decimals');
+      const { decimals } = await proxiedL2TokenUsdc.call('decimals');
       expect(decimals).to.equal(18n);
     }
   })

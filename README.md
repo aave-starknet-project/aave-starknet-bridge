@@ -44,22 +44,28 @@ The bridge was also shaped for liquidity providers who are able to assume Ethere
   * `rewAAVE` - a very basic ERC20 to represent the rewards on L2
   *  `proxy` - a generic implementation of a proxy in starknet
 
-## ETHStaticATokens
+## ETHStaticATokens on L2
 
 Natively, on Aave aTokens grow in balance, not in value. To be able to create this kind of model, it is important to wrap them before bridging, converting them in a token that grows in value, not in balance.
 
-ETHStaticATokens on L2 are an implementation of the wrapped aTokens that will continuously increase in value on Starknet because they are backed by the increasing StaticATokens amounts locked in the bridge contract on Ethereum. The ETHStaticATokens can then be converted back to staticATokens + rewards.
+ETHStaticATokens are an implementation of the wrapped aTokens that will continuously increase in value on Starknet because they are backed by the increasing StaticATokens amounts locked in the bridge contract on Ethereum. The ETHStaticATokens can then be converted back to staticATokens + rewards.
 
-## Bridging tokens from L1 <> L2
+## Bridging staticATokens from L1<>L2
 
-coming soon
+- To deposit: 
+
+Users can deposit their staticAToken  by calling `deposit()` on L1 `token bridge` or deposit from the underlying asset of the staticAToken directly by calling the `depositUnderlying()`.
+
+- To withdraw:
+
+To withdraw their staticATokens, the users need to call the `initiate_withdraw` on L2 `token_bridge`. 
+
+ 
+
 
 ## Synchronisation of rewards on L1 <> L2
 
-The challenge here was to allow to continue enjoying the same rewards as in L1 by continously updating -whenever is possible- the `acc_rewards_per_token` of all ETHStaticATokens to match the value of their respective StaticATokens on L1. To achieve that we : 
-
-
-To update the current accumulated rewards per token we make a call to  `push_acc_rewards_per_token`  on ETHStaticATokens.
+The challenge here was to allow users to continue enjoying the same rewards as on L1 by continously updating -whenever is possible- the `acc_rewards_per_token` of all ETHStaticATokens to match the value of their respective StaticATokens on L1. To achieve that, we frequently update the `acc_rewards_per_token` on each ETHStaticAToken by calling `push_acc_rewards_per_token` which takes as an additional argument the latest block number on L1. The tracking of rewards and block numbers is assured by `claimable.cairo`.
 
 ## Claiming rewards on L2
 
@@ -85,7 +91,7 @@ Using proxies during the early release of the bridge will allow us to upgrade an
 
 L2
 
-* `token_bridge` is controller of all ETHStaticATokens
+* `ETHStaticATokens` are controlled by the `token_bridge`
 * `rewAAVE` token is owned by the `token_bridge`
 
 L1
@@ -96,11 +102,18 @@ L1
 
 ### Environment
 
+
 Before installing cairo you'll need to install GMP
 
 ```bash
 sudo apt install -y libgmp3-dev # linux
 brew install gmp # mac
+```
+
+Install node
+
+```bash
+nvm install 16
 ```
 
 First let's install all our project dependencies

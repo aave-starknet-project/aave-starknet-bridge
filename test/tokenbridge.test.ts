@@ -282,8 +282,8 @@ describe('TokenBridge', async function() {
 
     // set L1 token bridge from L2 bridge
     await l2user.invoke(proxiedTokenBridgeL2, 'initialize_token_bridge', { governor_address: BigInt(l2user.starknetContract.address) });
-    await l2user.invoke(proxyTokenBridgeL2, 'set_l1_token_bridge', { l1_bridge_address: BigInt(tokenBridgeL1Proxied.address) });
-    const { res: retrievedBridgeAddress } = await tokenBridgeL2.call('get_l1_token_bridge', {});
+    await l2user.invoke(proxiedTokenBridgeL2, 'set_l1_token_bridge', { l1_bridge_address: BigInt(tokenBridgeL1Proxied.address) });
+    const { res: retrievedBridgeAddress } = await proxiedTokenBridgeL2.call('get_l1_token_bridge', {});
     expect(retrievedBridgeAddress).to.equal(BigInt(tokenBridgeL1Proxied.address));
 
     // map L1 tokens to L2 tokens on L2 bridge

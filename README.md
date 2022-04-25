@@ -102,14 +102,26 @@ sudo apt install -y libgmp3-dev # linux
 brew install gmp # mac
 ```
 
-```bash
-nvm install 16
+First let's install all our project dependencies
+```
+yarn install
+```
 
-yarn
+To enable our pre-hooks commits we need to install husky by running: 
+
+```
 yarn prepare
+```
 
+Let’s create a virtual environment. It helps isolate your project’s requirements from your global Python environment.
+
+```
 python3.7 -m venv .venv
 source .venv/bin/activate
+```
+Install poetry for dependencies management
+
+```
 pip install poetry
 poetry install
 ```
@@ -148,11 +160,7 @@ yarn testnet:ganache
 ```
 
 ```bash
-<<<<<<< HEAD
 yarn testnet:starknet
-=======
-yarn compile
->>>>>>> 36e7e65... WIP
 ```
 
 ### Run the tests

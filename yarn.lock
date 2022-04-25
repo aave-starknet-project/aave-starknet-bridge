@@ -534,10 +534,10 @@
   resolved "https://registry.yarnpkg.com/@joriksch/fossil/-/fossil-0.0.1.tgz#1d95dfdb739f39eeb362f55ea742dbf3336a6d6f"
   integrity sha512-MO3ScoGHllFH4+BKrWHkmZBkONc+2/7J1qiHHBOVcquwcs08aCNLHhvzrpgY2wh+9oh1jVoUwS3V+zN3Nmb8Ug==
 
-"@joriksch/oz-cairo@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@joriksch/oz-cairo/-/oz-cairo-1.0.0.tgz#eb840636444edd49e61e15304edac4be30a5cac4"
-  integrity sha512-Xu5/jHAyzItUeylW1tyl+0cp+VozsDIm1GnIZDveVJIt9HLJ/7cmf04Uh/KPwl28qjf0TooyL3otLoimeT4C1g==
+"@joriksch/oz-cairo@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@joriksch/oz-cairo/-/oz-cairo-1.0.1.tgz#660d7fc9ccfb78d4a77354ff8a43150cc6a14899"
+  integrity sha512-UhDE9gCiUKtz2ryrr9a8hA24ivFdBy5cdlI4BcmRmhpRChCdfaPjI6w2xdiDwxCh/ZhC/Ij9EnG1CMLqOd5g0w==
 
 "@joriksch/sg-contracts@^0.0.2":
   version "0.0.2"

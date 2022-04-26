@@ -31,7 +31,7 @@ The bridge was also shaped for liquidity providers who are able to assume Ethere
 
 `L1`
   * `StaticATokenLMNew` - an updated implementation of staticATokens which makes it possible to update its respective L2 token by sending the latest `accRewardsPerToken` on token transfer or when explicitly triggered to do so.
-  *  `TokenBridge` -  handles rewards update on L2 and deposit of staticAToken on L2
+  *  `TokenBridge` -  handles rewards update, deposit & withdrawal of staticATokens 
   *  `Proxy` - A proxy implementation 
 
 `L2`
@@ -54,18 +54,20 @@ ETHStaticATokens are an implementation of the wrapped aTokens that will continuo
 
 - To deposit: 
 
-Users can deposit their staticAToken  by calling `deposit()` on L1 `token bridge` or deposit from the underlying asset of the staticAToken directly by calling the `depositUnderlying()`.
+Users can either bridge their staticAToken to L2 by calling `deposit()` on `TokenBridge`, or deposit the underlying asset of the staticAToken directly by calling the `depositUnderlying()`.
 
 - To withdraw:
 
-To withdraw their staticATokens, the users need to call the `initiate_withdraw` on L2 `token_bridge`. 
+To bridge their staticATokens back to L1, users need to call the `initiate_withdraw` on L2 `token_bridge`. 
 
  
 
 
 ## Synchronisation of rewards on L1 <> L2
 
-The challenge here was to allow users to continue enjoying the same rewards as on L1 by continously updating -whenever is possible- the `acc_rewards_per_token` of all ETHStaticATokens to match the value of their respective StaticATokens on L1. To achieve that, we frequently update the `acc_rewards_per_token` on each ETHStaticAToken by calling `push_acc_rewards_per_token` which takes as an additional argument the latest block number on L1. The tracking of rewards and block numbers is assured by `claimable.cairo`.
+The challenge here was to allow users to continue enjoying the same rewards as on L1 by continously updating -whenever is possible- the `acc_rewards_per_token` of all ETHStaticATokens to match the value of their respective StaticATokens on L1. To achieve that, we have updated the `_beforeBeforeTokenTransfer()` function on the new implementation of staticATokens (`StaticATokensLMNew.sol`) to send a message (through the bridge) with the latest `acc_rew_per_token` value. 
+We update the `acc_rewards_per_token` on each ETHStaticAToken by calling `push_acc_rewards_per_token`, and
+the tracking of rewards is ensured by `claimable.cairo`.
 
 ## Claiming rewards on L2
 

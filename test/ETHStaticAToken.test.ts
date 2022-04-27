@@ -118,7 +118,7 @@ describe("ETHStaticAToken", function () {
       },
     });
 
-    const { totalSupply } = await user1.call(proxiedL2Token, "totalSupply");
+    const { totalSupply } = await proxiedL2Token.call("totalSupply");
 
     expect(totalSupply).to.deep.equal({
       high: 0n,
@@ -135,7 +135,7 @@ describe("ETHStaticAToken", function () {
       },
     });
 
-    const { balance } = await user1.call(proxiedL2Token, "balanceOf", {
+    const { balance } = await proxiedL2Token.call("balanceOf", {
       account: BigInt(user1.starknetContract.address),
     });
 
@@ -168,8 +168,7 @@ describe("ETHStaticAToken", function () {
       },
     });
 
-    const { acc_rewards_per_token } = await user1.call(
-      proxiedL2Token,
+    const { acc_rewards_per_token } = await proxiedL2Token.call(
       "get_acc_rewards_per_token"
     );
 
@@ -222,8 +221,7 @@ describe("ETHStaticAToken", function () {
   });
 
   it("returns correct user pending rewards before claim", async () => {
-    const userClaimableRewards = await user1.call(
-      proxiedL2Token,
+    const userClaimableRewards = await proxiedL2Token.call(
       "get_user_claimable_rewards",
       {
         user: BigInt(user1.starknetContract.address),
@@ -259,8 +257,7 @@ describe("ETHStaticAToken", function () {
   });
 
   it("returns correct user pending rewards after claim", async () => {
-    const userClaimableRewards = await user1.call(
-      proxiedL2Token,
+    const userClaimableRewards = await proxiedL2Token.call(
       "get_user_claimable_rewards",
       {
         user: BigInt(user1.starknetContract.address),
@@ -274,8 +271,7 @@ describe("ETHStaticAToken", function () {
   });
 
   it("updates user accumulated rewards per token after claim", async () => {
-    const userAccruedRewardsPerToken = await user1.call(
-      proxiedL2Token,
+    const userAccruedRewardsPerToken = await proxiedL2Token.call(
       "get_user_acc_rewards_per_token",
       {
         user: BigInt(user1.starknetContract.address),
@@ -313,8 +309,7 @@ describe("ETHStaticAToken", function () {
       },
     });
 
-    const user1ClaimableRewards = await user1.call(
-      proxiedL2Token,
+    const user1ClaimableRewards = await proxiedL2Token.call(
       "get_user_claimable_rewards",
       {
         user: BigInt(user1.starknetContract.address),

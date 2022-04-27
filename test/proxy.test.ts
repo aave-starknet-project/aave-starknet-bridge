@@ -44,13 +44,13 @@ describe('Proxy', function () {
       controller: BigInt(owner.starknetContract.address),
     });
 
-    const { name } = await owner.call(proxiedTokenContract, 'name');
+    const { name } = await proxiedTokenContract.call('name');
     expect(name).to.equal(666n);
 
-    const { symbol } = await owner.call(proxiedTokenContract, 'symbol');
+    const { symbol } = await proxiedTokenContract.call('symbol');
     expect(symbol).to.equal(666n);
 
-    const { decimals } = await owner.call(proxiedTokenContract, 'decimals');
+    const { decimals } = await proxiedTokenContract.call('decimals');
     expect(decimals).to.equal(4n);
   });
 
@@ -73,7 +73,7 @@ describe('Proxy', function () {
 
   it('allows owner to upgrade', async () => {
     await randomUser.invoke(proxyTokenContract, 'upgrade_implementation', { new_implementation: BigInt(tokenContractB.address) })
-    const { implementation } = await owner.call(proxyTokenContract, 'get_implementation', {});
+    const { implementation } = await proxyTokenContract.call('get_implementation', {});
     expect(implementation).to.equal(BigInt(tokenContractB.address));
   });
 

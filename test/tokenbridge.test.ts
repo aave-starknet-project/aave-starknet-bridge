@@ -370,8 +370,8 @@ describe('TokenBridge', async function() {
     expect(await proxiedL2TokenUsdc.call('get_last_update', {})).to.deep.equal({ block_number: BigInt(blockNumberUsdc) });
 
     // check balance of L2 tokens
-    expect(await proxiedL2TokenDai.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  30n } });
-    expect(await proxiedL2TokenUsdc.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  40n } });
+    expect(await proxiedL2TokenDai.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  10n } });
+    expect(await proxiedL2TokenUsdc.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  15n } });
   })
 
   it('L2 users sends back reward accrued to L1 user', async () => {

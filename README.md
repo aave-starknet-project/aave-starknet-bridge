@@ -53,13 +53,21 @@ ETHStaticATokens are an implementation of the wrapped aTokens that will continuo
 
 ## Bridging staticATokens from L1<>L2
 
-- To deposit: 
+- Transfer L1->L2: 
 
 Users can either bridge their staticAToken to L2 by calling `deposit()` on `TokenBridge`, or deposit the underlying asset of the staticAToken directly by calling the `depositUnderlying()`.
 
-- To withdraw:
+Calling `deposit` will result in the following:
 
-To bridge their staticATokens back to L1, users need to call the `initiate_withdraw` on L2 `token_bridge`. 
+- staticATokens will be transfered from the user account to the L1 bridge
+- A `deposit` event will be emitted with the L1 token address, the recipient address on L2, and the amount
+- A message will be sent to the  L2 bridge with the amount to be transferred, the L1 token address and the recipient address as parameters.
+- The token bridge on L2 will then be minting the correspending ETHStaticAToken of the L1 token to the user.
+
+
+- Transfer L2->L1:
+
+To bridge their staticATokens back to L1, users need to call `initiate_withdraw` on L2 `token_bridge`. 
 
  
 

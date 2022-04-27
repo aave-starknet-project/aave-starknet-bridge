@@ -8,7 +8,7 @@ export async function initStaticATokenProxy(implementationAddress : string, l1to
     const iface = new ethers.utils.Interface(ABI);
     const l1tokenInitData = iface.encodeFunctionData("initialize", initArgs);
     await l1tokenProxy.initialize(implementationAddress, l1tokenInitData);
-    const l1token = await ethers.getContractAt("StaticATokenLMNew", l1tokenProxy.address);
+    const l1token = await ethers.getContractAt("StaticATokenLM", l1tokenProxy.address);
     await l1token.deployed();
 
     return l1token;

@@ -161,7 +161,7 @@ describe('TokenBridge', async function() {
     tokenBridgeL1Proxy = await ProxyBridgeFactory.deploy();
     await tokenBridgeL1Proxy.deployed();
 
-    L1StaticATokenFactory = await ethers.getContractFactory('StaticATokenLMNew', signer);
+    L1StaticATokenFactory = await ethers.getContractFactory('StaticATokenLM', signer);
     ProxyTokenFactory = await ethers.getContractFactory("ProxyToken", signer);
 
     l1tokenDaiImplementation = await L1StaticATokenFactory.deploy();

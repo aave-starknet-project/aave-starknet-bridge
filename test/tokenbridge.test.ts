@@ -164,10 +164,10 @@ describe('TokenBridge', async function() {
     L1StaticATokenFactory = await ethers.getContractFactory('StaticATokenLM', signer);
     ProxyTokenFactory = await ethers.getContractFactory("ProxyToken", signer);
 
-    l1tokenDaiImplementation = await L1StaticATokenFactory.deploy();
+    l1tokenDaiImplementation = await L1StaticATokenFactory.deploy(tokenBridgeL1Proxy.address);
     l1tokenDaiProxy = await ProxyTokenFactory.deploy(proxyAdmin.address);
 
-    l1tokenUsdcImplementation = await L1StaticATokenFactory.deploy();
+    l1tokenUsdcImplementation = await L1StaticATokenFactory.deploy(tokenBridgeL1Proxy.address);
     l1tokenUsdcProxy = await ProxyTokenFactory.deploy(proxyAdmin.address);
 
   });

@@ -198,8 +198,8 @@ contract TokenBridge is
         onlyValidL2Address(l2Recipient)
         external
     {
-        amount = l1Token.deposit(msg.sender, amount, refferalCode, fromAsset);
-        deposit(l1Token, l2Recipient, amount);
+        amount = l1Token.deposit(address(this), amount, refferalCode, fromAsset);
+        sendMessage(l1Token, l2Recipient, amount);
     }
 }
     function withdrawUnderlying(

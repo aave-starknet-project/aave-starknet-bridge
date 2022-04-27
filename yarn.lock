@@ -534,10 +534,10 @@
   resolved "https://registry.yarnpkg.com/@joriksch/fossil/-/fossil-0.0.1.tgz#1d95dfdb739f39eeb362f55ea742dbf3336a6d6f"
   integrity sha512-MO3ScoGHllFH4+BKrWHkmZBkONc+2/7J1qiHHBOVcquwcs08aCNLHhvzrpgY2wh+9oh1jVoUwS3V+zN3Nmb8Ug==
 
-"@joriksch/oz-cairo@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@joriksch/oz-cairo/-/oz-cairo-1.0.0.tgz#eb840636444edd49e61e15304edac4be30a5cac4"
-  integrity sha512-Xu5/jHAyzItUeylW1tyl+0cp+VozsDIm1GnIZDveVJIt9HLJ/7cmf04Uh/KPwl28qjf0TooyL3otLoimeT4C1g==
+"@joriksch/oz-cairo@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@joriksch/oz-cairo/-/oz-cairo-1.0.1.tgz#660d7fc9ccfb78d4a77354ff8a43150cc6a14899"
+  integrity sha512-UhDE9gCiUKtz2ryrr9a8hA24ivFdBy5cdlI4BcmRmhpRChCdfaPjI6w2xdiDwxCh/ZhC/Ij9EnG1CMLqOd5g0w==
 
 "@joriksch/sg-contracts@^0.0.2":
   version "0.0.2"
@@ -697,10 +697,10 @@
     "@sentry/types" "5.30.0"
     tslib "^1.9.3"
 
-"@shardlabs/starknet-hardhat-plugin@^0.5.2":
-  version "0.5.2"
-  resolved "https://registry.yarnpkg.com/@shardlabs/starknet-hardhat-plugin/-/starknet-hardhat-plugin-0.5.2.tgz#c0173c8a0e18cf7c24939b761abcab3953d82f49"
-  integrity sha512-vHIbAAH69gmO3r3xB4en8W7UcTryFLfX6KV2xdxsji6ISPhYOn7wPQpymDI7GJ3uHOAjcedrlYK0goCpDkLAaA==
+"@shardlabs/starknet-hardhat-plugin@^0.5.3":
+  version "0.5.3"
+  resolved "https://registry.yarnpkg.com/@shardlabs/starknet-hardhat-plugin/-/starknet-hardhat-plugin-0.5.3.tgz#b0308f31d9e255839f08bca166ab1eafdb037d91"
+  integrity sha512-4R3Oi0ew5cWNUcwToyi5z8CIWWmlQXJFm7B2DVc7oU6Ttc9ARmaUd5BGY4GRbGAxWoKanOwG4OkmKvEJ9yB4mw==
   dependencies:
     "@nomiclabs/hardhat-docker" "^2.0.2"
     axios "^0.24.0"
@@ -4125,10 +4125,10 @@ har-validator@~5.1.3:
     ajv "^6.12.3"
     har-schema "^2.0.0"
 
-hardhat@2.9.2:
-  version "2.9.2"
-  resolved "https://registry.yarnpkg.com/hardhat/-/hardhat-2.9.2.tgz#123f3fed6810ef8637b127b73ca44bb9c9efc249"
-  integrity sha512-elTcUK1EdFverWinybQ+DoJzsM6sgiHUYs0ZYNNXMfESty6ESHiFSwkfJsC88/q09vmIz6YVaMh73BYnYd+feQ==
+hardhat@2.9.3:
+  version "2.9.3"
+  resolved "https://registry.yarnpkg.com/hardhat/-/hardhat-2.9.3.tgz#4759dc3c468c7d15f34334ca1be7d59b04e47b1e"
+  integrity sha512-7Vw99RbYbMZ15UzegOR/nqIYIqddZXvLwJGaX5sX4G5bydILnbjmDU6g3jMKJSiArEixS3vHAEaOs5CW1JQ3hg==
   dependencies:
     "@ethereumjs/block" "^3.6.0"
     "@ethereumjs/blockchain" "^5.5.0"

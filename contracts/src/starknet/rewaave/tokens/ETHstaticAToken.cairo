@@ -4,6 +4,7 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.uint256 import Uint256, uint256_le
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.math_cmp import is_le
+from starkware.cairo.common.bool import TRUE
 
 from openzeppelin.token.erc20.library import (
     ERC20_name,
@@ -23,8 +24,6 @@ from openzeppelin.token.erc20.library import (
 )
 
 from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner, Ownable_get_owner
-
-from openzeppelin.utils.constants import TRUE
 
 from rewaave.tokens.claimable import (
     claimable_claim_rewards,
@@ -51,24 +50,6 @@ func set_l2_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
 ):
     Ownable_only_owner()
     l2_token_bridge.write(l2_token_bridge_)
-    return ()
-end
-
-@constructor
-func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    name : felt,
-    symbol : felt,
-    decimals : felt,
-    initial_supply : Uint256,
-    recipient : felt,
-    controller : felt,
-):
-    ERC20_initializer(name, symbol, decimals)
-    ERC20_mint(recipient, initial_supply)
-    Ownable_initializer(controller)
-    # TODO we either need to configure the last_update here, or pause the contract
-    # until the first update somehow.
-    # Actually we can just rely on the first bridger to give us the right rewards!
     return ()
 end
 
@@ -135,6 +116,31 @@ end
 #
 # Externals
 #
+
+@external
+func initialize_ETHstaticAToken{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    name : felt,
+    symbol : felt,
+    decimals : felt,
+    initial_supply : Uint256,
+    recipient : felt,
+    controller : felt,
+):
+    let (name_) = ERC20_name()
+    let (symbol_) = ERC20_symbol()
+    let (decimals_) = ERC20_decimals()
+
+    with_attr error_message("ETHstaticAToken already initialized"):
+        assert name_ = 0
+        assert symbol_ = 0
+        assert decimals_ = 0
+    end
+
+    ERC20_initializer(name, symbol, decimals)
+    ERC20_mint(recipient, initial_supply)
+    Ownable_initializer(controller)
+    return ()
+end
 
 @external
 func transfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(

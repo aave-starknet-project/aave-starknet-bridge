@@ -51,4 +51,14 @@ namespace IETHstaticAToken:
 
     func push_acc_rewards_per_token(block : felt, acc_rewards_per_token : Uint256):
     end
+
+    func initialize_ETHstaticAToken(
+        name : felt,
+        symbol : felt,
+        decimals : felt,
+        initial_supply : Uint256,
+        recipient : felt,
+        controller : felt,
+    ):
+    end
 end

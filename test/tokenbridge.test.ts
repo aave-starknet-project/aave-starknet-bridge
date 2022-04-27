@@ -374,7 +374,7 @@ describe('TokenBridge', async function() {
     expect(await proxiedL2TokenUsdc.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  15n } });
   })
 
-  it('L2 users sends back reward accrued to L1 user', async () => {
+  it('L2 user sends back reward accrued to L1 user', async () => {
     // Give TokenBridge 1000 reward tokens
     await rewAaveTokenL1.connect(l1user).approve(tokenBridgeL1Proxied.address, MAX_UINT256);
     await rewAaveTokenL1.transfer(tokenBridgeL1Proxied.address, 1000);

@@ -16,8 +16,8 @@ contract TokenBridge is
     ProxySupport
 {
     event LogDeposit(address sender, address token, uint256 amount, uint256 l2Recipient);
-    event LogWithdrawal(address token, address recipient, uint256 amount);
-    event LogBridgeReward(address recipient, uint256 amount);
+    event LogWithdrawal(address token, uint256 l2sender, address recipient, uint256 amount);
+    event LogBridgeReward(uint256 l2sender, address recipient, uint256 amount);
     event LogBridgeAdded(address l1Token, uint256 l2Token);
 
     mapping(address => uint256) public l1TokentoL2Token;
@@ -113,19 +113,20 @@ contract TokenBridge is
         (approvedL1Tokens[idx2], approvedL1Tokens[idx1]);
     }
 
-    function sendMessage(address l1Token, uint256 l2Recipient, uint256 amount)
+    function sendMessage(address l1Token, address from, uint256 l2Recipient, uint256 amount)
         internal
         isApprovedToken(l1Token)
         isValidL2Address(l2Recipient)
     {
-        emit LogDeposit(msg.sender, l1Token, amount, l2Recipient);
+        emit LogDeposit(from, l1Token, amount, l2Recipient);
 
         uint256 l2TokenAddress = l1TokentoL2Token[l1Token];
 
-        uint256[] memory payload = new uint256[](4);
-        payload[0] = l2Recipient;
-        payload[1] = l2TokenAddress;
-        (payload[2], payload[3]) = toSplitUint(amount);
+        uint256[] memory payload = new uint256[](5);
+        payload[0] = uint256(from);
+        payload[1] = l2Recipient;
+        payload[2] = l2TokenAddress;
+        (payload[3], payload[4]) = toSplitUint(amount);
 
         messagingContract.sendMessageToL2(l2TokenBridge, DEPOSIT_HANDLER, payload);
     }
@@ -144,14 +145,15 @@ contract TokenBridge is
       messagingContract.sendMessageToL2(l2TokenBridge, REWARDS_UPDATE_HANDLER, payload);
     }
 
-    function consumeMessage(address l1Token, address recipient, uint256 amount) internal {
-        emit LogWithdrawal(l1Token, recipient, amount);
+    function consumeMessage(address l1Token, uint256 l2sender, address recipient, uint256 amount) internal {
+        emit LogWithdrawal(l1Token, l2sender, recipient, amount);
 
-        uint256[] memory payload = new uint256[](5);
+        uint256[] memory payload = new uint256[](6);
         payload[0] = TRANSFER_FROM_STARKNET;
         payload[1] = uint256(l1Token);
-        payload[2] = uint256(recipient);
-        (payload[3], payload[4]) = toSplitUint(amount);
+        payload[2] = l2sender;
+        payload[3] = uint256(recipient);
+        (payload[4], payload[5]) = toSplitUint(amount);
 
         // Consume the message from the StarkNet core contract.
         // This will revert the (Ethereum) transaction if the message does not exist.
@@ -161,31 +163,32 @@ contract TokenBridge is
     function deposit(address l1Token_, uint256 l2Recipient, uint256 amount) isApprovedToken(l1Token_) external {
         IStaticATokenLM l1Token = IStaticATokenLM(l1Token_);
         l1Token.transferFrom(msg.sender, address(this), amount);
-        sendMessage(l1Token_, l2Recipient, amount);
+        sendMessage(l1Token_, msg.sender, l2Recipient, amount);
     }
 
-    function withdraw(address l1Token_, address recipient, uint256 amount) isApprovedToken(l1Token_) external {
-        consumeMessage(l1Token_, recipient, amount);
+    function withdraw(address l1Token_, uint256 l2sender, address recipient, uint256 amount) isApprovedToken(l1Token_) external {
+        consumeMessage(l1Token_, l2sender, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
         IStaticATokenLM l1Token = IStaticATokenLM(l1Token_);
         require(l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender), "UNDERFLOW");
         l1Token.transfer(recipient, amount);
     }
 
-     function consumeBridgeRewardMessage(address recipient, uint256 amount) internal {
-        emit LogBridgeReward(recipient, amount);
+     function consumeBridgeRewardMessage(uint256 l2sender, address recipient, uint256 amount) internal {
+        emit LogBridgeReward(l2sender, recipient, amount);
 
-        uint256[] memory payload = new uint256[](4);
+        uint256[] memory payload = new uint256[](5);
         payload[0] = BRIDGE_REWARD_MESSAGE;
-        payload[1] = uint256(recipient);
-        payload[2] = amount & (UINT256_PART_SIZE - 1);
-        payload[3] = amount >> UINT256_PART_SIZE_BITS;
+        payload[1] = l2sender;
+        payload[2] = uint256(recipient);
+        payload[3] = amount & (UINT256_PART_SIZE - 1);
+        payload[4] = amount >> UINT256_PART_SIZE_BITS;
 
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
 
-    function receiveRewards(address recipient, uint256 amount) external {
-        consumeBridgeRewardMessage(recipient, amount);
+    function receiveRewards(uint256 l2sender, address recipient, uint256 amount) external {
+        consumeBridgeRewardMessage(l2sender, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
 
         address self = address(this);

@@ -349,9 +349,9 @@ describe('TokenBridge', async function() {
     expect(flushL2Messages).to.have.a.lengthOf(2);
 
     // actually withdraw tokens
-    txDai = await tokenBridgeL1Proxied.connect(l1user).withdraw(l1tokenDai.address, l1user.address, 20);
+    txDai = await tokenBridgeL1Proxied.connect(l1user).withdraw(l1tokenDai.address, l2user.starknetContract.address, l1user.address, 20);
     blockNumberDai = txDai.blockNumber;
-    txUsdc = await tokenBridgeL1Proxied.connect(l1user).withdraw(l1tokenUsdc.address, l1user.address, 25);
+    txUsdc = await tokenBridgeL1Proxied.connect(l1user).withdraw(l1tokenUsdc.address, l2user.starknetContract.address, l1user.address, 25);
     blockNumberUsdc = txUsdc.blockNumber;
 
     // check that tokens have been transfered to l1user
@@ -390,7 +390,7 @@ describe('TokenBridge', async function() {
     expect(flushL2Messages).to.have.a.lengthOf(1);
 
     // call recieveRewards on L1 to consume messages from L2
-    await tokenBridgeL1Proxied.connect(l1user).receiveRewards(l1user.address, 30);
+    await tokenBridgeL1Proxied.connect(l1user).receiveRewards(l2user.starknetContract.address, l1user.address, 30);
 
     // check that the l1 user received reward tokens
     expect(await rewAaveTokenL1.balanceOf(l1user.address)).to.be.equal(30);

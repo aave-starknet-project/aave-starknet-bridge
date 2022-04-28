@@ -47,7 +47,7 @@ func minted_rewards(l2_reward_token : felt, account : felt, amount : Uint256):
 end
 
 @event
-func bridged_rewards(l1_recipient : felt, amount : Uint256):
+func bridged_rewards(caller : felt, l1_recipient : felt, amount : Uint256):
 end
 
 # Getters.
@@ -223,7 +223,7 @@ func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     assert message_payload[3] = amount.high
 
     send_message_to_l1(to_address=to_address, payload_size=4, payload=message_payload)
-    bridged_rewards.emit(l1_recipient, amount)
+    bridged_rewards.emit(token_owner, l1_recipient, amount)
 
     return ()
 end

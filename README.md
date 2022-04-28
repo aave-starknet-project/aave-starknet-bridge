@@ -17,6 +17,7 @@ For Aave, one of the main current and future goals is growth of liquidity and us
 
 As a rollup/execution layer, one of the main goals for Starknet in the medium term is more user acquisition, and that comes with use cases in the network; in this case being able to deposit on Aave Ethereum to earn high yield, without the Aave Ethereum high transaction costs.
 
+
 Both previous points show that having an initial phase on the Aave <> Starknet integration allowing deposit/withdrawal on Aave Ethereum by exclusively transacting on Starknet can be a good idea, target-wise.
 
 The bridge allows users to deposit and withdraw `staticATokens` - wrappers converting balance-increasing [aTokens]( https://docs.aave.com/developers/tokens/atoken) into exchange-rate-increasing staticATokens - on StarkNet and get wrapped tokens `ETHStaticATokens` that allow users to keep enjoying the same rewards as on L1. 
@@ -25,19 +26,19 @@ The bridge was also shaped for liquidity providers who are able to assume Ethere
 
 ## Architecture
 
+![aave_bridge_4](https://user-images.githubusercontent.com/37840702/165781734-547604a3-99cc-4661-b695-589197e2e916.png)
 
-![bridge_aave_v3](https://user-images.githubusercontent.com/37840702/164996342-d6deb978-e850-401f-8fb1-f91a11474784.png)
 
 ## Contracts
 
 `L1`
-  * `StaticATokenLMNew` - an updated implementation of staticATokens which makes it possible to update its respective L2 token by sending the latest `accRewardsPerToken` on token transfer or when explicitly triggered to do so.
-  *  `TokenBridge` -  handles rewards update, deposit & withdrawal of staticATokens 
+  * `StaticATokenLMNew` - an updated implementation of staticATokens which makes it possible to communicate with its respective L2 token by sending the latest `accRewardsPerToken` on token transfer or when explicitly triggered to do so.
+  *  `TokenBridge` -  handles rewards update, deposit & withdrawal of staticATokens & their underlying assets
   *  `Proxy` - A proxy implementation 
 
 `L2`
   * `ETHStaticAToken` - Tokens on Starknet equivalent to each staticAToken on Ethereum mainnet. Contains the same logic for tracking user rewards as staticATokens and has the same `_accRewardsPerToken`.
-  * `claimable` - tracks users' pending rewards and tracks each user `_accRewardsPerToken`
+  * `claimable` - tracks users' claimable rewards and current reward index for each `ETHStaticAToken`
   * `token_bridge` - is responsible for:
     * bridging the staticATokens to and from L2. Minting and burning ETHStaticATokens on message from L1. 
     * bridging rewAAVE token back to L1
@@ -67,8 +68,13 @@ Calling `deposit` will result in the following:
 
 - Transfer L2->L1:
 
-To bridge their staticATokens back to L1, users need to call `initiate_withdraw` on L2 `token_bridge`. 
+To bridge their staticATokens back to L1, users need to call `initiate_withdraw()` on L2 `token_bridge`. 
 
+Calling `initiate_withdraw` will result in the following:
+
+- The amount withdraw of ETHStaticAToken will be burned by the bridge
+- A message will be sent to L1 with the L1 token address, the l1 recipient, and the amount
+(@TODO: add more info on how we bridge the current rewards index when withdrawing..)
  
 
 
@@ -171,12 +177,6 @@ Then load all the environment variables
 ```bash
 source .evn/*
 ```
-To enable lite mode
-
-```bash
-starknet-devnet --lite-mode
-```
-
 
 Then start the testnets. It's wise to do this in two separate shells.
 

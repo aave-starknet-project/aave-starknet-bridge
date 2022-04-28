@@ -32,17 +32,17 @@ The bridge was also shaped for liquidity providers who are able to assume Ethere
 ## Contracts
 
 `L1`
-  * `StaticATokenLMNew` - an updated implementation of staticATokens which makes it possible to communicate with its respective L2 token by sending the latest `accRewardsPerToken` on token transfer or when explicitly triggered to do so.
+  * `StaticATokenLMNew` - an updated implementation of staticATokens which makes it possible to communicate with its respective L2 token by sending the latest `rewards_index` on token transfer or when explicitly triggered to do so.
   *  `TokenBridge` -  handles rewards update, deposit & withdrawal of staticATokens & their underlying assets
   *  `Proxy` - A proxy implementation 
 
 `L2`
-  * `ETHStaticAToken` - Tokens on Starknet equivalent to each staticAToken on Ethereum mainnet. Contains the same logic for tracking user rewards as staticATokens and has the same `_accRewardsPerToken`.
+  * `ETHStaticAToken` - Tokens on Starknet equivalent to each staticAToken on Ethereum mainnet. Contains the same logic for tracking user rewards as staticATokens and has the same `rewards_index`.
   * `claimable` - tracks users' claimable rewards and current reward index for each `ETHStaticAToken`
   * `token_bridge` - is responsible for:
     * bridging the staticATokens to and from L2. Minting and burning ETHStaticATokens on message from L1. 
     * bridging rewAAVE token back to L1
-    * updating `_accRewardsPerToken` for each ETHStaticAToken on message from L1 
+    * updating `rewards_index` for each ETHStaticAToken on message from L1 
   * `rewAAVE` - a very basic ERC20 to represent the rewards on L2
   *  `proxy` - a generic implementation of a proxy in starknet
 
@@ -50,13 +50,13 @@ The bridge was also shaped for liquidity providers who are able to assume Ethere
 
 Natively, on Aave aTokens grow in balance, not in value. To be able to create this kind of model, it is important to wrap them before bridging, converting them in a token that grows in value, not in balance.
 
-ETHStaticATokens are an implementation of the wrapped aTokens that will continuously increase in value on Starknet because they are backed by the increasing StaticATokens amounts locked in the bridge contract on Ethereum. The ETHStaticATokens can then be converted back to staticATokens + rewards.
+ETHStaticATokens are an implementation of the wrapped aTokens that will continuously increase in value on Starknet because they are backed by the increasing staticATokens amounts locked in the bridge contract on Ethereum. The ETHStaticATokens can then be converted back to staticATokens + rewards.
 
 ## Bridging staticATokens from L1<>L2
 
 - Transfer L1->L2: 
 
-Users can either bridge their staticAToken to L2 by calling `deposit()` on `TokenBridge`, or deposit the underlying asset of the staticAToken directly by calling the `depositUnderlying()`.
+Users can either bridge their staticAToken to L2 by calling `deposit()` on `TokenBridge`, or deposit the underlying asset of the staticAToken directly by calling `depositUnderlying()`.
 
 Calling `deposit` will result in the following:
 
@@ -68,30 +68,31 @@ Calling `deposit` will result in the following:
 
 - Transfer L2->L1:
 
-To bridge their staticATokens back to L1, users need to call `initiate_withdraw()` on L2 `token_bridge`. 
+To bridge their staticATokens back to L1, users need to call `initiate_withdraw()` on Starknet `token_bridge`. 
 
 Calling `initiate_withdraw` will result in the following:
 
 - The amount withdraw of ETHStaticAToken will be burned by the bridge
 - A message will be sent to L1 with the L1 token address, the l1 recipient, and the amount
+
 (@TODO: add more info on how we bridge the current rewards index when withdrawing..)
  
 
 
 ## Synchronisation of rewards on L1 <> L2
 
-The challenge here was to allow users to continue enjoying the same rewards as on L1 by continously updating -whenever is possible- the `acc_rewards_per_token` of all ETHStaticATokens to match the value of their respective StaticATokens on L1. To achieve that, we have updated the `_beforeBeforeTokenTransfer()` function on the new implementation of staticATokens (`StaticATokensLMNew.sol`) to send a message (through the bridge) with the latest `acc_rew_per_token` value. 
-We update the `acc_rewards_per_token` on each ETHStaticAToken by calling `push_acc_rewards_per_token`, and
-the tracking of rewards is ensured by `claimable.cairo`.
+The challenge here was to allow users to continue enjoying the same rewards as on L1 by continously updating -whenever is possible- the `rewards_index` of all ETHStaticATokens to match the value of their respective StaticATokens on L1. To achieve that, we have updated the `_beforeBeforeTokenTransfer()` function on the new implementation of staticATokens (`StaticATokensLMNew.sol`) to send a message (through the bridge) with the latest `reward_index` value. 
+We update the `rewards_index` on each ETHStaticAToken by calling `push_rewards_index`, and
+the tracking of all unclaimed/pending rewards is ensured by `claimable`.
 
 ## Claiming rewards on L2
 
 
-To claim rewards users need to call `claim_rewards` on ETHStaticAToken contract. The ETHStaticAToken will then be calling the bridge to mint the due `rewAAVE` tokens to the user.
+To claim rewards users need to call `claim_rewards()` on ETHStaticAToken contract. The ETHStaticAToken will then be calling the bridge to mint the due `rewAAVE` tokens to the user.
 
 ## Bridging rewards from L2->L1
 
-To bridge their rewards to L1, users will have to call `bridge_rewards` on the L2 `token_bridge` providing the `amount` to be bridged. The L1 bridge will be claiming pending rewards to self from all staticATokens in a loop until having enough rewards balance to transfer it to users. The claiming ans transferring of rewards is handled by `receiveRewards()` on `TokenBridge.sol`
+To bridge their rewards to L1, users will have to call `bridge_rewards()` on the L2 `token_bridge` providing the `amount` to be bridged. The L1 bridge will be claiming pending rewards to self from all staticATokens in a loop until having enough rewards balance to transfer it to users. The claiming ans transferring of rewards is handled by `receiveRewards()` on `TokenBridge.sol`
 
 
 ## Proxies

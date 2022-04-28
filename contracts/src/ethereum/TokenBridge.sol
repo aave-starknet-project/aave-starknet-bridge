@@ -201,7 +201,7 @@ contract TokenBridge is
         }
 
         for (uint256 i = 0; i < approvedL1Tokens.length; ++i) {
-            IStaticATokenLM(approvedL1Tokens[i]).claimRewardsToSelf(true);
+            IStaticATokenLM(approvedL1Tokens[i]).claimRewardsToSelf();
 
             rewardBalance = rewardToken.balanceOf(self);
 

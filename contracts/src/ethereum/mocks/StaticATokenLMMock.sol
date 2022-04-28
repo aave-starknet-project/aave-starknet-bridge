@@ -5,5 +5,5 @@ pragma experimental ABIEncoderV2;
 import {StaticATokenLM} from "@swp0x0/protocol-v2/contracts/protocol/tokenization/StaticATokenLM.sol";
 
 contract StaticATokenLMMock is StaticATokenLM {
-    constructor(address l1TokenBridge) public StaticATokenLM(l1TokenBridge) {}
+    constructor() public StaticATokenLM() {}
 }

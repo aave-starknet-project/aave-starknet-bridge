@@ -1,6 +1,4 @@
 
-
-
 # AAVE Starknet Bridge
 
 [![Tests](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/ci.yml)
@@ -26,8 +24,7 @@ The bridge was also shaped for liquidity providers who are able to assume Ethere
 
 ## Architecture
 
-![aave_bridge_4](https://user-images.githubusercontent.com/37840702/165781734-547604a3-99cc-4661-b695-589197e2e916.png)
-
+![aave_bridge_5](https://user-images.githubusercontent.com/37840702/165796331-f587b34c-74a4-4954-a05c-bf55705963d6.png)
 
 ## Contracts
 

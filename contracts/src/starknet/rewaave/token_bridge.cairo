@@ -39,7 +39,7 @@ func withdraw_initiated(l2_token : felt, l1_recipient : felt, amount : Uint256, 
 end
 
 @event
-func deposit_handled(l2_token : felt, account : felt, amount : Uint256):
+func deposit_handled(l2_token : felt, l1_sender : felt, account : felt, amount : Uint256):
 end
 
 @event
@@ -47,7 +47,7 @@ func minted_rewards(l2_reward_token : felt, account : felt, amount : Uint256):
 end
 
 @event
-func bridged_rewards(l2_token : felt, acocunt : felt, amount : Uint256):
+func bridged_rewards(caller : felt, l1_recipient : felt, amount : Uint256):
 end
 
 # Getters.
@@ -193,24 +193,21 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     let (message_payload : felt*) = alloc()
     assert message_payload[0] = WITHDRAW_MESSAGE
     assert message_payload[1] = l1_token
-    assert message_payload[2] = l1_recipient
-    assert message_payload[3] = amount.low
-    assert message_payload[4] = amount.high
+    assert message_payload[2] = caller_address
+    assert message_payload[3] = l1_recipient
+    assert message_payload[4] = amount.low
+    assert message_payload[5] = amount.high
 
-    send_message_to_l1(to_address=to_address, payload_size=5, payload=message_payload)
+    send_message_to_l1(to_address=to_address, payload_size=6, payload=message_payload)
     withdraw_initiated.emit(l2_token, l1_recipient, amount, caller_address)
     return ()
 end
 
 @external
 func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    l2_token : felt, l1_recipient : felt, amount : Uint256
+    l1_recipient : felt, amount : Uint256
 ):
     let (to_address) = get_l1_token_bridge()
-
-    is_token(l2_token)
-
-    let (l1_token) = l2_token_to_l1_token.read(l2_token)
 
     let (token_owner) = get_caller_address()
 
@@ -222,13 +219,13 @@ func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     # Send message for bridging tokens
     let (message_payload : felt*) = alloc()
     assert message_payload[0] = BRIDGE_REWARD_MESSAGE
-    assert message_payload[1] = l1_token
+    assert message_payload[1] = token_owner
     assert message_payload[2] = l1_recipient
     assert message_payload[3] = amount.low
     assert message_payload[4] = amount.high
 
     send_message_to_l1(to_address=to_address, payload_size=5, payload=message_payload)
-    bridged_rewards.emit(l2_token, l1_recipient, amount)
+    bridged_rewards.emit(token_owner, l1_recipient, amount)
 
     return ()
 end
@@ -236,6 +233,7 @@ end
 @l1_handler
 func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     from_address : felt,
+    l1_sender : felt,
     l2_recipient : felt,
     l2_token_address : felt,
     amount_low : felt,
@@ -253,7 +251,7 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     # Call mint on l2_token contract.
 
     IERC20.mint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
-    deposit_handled.emit(l2_token_address, l2_recipient, amount)
+    deposit_handled.emit(l2_token_address, l1_sender, l2_recipient, amount)
     return ()
 end
 

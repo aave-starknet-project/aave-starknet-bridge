@@ -130,6 +130,8 @@ describe('TokenBridge', async function() {
     l2tokenDai = await L2TokenFactory.deploy();
     l2tokenUsdc = await L2TokenFactory.deploy();
 
+    // L1 deployments
+
     [signer, l1user, proxyAdmin] = await ethers.getSigners();
 
     pool = await ethers.getContractAt("LendingPool", LENDING_POOL)
@@ -172,7 +174,7 @@ describe('TokenBridge', async function() {
 
   });
 
-  it('set L2  implementation contracts', async () => {
+  it('set L2 implementation contracts', async () => {
     {
       await l2user.invoke(proxyL2TokenDai, 'initialize_proxy', {implementation_address: BigInt(l2tokenDai.address)});
       const { implementation } = await proxyL2TokenDai.call('get_implementation', {});
@@ -195,7 +197,7 @@ describe('TokenBridge', async function() {
     }
   })
 
-  it('initialise L2 ETHStaticATokens', async () => {
+  it('initialize L2 ETHStaticATokens', async () => {
     await l2user.invoke(proxiedL2TokenDai, 'initialize_ETHstaticAToken', {
           name: 1234n,
           symbol: 123n,

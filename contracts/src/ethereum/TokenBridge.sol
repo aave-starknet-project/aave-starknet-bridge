@@ -59,9 +59,13 @@ contract TokenBridge is
 
     function processSubContractAddresses(bytes calldata subContractAddresses) internal override {}
 
+    function isValidFelt(uint256 felt) internal returns (bool) {
+        return (felt != 0) && (felt < CairoConstants.FIELD_PRIME);
+    }
+
     modifier isApprovedToken(address token) {
         uint256 l2TokenAddress = l1TokentoL2Token[token];
-        require((l2TokenAddress != 0) && (l2TokenAddress < CairoConstants.FIELD_PRIME), "L2_TOKEN_HAS_NOT_BEEN_APPROVED");
+        require(isValidFelt(l2TokenAddress), "L2_TOKEN_HAS_NOT_BEEN_APPROVED");
         _;
     }
 
@@ -133,16 +137,17 @@ contract TokenBridge is
 
     function sendMessageStaticAToken(address l1Token, uint256 accRewards) 
         external
-        isApprovedToken(l1Token)
     {
       uint256 l2Token = l1TokentoL2Token[l1Token];
 
-      uint256[] memory payload = new uint256[](4);
-      payload[0] = block.number;
-      payload[1] = l2Token;
-      (payload[2], payload[3]) = toSplitUint(accRewards);
+      if (isValidFelt(l2Token)) {
+        uint256[] memory payload = new uint256[](4);
+        payload[0] = block.number;
+        payload[1] = l2Token;
+        (payload[2], payload[3]) = toSplitUint(accRewards);
 
-      messagingContract.sendMessageToL2(l2TokenBridge, REWARDS_UPDATE_HANDLER, payload);
+        messagingContract.sendMessageToL2(l2TokenBridge, REWARDS_UPDATE_HANDLER, payload);
+      }
     }
 
     function consumeMessage(address l1Token, uint256 l2sender, address recipient, uint256 amount) internal {

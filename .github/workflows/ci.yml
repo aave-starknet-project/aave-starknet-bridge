@@ -38,7 +38,7 @@ jobs:
           make
 
       - name: Static analysis
-        run: slither .
+        run: .venv/bin/slither .
 
       - name: Lint
         run: |

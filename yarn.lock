@@ -529,11 +529,6 @@
     "@ethersproject/properties" "^5.6.0"
     "@ethersproject/strings" "^5.6.0"
 
-"@joriksch/fossil@^0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@joriksch/fossil/-/fossil-0.0.1.tgz#1d95dfdb739f39eeb362f55ea742dbf3336a6d6f"
-  integrity sha512-MO3ScoGHllFH4+BKrWHkmZBkONc+2/7J1qiHHBOVcquwcs08aCNLHhvzrpgY2wh+9oh1jVoUwS3V+zN3Nmb8Ug==
-
 "@joriksch/oz-cairo@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@joriksch/oz-cairo/-/oz-cairo-1.0.1.tgz#660d7fc9ccfb78d4a77354ff8a43150cc6a14899"
@@ -719,10 +714,10 @@
   dependencies:
     antlr4ts "^0.5.0-alpha.4"
 
-"@swp0x0/protocol-v2@^1.0.3":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@swp0x0/protocol-v2/-/protocol-v2-1.0.3.tgz#7ae52b2827327a8d3da2c84e4d3e3dda87e57ebc"
-  integrity sha512-Y9ryxhnXFFb40308Im+xkdJYAXoAHNzxG17hko/sEEqNZPzo/DyAc4Vx8GaTkSXprHeCrVBWeH+jQBrznhCT2A==
+"@swp0x0/protocol-v2@^1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@swp0x0/protocol-v2/-/protocol-v2-1.0.4.tgz#786f093878f8e02ed342339aca757c130e01977e"
+  integrity sha512-Wz5/UDnZLpAHTmCS5nxmpZGiMt1UUjkmnYE/JlhWLNL3qlFlBeMwKmNFaogiZIhf3pdBuImQ2TtwmiMVbOafRQ==
   dependencies:
     axios-curlirize "^1.3.7"
     tmp-promise "^3.0.2"

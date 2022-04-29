@@ -6,11 +6,6 @@ import {
 } from "hardhat/types";
 import fs from "fs";
 
-/*
-  deploys and initializes ETHStaticAToken on L2
-* @param   
-*/
-
 /**
  * deploys and initializes ETHStaticAToken on L2
  * @param deployer the deployer starknet account
@@ -68,6 +63,38 @@ export async function deployETHStaticAToken(
     recipient: recipient,
     controller: controller,
   });
+}
+
+export async function deployL2RewAaveToken(
+  name: string,
+  symbol: string,
+  decimals: bigint,
+  initial_supply: { low: bigint; high: bigint },
+  recipient: bigint,
+  owner: bigint
+) {
+  let rewAaveTokenL2: StarknetContract;
+  const rewAaveContractFactory = await starknet.getContractFactory("rewAAVE");
+
+  console.log("deploying rewAAVE token on L2...");
+  rewAaveTokenL2 = await rewAaveContractFactory.deploy({
+    name: stringToBigInt(name),
+    symbol: stringToBigInt(symbol),
+    decimals: decimals,
+    initial_supply: initial_supply,
+    recipient: recipient,
+    owner: owner,
+  });
+
+  fs.writeFileSync(
+    `deployment/${name}.json`,
+    JSON.stringify({
+      token: name,
+      address: rewAaveTokenL2.address,
+    })
+  );
+
+  return rewAaveTokenL2;
 }
 
 function stringToBigInt(str: string) {

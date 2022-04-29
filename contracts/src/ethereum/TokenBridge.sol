@@ -135,10 +135,10 @@ contract TokenBridge is
         messagingContract.sendMessageToL2(l2TokenBridge, DEPOSIT_HANDLER, payload);
     }
 
-    function sendMessageStaticAToken(address l1Token, uint256 rewardsIndex)
+    function sendMessageStaticAToken(uint256 rewardsIndex)
         external
     {
-      uint256 l2Token = l1TokentoL2Token[l1Token];
+      uint256 l2Token = l1TokentoL2Token[msg.sender];
 
       if (isValidL2Address(l2Token)) {
         uint256[] memory payload = new uint256[](4);

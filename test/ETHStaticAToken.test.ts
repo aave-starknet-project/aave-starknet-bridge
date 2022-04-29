@@ -361,7 +361,7 @@ describe("ETHStaticAToken", function () {
       low: 0n,
     });
 
-    const user_claimable_rewards = await proxiedL2Token.call(
+    const {user_claimable_rewards} = await proxiedL2Token.call(
       "get_user_claimable_rewards",
       {
         user: BigInt(user1.starknetContract.address),

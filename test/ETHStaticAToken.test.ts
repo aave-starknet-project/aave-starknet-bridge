@@ -332,4 +332,45 @@ describe("ETHStaticAToken", function () {
       user1ClaimableRewards.user_claimable_rewards
     );
   });
+
+  it("Rewards of user are not lost if L2 tokens are burnt before claiming", async () => {
+    //To have a non null rewards amount, we update the rewards index
+    await owner.invoke(proxiedL2Token, "push_acc_rewards_per_token", {
+      block: 3,
+      acc_rewards_per_token: {
+        high: 0,
+        low: BigInt(decimalToWad(4)),
+      },
+    });
+
+    //burn all ETHStaticAToken of user on L2==>this is the same as calling init_withdraw on bridge
+    await owner.invoke(proxiedL2Token, "burn", {
+      account: BigInt(user1.starknetContract.address),
+      amount: {
+        high: 0n,
+        low: BigInt(decimalToWad(50)),
+      },
+    });
+
+    const { balance } = await proxiedL2Token.call("balanceOf", {
+      account: BigInt(user1.starknetContract.address),
+    });
+
+    expect(balance).to.deep.equal({
+      high: 0n,
+      low: 0n,
+    });
+
+    const user_claimable_rewards = await proxiedL2Token.call(
+      "get_user_claimable_rewards",
+      {
+        user: BigInt(user1.starknetContract.address),
+      }
+    );
+
+    expect(user_claimable_rewards).to.deep.equal({
+      high: 0n,
+      low: BigInt(wadToRay(50)),
+    });
+  });
 });

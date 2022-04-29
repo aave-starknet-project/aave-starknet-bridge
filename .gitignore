@@ -17,3 +17,6 @@ package-lock.json
 
 #Private keys
 .env/private
+
+# Yarn error file
+yarn-error.log

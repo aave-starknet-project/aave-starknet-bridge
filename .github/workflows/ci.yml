@@ -37,6 +37,9 @@ jobs:
           source .venv/bin/activate
           make
 
+      - name: Static analysis
+        run: slither .
+
       - name: Lint
         run: |
           yarn lint

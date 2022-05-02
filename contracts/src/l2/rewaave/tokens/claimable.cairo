@@ -50,7 +50,7 @@ func update_user{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     if balance.high + balance.low == 0:
         update_user_snapshot_rewards_per_token(user)
     else:
-        let (pending) = get_pending_rewards(user)
+        let (pending) = claimable_get_pending_rewards(user)
         let (unclaimed) = claimable_get_user_unclaimed_rewards(user)
         let (unclaimed, overflow) = ray_add(unclaimed, pending)
         assert overflow = 0
@@ -83,9 +83,11 @@ func claimable_before_token_transfer{
     return ()
 end
 
-func get_pending_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func claimable_get_pending_rewards{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(
     user : felt
-) -> (pending_rewards : Ray):
+) -> (pending_rewards : Uint256):
     alloc_locals
     let (balance) = ERC20_balanceOf(user)
     let (balance_in_ray) = wad_to_ray(Wad(balance))
@@ -99,7 +101,8 @@ func get_pending_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
     return (pending_rewards)
 end
 
-func get_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+<<<<<<< HEAD
+func claimable_get_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     user : felt
 ) -> (claimable_rewards : Wad):
     alloc_locals
@@ -115,7 +118,7 @@ func claimable_claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, r
     user : felt
 ) -> (rewards : Wad):
     alloc_locals
-    let (rewards) = get_claimable_rewards(user)
+    let (rewards) = claimable_get_claimable_rewards(user)
 
     unclaimed_rewards.write(user, Ray(Uint256(0, 0)))
 

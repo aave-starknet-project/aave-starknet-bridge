@@ -36,7 +36,13 @@ end
 # Events.
 
 @event
-func withdraw_initiated(l2_token : felt, l1_recipient : felt, amount : Uint256, caller : felt):
+func withdraw_initiated(
+    l2_token : felt,
+    l1_recipient : felt,
+    amount : Uint256,
+    caller : felt,
+    current_rewards_index : Uint256,
+):
 end
 
 @event
@@ -185,6 +191,10 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
         assert_not_zero(l1_token)
     end
 
+    let (current_rewards_index) = IETHstaticAToken.get_acc_rewards_per_token(
+        contract_address=l2_token
+    )
+
     # Call burn on l2_token contract.
     let (caller_address) = get_caller_address()
 
@@ -198,9 +208,11 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     assert message_payload[3] = l1_recipient
     assert message_payload[4] = amount.low
     assert message_payload[5] = amount.high
+    assert message_payload[6] = current_rewards_index.low
+    assert message_payload[7] = current_rewards_index.high
 
-    send_message_to_l1(to_address=to_address, payload_size=6, payload=message_payload)
-    withdraw_initiated.emit(l2_token, l1_recipient, amount, caller_address)
+    send_message_to_l1(to_address=to_address, payload_size=8, payload=message_payload)
+    withdraw_initiated.emit(l2_token, l1_recipient, amount, caller_address, current_rewards_index)
     return ()
 end
 

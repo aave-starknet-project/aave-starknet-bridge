@@ -33,10 +33,14 @@ function expectAddressEquality(actual: string, expected: string) {
   expect(adaptAddress(actual)).to.equal(adaptAddress(expected));
 }
 
-const LENDING_POOL = "0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9";
-const INCENTIVES_CONTROLLER = "0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5";
-const A_DAI = "0x028171bCA77440897B824Ca71D1c56caC55b68A3";
-const A_USDC = "0xBcca60bB61934080951369a648Fb03DF4F96263C";
+function uintFromParts(low: string, high: string) : BigInt{
+  return BigInt(high) *(2n ** 128n) + BigInt(low);
+}
+
+const LENDING_POOL = '0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9';
+const INCENTIVES_CONTROLLER = '0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5';
+const A_DAI = '0x028171bCA77440897B824Ca71D1c56caC55b68A3';
+const A_USDC = '0xBcca60bB61934080951369a648Fb03DF4F96263C';
 
 const STKAAVE_WHALE = "0x32b61bb22cbe4834bc3e73dce85280037d944a4d";
 const DAI_WHALE = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
@@ -529,16 +533,38 @@ describe("TokenBridge", async function () {
     await l2user.invoke(l2TokenBridge, 'initiate_withdraw', { l2_token: BigInt(l2StaticADai.address), l1_recipient: BigInt(l1user.address), amount: { high: 0n, low:  30n } });
     await l2user.invoke(l2TokenBridge, 'initiate_withdraw', { l2_token: BigInt(l2StaticAUsdc.address), l1_recipient: BigInt(l1user.address), amount: { high: 0n, low:  40n } });
 
+    // make time pass - Chronos
+    await network.provider.send("evm_increaseTime", [7200])
+    await network.provider.send("evm_mine")
+
     // flush L2 messages to be consumed by L1
     const flushL2Response = await starknet.devnet.flush();
     const flushL2Messages = flushL2Response.consumed_messages.from_l2;
     expect(flushL2Response.consumed_messages.from_l1).to.be.empty;
     expect(flushL2Messages).to.have.a.lengthOf(2);
+    const l2RewardsIndexDai = uintFromParts(flushL2Messages[0].payload[6], flushL2Messages[0].payload[7]);
+    const l2RewardsIndexUsdc = uintFromParts(flushL2Messages[1].payload[6], flushL2Messages[1].payload[7]);
 
     // actually withdraw tokens
-    txDai = await l1TokenBridge.connect(l1user).withdraw(l1StaticDai.address, l2user.starknetContract.address, l1user.address, 30);
+    txDai = await l1TokenBridge
+      .connect(l1user)
+      .withdraw(
+        l1StaticDai.address,
+        l2user.starknetContract.address,
+        l1user.address,
+        30,
+        l2RewardsIndexDai
+      );
     blockNumberDai = txDai.blockNumber;
-    txUsdc = await l1TokenBridge.connect(l1user).withdraw(l1StaticUsdc.address, l2user.starknetContract.address, l1user.address, 40);
+    txUsdc = await l1TokenBridge
+      .connect(l1user)
+      .withdraw(
+        l1StaticUsdc.address,
+        l2user.starknetContract.address,
+        l1user.address,
+        40,
+        l2RewardsIndexUsdc
+      );
     blockNumberUsdc = txUsdc.blockNumber;
 
     // check that tokens have been transfered to l1user
@@ -576,11 +602,13 @@ describe("TokenBridge", async function () {
     const flushL2Messages = flushL2Response.consumed_messages.from_l2;
     expect(flushL2Response.consumed_messages.from_l1).to.be.empty;
     expect(flushL2Messages).to.have.a.lengthOf(2);
+    const l2RewardsIndexDai = uintFromParts(flushL2Messages[0].payload[6], flushL2Messages[0].payload[7]);
+    const l2RewardsIndexUsdc = uintFromParts(flushL2Messages[1].payload[6], flushL2Messages[1].payload[7]);
 
     // actually withdraw tokens
-    txDai = await l1TokenBridge.connect(l1user).withdrawUnderlying(l1StaticDai.address, l2user.starknetContract.address, l1user.address, 28, false);
+    txDai = await l1TokenBridge.connect(l1user).withdrawUnderlying(l1StaticDai.address, l2user.starknetContract.address, l1user.address, 28, l2RewardsIndexDai, false);
     blockNumberDai = txDai.blockNumber;
-    txUsdc = await l1TokenBridge.connect(l1user).withdrawUnderlying(l1StaticUsdc.address, l2user.starknetContract.address, l1user.address, 37, false);
+    txUsdc = await l1TokenBridge.connect(l1user).withdrawUnderlying(l1StaticUsdc.address, l2user.starknetContract.address, l1user.address, 37, l2RewardsIndexUsdc, false);
     blockNumberUsdc = txUsdc.blockNumber;
 
     // check that tokens have been transfered to l1user
@@ -619,11 +647,13 @@ describe("TokenBridge", async function () {
     const flushL2Messages = flushL2Response.consumed_messages.from_l2;
     expect(flushL2Response.consumed_messages.from_l1).to.be.empty;
     expect(flushL2Messages).to.have.a.lengthOf(2);
+    const l2RewardsIndexDai = uintFromParts(flushL2Messages[0].payload[6], flushL2Messages[0].payload[7]);
+    const l2RewardsIndexUsdc = uintFromParts(flushL2Messages[1].payload[6], flushL2Messages[1].payload[7]);
 
     // actually withdraw tokens
-    txDai = await l1TokenBridge.connect(l1user).withdrawUnderlying(l1StaticDai.address, l2user.starknetContract.address, l1user.address, 28, true);
+    txDai = await l1TokenBridge.connect(l1user).withdrawUnderlying(l1StaticDai.address, l2user.starknetContract.address, l1user.address, 28, l2RewardsIndexDai, true);
     blockNumberDai = txDai.blockNumber;
-    txUsdc = await l1TokenBridge.connect(l1user).withdrawUnderlying(l1StaticUsdc.address, l2user.starknetContract.address, l1user.address, 37, true);
+    txUsdc = await l1TokenBridge.connect(l1user).withdrawUnderlying(l1StaticUsdc.address, l2user.starknetContract.address, l1user.address, 37, l2RewardsIndexUsdc, true);
     blockNumberUsdc = txUsdc.blockNumber;
 
     // check that tokens have been transfered to l1user
@@ -660,5 +690,6 @@ describe("TokenBridge", async function () {
 
    //  // check that the l1 user received reward tokens
    //  expect(await l1AAVE.balanceOf(l1user.address)).to.be.equal(30);
+    // check that the l1 user received reward tokens
   })
 });

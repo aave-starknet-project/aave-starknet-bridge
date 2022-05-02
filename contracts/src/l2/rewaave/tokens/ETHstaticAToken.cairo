@@ -34,7 +34,7 @@ from rewaave.tokens.claimable import (
     claimable_set_l2_token_bridge,
     claimable_get_l2_token_bridge,
     claimable_only_token_bridge,
-    get_claimable_rewards,
+    claimable_get_claimable_rewards,
 )
 
 from rewaave.math.wad_ray_math import Ray
@@ -217,14 +217,14 @@ func push_acc_rewards_per_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*
     return ()
 end
 
-@external
+@view
 func get_acc_rewards_per_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     ) -> (acc_rewards_per_token : Uint256):
     let (res) = claimable_get_acc_rewards_per_token()
     return (res.ray)
 end
 
-@external
+@view
 func get_user_acc_rewards_per_token{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt) -> (user_acc_rewards_per_token : Uint256):
@@ -232,11 +232,11 @@ func get_user_acc_rewards_per_token{
     return (res.ray)
 end
 
-@external
+@view
 func get_user_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     user : felt
 ) -> (user_claimable_rewards : Uint256):
     alloc_locals
-    let (res) = get_claimable_rewards(user)
+    let (res) = claimable_get_claimable_rewards(user)
     return (res.wad)
 end

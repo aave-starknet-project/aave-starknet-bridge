@@ -46,7 +46,14 @@ func withdraw_initiated(
 end
 
 @event
-func deposit_handled(l2_token : felt, l1_sender : felt, account : felt, amount : Uint256):
+func deposit_handled(
+    l2_token : felt,
+    l1_sender : felt,
+    account : felt,
+    amount : Uint256,
+    block_number : felt,
+    l1_rewards_index : Uint256,
+):
 end
 
 @event
@@ -248,24 +255,33 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     from_address : felt,
     l1_sender : felt,
     l2_recipient : felt,
-    l2_token_address : felt,
+    l2_token : felt,
     amount_low : felt,
     amount_high : felt,
+    block_number : felt,
+    l1_rewards_index_low : felt,
+    l1_rewards_index_high : felt,
 ):
     alloc_locals
     only_l1_handler(from_address_=from_address)
 
     let amount = Uint256(low=amount_low, high=amount_high)
+    let l1_rewards_index = Uint256(low=l1_rewards_index_low, high=l1_rewards_index_high)
 
     with_attr error_message("High or low overflows 128 bit bound {amount}"):
         uint256_check(amount)
     end
-    assert_not_zero(l2_token_address)
+
+    assert_not_zero(l2_token)
+
+    # push rewards
+    IETHstaticAToken.push_acc_rewards_per_token(
+        contract_address=l2_token, block=block_number, acc_rewards_per_token=l1_rewards_index
+    )
 
     # Call mint on l2_token contract.
-
-    IERC20.mint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
-    deposit_handled.emit(l2_token_address, l1_sender, l2_recipient, amount)
+    IERC20.mint(contract_address=l2_token, recipient=l2_recipient, amount=amount)
+    deposit_handled.emit(l2_token, l1_sender, l2_recipient, amount, block_number, l1_rewards_index)
     return ()
 end
 

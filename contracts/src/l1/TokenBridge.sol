@@ -26,7 +26,7 @@ contract TokenBridge is
     using RayMathNoRounding for uint256;
     using SafeMath for uint256;
 
-    event LogDeposit(address sender, IStaticATokenLM token, uint256 amount, uint256 l2Recipient);
+    event LogDeposit(address sender, IStaticATokenLM token, uint256 amount, uint256 l2Recipient, uint256 blockNumber, uint256 rewardsIndex);
     event LogWithdrawal(IStaticATokenLM token, uint256 l2sender, address recipient, uint256 amount);
     event LogBridgeReward(uint256 l2sender, address recipient, uint256 amount);
     event LogBridgeAdded(IStaticATokenLM l1Token, uint256 l2Token);
@@ -132,20 +132,30 @@ contract TokenBridge is
         (approvedL1Tokens[idx2], approvedL1Tokens[idx1]);
     }
 
-    function sendMessage(IStaticATokenLM l1Token, address from, uint256 l2Recipient, uint256 amount)
+    function sendMessage(
+        IStaticATokenLM l1Token,
+        address from,
+        uint256 l2Recipient,
+        uint256 amount,
+        uint256 blockNumber,
+        uint256 currentRewardsIndex
+    )
         internal
         onlyApprovedToken(l1Token)
         onlyValidL2Address(l2Recipient)
     {
-        emit LogDeposit(from, l1Token, amount, l2Recipient);
+        emit LogDeposit(from, l1Token, amount, l2Recipient, blockNumber,
+                        currentRewardsIndex);
 
         uint256 l2TokenAddress = l1TokentoL2Token[l1Token];
 
-        uint256[] memory payload = new uint256[](5);
+        uint256[] memory payload = new uint256[](8);
         payload[0] = uint256(from);
         payload[1] = l2Recipient;
         payload[2] = l2TokenAddress;
         (payload[3], payload[4]) = toSplitUint(amount);
+        payload[5] = blockNumber;
+        (payload[6], payload[7]) = toSplitUint(currentRewardsIndex);
 
         messagingContract.sendMessageToL2(l2TokenBridge, DEPOSIT_HANDLER, payload);
     }
@@ -196,8 +206,12 @@ contract TokenBridge is
         onlyValidL2Address(l2Recipient)
         external
     {
+        (bool success, bytes memory result) = l1Token_.call(abi.encodeWithSignature("_getCurrentRewardsIndex()"));
+        if (!success) { revert("Cannot get current reward index"); }
+        uint256 rewardsIndex = abi.decode(result, (uint256));
+
         l1Token.safeTransferFrom(msg.sender, address(this), amount);
-        sendMessage(l1Token, msg.sender, l2Recipient, amount);
+        sendMessage(l1Token, msg.sender, l2Recipient, amount, block.number, rewardsIndex);
     }
 
     function depositUnderlying(
@@ -211,13 +225,18 @@ contract TokenBridge is
         onlyValidL2Address(l2Recipient)
         external
     {
+        (bool success, bytes memory result) = l1Token_.call(abi.encodeWithSignature("_getCurrentRewardsIndex()"));
+        if (!success) { revert("Cannot get current reward index"); }
+        uint256 rewardsIndex = abi.decode(result, (uint256));
+
         if (fromAsset) {
           l1Token.ASSET().safeTransferFrom(msg.sender, address(this), amount);
         } else {
           l1Token.ATOKEN().safeTransferFrom(msg.sender, address(this), amount);
         }
+
         amount = l1Token.deposit(address(this), amount, refferalCode, fromAsset);
-        sendMessage(l1Token, msg.sender, l2Recipient, amount);
+        sendMessage(l1Token, msg.sender, l2Recipient, amount, block.number, rewardsIndex);
     }
 
     function withdrawUnderlying(
@@ -287,8 +306,7 @@ contract TokenBridge is
         payload[0] = BRIDGE_REWARD_MESSAGE;
         payload[1] = l2sender;
         payload[2] = uint256(recipient);
-        payload[3] = amount & (UINT256_PART_SIZE - 1);
-        payload[4] = amount >> UINT256_PART_SIZE_BITS;
+        (payload[3], payload[4]) = toSplitUint(amount);
 
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }

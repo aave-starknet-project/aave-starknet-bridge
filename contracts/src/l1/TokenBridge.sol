@@ -8,6 +8,7 @@ import "@joriksch/sg-contracts/src/starkware/cairo/eth/CairoConstants.sol";
 import "../../test/IStarknetMessaging.sol";
 
 import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IStaticATokenLM} from "@swp0x0/protocol-v2/contracts/interfaces/IStaticATokenLM.sol";
 
 contract TokenBridge is
@@ -15,6 +16,8 @@ contract TokenBridge is
     ContractInitializer,
     ProxySupport
 {
+    using SafeERC20 for IERC20;
+
     event LogDeposit(address sender, IStaticATokenLM token, uint256 amount, uint256 l2Recipient);
     event LogWithdrawal(IStaticATokenLM token, uint256 l2sender, address recipient, uint256 amount);
     event LogBridgeReward(uint256 l2sender, address recipient, uint256 amount);
@@ -103,6 +106,9 @@ contract TokenBridge is
         require(l2Token_ == 0, "l2Token already set");
 
         require(IStaticATokenLM(l1Token).REWARD_TOKEN() == rewardToken, "L1 TOKEN CONFIGURED WITH WRONG REWARD TOKEN");
+
+        l1Token.ASSET().safeApprove(address(l1Token), type(uint256).max);
+        l1Token.ATOKEN().safeApprove(address(l1Token), type(uint256).max);
 
         emit LogBridgeAdded(l1Token, l2Token);
         l1TokentoL2Token[l1Token] = l2Token;
@@ -194,6 +200,11 @@ contract TokenBridge is
         onlyValidL2Address(l2Recipient)
         external
     {
+        if (fromAsset) {
+          l1Token.ASSET().safeTransferFrom(msg.sender, address(this), amount);
+        } else {
+          l1Token.ATOKEN().safeTransferFrom(msg.sender, address(this), amount);
+        }
         amount = l1Token.deposit(address(this), amount, refferalCode, fromAsset);
         sendMessage(l1Token, l2Recipient, amount);
     }

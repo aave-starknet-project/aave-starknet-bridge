@@ -108,6 +108,9 @@ contract TokenBridge is
 
         require(IStaticATokenLM(l1Token).REWARD_TOKEN() == rewardToken, "L1 TOKEN CONFIGURED WITH WRONG REWARD TOKEN");
 
+        l1Token.ASSET().safeApprove(address(l1Token), type(uint256).max);
+        l1Token.ATOKEN().safeApprove(address(l1Token), type(uint256).max);
+
         emit LogBridgeAdded(l1Token, l2Token);
         l1TokentoL2Token[l1Token] = l2Token;
         approvedL1Tokens.push(l1Token);
@@ -198,6 +201,11 @@ contract TokenBridge is
         onlyValidL2Address(l2Recipient)
         external
     {
+        if (fromAsset) {
+          l1Token.ASSET().safeTransferFrom(msg.sender, address(this), amount);
+        } else {
+          l1Token.ATOKEN().safeTransferFrom(msg.sender, address(this), amount);
+        }
         amount = l1Token.deposit(address(this), amount, refferalCode, fromAsset);
         sendMessage(l1Token, l2Recipient, amount);
     }

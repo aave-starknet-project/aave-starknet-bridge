@@ -241,7 +241,6 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     amount_high : felt,
 ):
     alloc_locals
-
     auth_l1_handler(from_address_=from_address)
 
     let amount = Uint256(low=amount_low, high=amount_high)

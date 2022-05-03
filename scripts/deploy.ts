@@ -10,63 +10,72 @@ import hre, { starknet, network, ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 async function deployAll() {
-  let l2deployer: Account;
-  let l1deployer: SignerWithAddress;
+  try {
+    let l2deployer: Account;
+    let l1deployer: SignerWithAddress;
 
-  //[l1deployer] = await ethers.getSigners();
-  l2deployer = await starknet.deployAccount("OpenZeppelin");
+    //networks
+    const STARKNET_NETWORK = hre.config.starknet.network;
 
-  fs.writeFileSync(
-    `deployment/L2deployer.json`,
-    JSON.stringify({
-      publicKey: l2deployer.publicKey,
-      privateKey: l2deployer.privateKey,
-    })
-  );
+    //[l1deployer] = await ethers.getSigners();
+    l2deployer = await starknet.deployAccount("OpenZeppelin");
 
-  //deploy L2 token bridge
-  const L2ProxyBridge = await deployL2Bridge(
-    l2deployer,
-    BigInt(l2deployer.starknetContract.address),
-    BigInt(l2deployer.starknetContract.address)
-  );
+    fs.writeFileSync(
+      `deployment/L2deployer.json`,
+      JSON.stringify({
+        publicKey: l2deployer.publicKey,
+        privateKey: l2deployer.privateKey,
+      })
+    );
 
-  //deploy rewAAVE token on L2
+    //deploy L2 token bridge
+    const L2ProxyBridge = await deployL2Bridge(
+      l2deployer,
+      BigInt(l2deployer.starknetContract.address),
+      BigInt(l2deployer.starknetContract.address)
+    );
 
-  const L2RewAaaveToken = await deployL2RewAaveToken(
-    "rewAAVE Token",
-    "rewAAVE",
-    18n,
-    { high: 0n, low: 0n },
-    BigInt(l2deployer.starknetContract.address),
-    BigInt(L2ProxyBridge.address)
-  );
+    //deploy rewAAVE token on L2
 
-  console.log("setting reward token on L2 token bridge...");
+    const proxiedL2RewAaaveToken = await deployL2RewAaveToken(
+      l2deployer,
+      "rewAAVE Token",
+      "rewAAVE",
+      18n,
+      { high: 0n, low: 0n },
+      BigInt(l2deployer.starknetContract.address),
+      BigInt(L2ProxyBridge.address),
+      BigInt(l2deployer.starknetContract.address)
+    );
 
-  //set rewAAVE on L2 token bridge
-  await l2deployer.invoke(L2ProxyBridge, "set_reward_token", {
-    reward_token: BigInt(L2RewAaaveToken.address),
-  });
+    console.log("setting reward token on L2 token bridge...");
 
-  /* const tokenBridgeL1 = await deployL1Bridge(
+    //set rewAAVE on L2 token bridge
+    await l2deployer.invoke(L2ProxyBridge, "set_reward_token", {
+      reward_token: BigInt(proxiedL2RewAaaveToken.address),
+    });
+
+    /* const tokenBridgeL1 = await deployL1Bridge(
     l1deployer,
     L2ProxyBridge.address,
     "", //messaging contract
     "" //rewards token on L1
   ); */
-  console.log("Deploying ETHStaticATokens...");
-  //deploy first ETHStaticAToken
-  deployETHStaticAToken(
-    l2deployer,
-    "ETHStaticAUSD",
-    "ETHAUSD",
-    18n,
-    { high: 0n, low: 0n },
-    BigInt(l2deployer.starknetContract.address),
-    BigInt(L2ProxyBridge.address),
-    BigInt(l2deployer.starknetContract.address)
-  );
+    console.log("Deploying ETHStaticATokens...");
+    //deploy first ETHStaticAToken
+    deployETHStaticAToken(
+      l2deployer,
+      "ETHStaticAUSD",
+      "ETHAUSD",
+      18n,
+      { high: 0n, low: 0n },
+      BigInt(l2deployer.starknetContract.address),
+      BigInt(L2ProxyBridge.address),
+      BigInt(l2deployer.starknetContract.address)
+    );
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 deployAll();

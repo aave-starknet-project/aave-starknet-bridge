@@ -533,6 +533,18 @@ describe("TokenBridge", async function () {
     await l2user.invoke(l2TokenBridge, 'initiate_withdraw', { l2_token: BigInt(l2StaticADai.address), l1_recipient: BigInt(l1user.address), amount: { high: 0n, low:  30n } });
     await l2user.invoke(l2TokenBridge, 'initiate_withdraw', { l2_token: BigInt(l2StaticAUsdc.address), l1_recipient: BigInt(l1user.address), amount: { high: 0n, low:  40n } });
 
+    {
+    const d = await incentives.getAssetData(l1tokenDai.address);
+    console.log(d);
+    }
+
+    {
+    const d = await incentives.getAssetData(l1tokenUsdc.address);
+    console.log(d);
+    const {0: index, 1: emissionsPerSecond, 2: lastUpdateTimeStamp} = await incentives.getAssetData(l1tokenUsdc.address);
+    console.log(index, emissionsPerSecond, lastUpdateTimeStamp);
+    }
+
     // make time pass - Chronos
     await network.provider.send("evm_increaseTime", [7200])
     await network.provider.send("evm_mine")

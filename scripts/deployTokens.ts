@@ -75,19 +75,38 @@ export async function deployL2RewAaveToken(
   owner: bigint,
   proxy_admin: bigint
 ) {
-  let rewAaveTokenL2: StarknetContract;
+  let rewAaveTokenImplementation: StarknetContract;
   let proxyFactoryL2: StarknetContractFactory;
   let proxyToken: StarknetContract;
+  let proxiedRewAAVE: StarknetContract;
   const rewAaveContractFactory = await starknet.getContractFactory("rewAAVE");
   proxyFactoryL2 = await starknet.getContractFactory("proxy");
 
-  console.log("deploying rewAAVE token proxy on L2...");
+  console.log("deploying rewAAVE token proxy ...");
   proxyToken = await proxyFactoryL2.deploy({
     proxy_admin: proxy_admin,
   });
 
-  console.log("deploying rewAAVE token implementation on L2...");
-  rewAaveTokenL2 = await rewAaveContractFactory.deploy({
+  console.log("deploying rewAAVE token implementation ...");
+  rewAaveTokenImplementation = await rewAaveContractFactory.deploy();
+
+  fs.writeFileSync(
+    `deployment/${name}.json`,
+    JSON.stringify({
+      token: name,
+      proxy: proxyToken.address,
+      implementation: rewAaveTokenImplementation.address,
+    })
+  );
+
+  console.log("initializing rewAAVE token proxy...");
+  await deployer.invoke(proxyToken, "initialize_proxy", {
+    implementation_address: BigInt(rewAaveTokenImplementation.address),
+  });
+
+  proxiedRewAAVE = rewAaveContractFactory.getContractAt(proxyToken.address);
+
+  await deployer.invoke(proxiedRewAAVE, "initialize_rewAAVE", {
     name: stringToBigInt(name),
     symbol: stringToBigInt(symbol),
     decimals: decimals,
@@ -95,21 +114,7 @@ export async function deployL2RewAaveToken(
     recipient: recipient,
     owner: owner,
   });
-
-  fs.writeFileSync(
-    `deployment/${name}.json`,
-    JSON.stringify({
-      token: name,
-      proxy: proxyToken.address,
-      implementation: rewAaveTokenL2.address,
-    })
-  );
-  console.log("initializing rewAAVE token proxy...");
-  await deployer.invoke(proxyToken, "initialize_proxy", {
-    implementation_address: BigInt(rewAaveTokenL2.address),
-  });
-
-  return rewAaveTokenL2;
+  return proxyToken;
 }
 
 function stringToBigInt(str: string) {

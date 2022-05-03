@@ -59,6 +59,9 @@ const config: HardhatUserConfig = {
     devnet: {
       url: "http://localhost:5000",
     },
+    fork: {
+      url: "http://localhost:8545",
+    },
     mainnet: {
       url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,
       accounts: [mnemonic],

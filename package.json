@@ -13,7 +13,7 @@
     "compile:tests": "hardhat starknet-compile --cairo-path 'node_modules/@joriksch/oz-cairo:contracts/src/l2' contracts/test",
     "deploy:account": "yarn hardhat starknet-deploy-account --starknet-network devnet --wallet OpenZeppelin",
     "deploy-bridge:l2": "hardhat run --network devnet ./scripts/deploy.ts",
-    "deploy-bridge:l1": "hardhat run --network mainnet ./scripts/deploy.ts",
+    "deploy-bridge:l1": "hardhat run --network fork ./scripts/deploy.ts",
     "compile:openzeppelin": "yarn hardhat starknet-compile node_modules/@joriksch/oz-cairo --cairo-path node_modules/@joriksch/oz-cairo/",
     "prepare": "husky install"
   },
@@ -34,6 +34,7 @@
     "@types/node": "^16.11.10",
     "chai": "^4.3.4",
     "chai-bignumber": "^3.0.0",
+    "dotenv": "^16.0.0",
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.4.6",
     "ganache": "^7.0.5",

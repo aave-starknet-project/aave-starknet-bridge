@@ -1,9 +1,9 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from starkware.cairo.common.uint256 import Uint256, uint256_le
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.math_cmp import is_le
+from starkware.cairo.common.uint256 import Uint256
 from starkware.cairo.common.bool import TRUE
 
 from openzeppelin.token.erc20.library import (
@@ -31,6 +31,7 @@ from rewaave.tokens.claimable import (
     claimable_before_token_transfer,
     claimable_get_acc_rewards_per_token,
     claimable_get_user_acc_rewards_per_token,
+    claimable_get_last_update,
     get_claimable_rewards,
 )
 
@@ -53,64 +54,53 @@ func set_l2_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
     return ()
 end
 
-@storage_var
-func last_update() -> (block_number : felt):
-end
-
 #
 # Getters
 #
 
 @view
 func get_last_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-    block_number : felt
+    block_number : Uint256
 ):
-    let (block_number) = last_update.read()
-    return (block_number)
+    return claimable_get_last_update()
 end
 
 @view
 func name{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (name : felt):
-    let (name) = ERC20_name()
-    return (name)
+    return ERC20_name()
 end
 
 @view
 func symbol{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (symbol : felt):
-    let (symbol) = ERC20_symbol()
-    return (symbol)
+    return ERC20_symbol()
 end
 
 @view
 func totalSupply{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     totalSupply : Uint256
 ):
-    let (totalSupply : Uint256) = ERC20_totalSupply()
-    return (totalSupply)
+    return ERC20_totalSupply()
 end
 
 @view
 func decimals{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     decimals : felt
 ):
-    let (decimals) = ERC20_decimals()
-    return (decimals)
+    return ERC20_decimals()
 end
 
 @view
 func balanceOf{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     account : felt
 ) -> (balance : Uint256):
-    let (balance : Uint256) = ERC20_balanceOf(account)
-    return (balance)
+    return ERC20_balanceOf(account)
 end
 
 @view
 func allowance{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     owner : felt, spender : felt
 ) -> (remaining : Uint256):
-    let (remaining : Uint256) = ERC20_allowance(owner, spender)
-    return (remaining)
+    return ERC20_allowance(owner, spender)
 end
 
 #
@@ -219,25 +209,10 @@ end
 
 @external
 func push_acc_rewards_per_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    block : felt, acc_rewards_per_token : Uint256
+    block_number : Uint256, acc_rewards_per_token : Uint256
 ):
-    alloc_locals
-    Ownable_only_owner()
-    let (last_block) = last_update.read()
-    let (le) = is_le(last_block, block - 1)
-    if le == 1:
-        let (prev_acc) = claimable_get_acc_rewards_per_token()
-        let (le) = uint256_le(prev_acc, acc_rewards_per_token)
-        if le == 1:
-            last_update.write(block)
-            claimable_push_acc_rewards_per_token(acc_rewards_per_token)
-            return ()
-        else:
-            return ()
-        end
-    else:
-        return ()
-    end
+    claimable_push_acc_rewards_per_token(block_number, acc_rewards_per_token)
+    return ()
 end
 
 @external
@@ -257,5 +232,6 @@ end
 func get_user_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     user : felt
 ) -> (user_claimable_rewards : Uint256):
+    alloc_locals
     return get_claimable_rewards(user)
 end

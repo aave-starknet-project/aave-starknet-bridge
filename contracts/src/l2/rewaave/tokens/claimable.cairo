@@ -7,12 +7,17 @@ from starkware.cairo.common.uint256 import (
     uint256_sub,
     uint256_mul,
     uint256_unsigned_div_rem,
+    uint256_le,
 )
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.math_cmp import is_le
 from rewaave.math.wad_ray_math import wad_to_ray, ray_mul_no_rounding, ray_to_wad_no_rounding
 from openzeppelin.token.erc20.library import ERC20_totalSupply, ERC20_balanceOf, ERC20_mint
 from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner, Ownable_get_owner
+
+@storage_var
+func last_update() -> (block_number : Uint256):
+end
 
 @storage_var
 func acc_rewards_per_token() -> (res : Uint256):
@@ -120,10 +125,25 @@ end
 
 func claimable_push_acc_rewards_per_token{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
-}(acc_rewards_per_token_ : Uint256):
+}(block_number : Uint256, acc_rewards_per_token_ : Uint256):
     alloc_locals
-    acc_rewards_per_token.write(acc_rewards_per_token_)
-    return ()
+    Ownable_only_owner()
+    let (last_block_number) = last_update.read()
+    let (block_number_1) = uint256_sub(block_number, Uint256(1, 0))
+    let (le) = uint256_le(last_block_number, block_number_1)
+    if le == 1:
+        let (prev_acc) = acc_rewards_per_token.read()
+        let (le) = uint256_le(prev_acc, acc_rewards_per_token_)
+        if le == 1:
+            last_update.write(block_number)
+            acc_rewards_per_token.write(acc_rewards_per_token_)
+            return ()
+        else:
+            return ()
+        end
+    else:
+        return ()
+    end
 end
 
 func claimable_get_acc_rewards_per_token{
@@ -136,4 +156,9 @@ func claimable_get_user_acc_rewards_per_token{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt) -> (res : Uint256):
     return user_snapshot_rewards_per_token.read(user)
+end
+
+func claimable_get_last_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    ) -> (block_number : Uint256):
+    return last_update.read()
 end

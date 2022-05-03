@@ -20,3 +20,7 @@ package-lock.json
 
 #deployment
 deployment
+
+# Yarn error file
+yarn-error.log
+

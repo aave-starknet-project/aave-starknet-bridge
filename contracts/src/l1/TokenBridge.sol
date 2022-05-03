@@ -59,9 +59,13 @@ contract TokenBridge is
 
     function processSubContractAddresses(bytes calldata subContractAddresses) internal override {}
 
-    modifier isApprovedToken(address token) {
+    function isValidL2Address(uint256 l2Address) internal returns (bool) {
+        return (l2Address != 0) && (l2Address < CairoConstants.FIELD_PRIME);
+    }
+
+    modifier onlyApprovedToken(address token) {
         uint256 l2TokenAddress = l1TokentoL2Token[token];
-        require((l2TokenAddress != 0) && (l2TokenAddress < CairoConstants.FIELD_PRIME), "L2_TOKEN_HAS_NOT_BEEN_APPROVED");
+        require(isValidL2Address(l2TokenAddress), "L2_TOKEN_HAS_NOT_BEEN_APPROVED");
         _;
     }
 
@@ -83,15 +87,15 @@ contract TokenBridge is
         rewardToken = rewardToken_;
     }
 
-    modifier isValidL2Address(uint256 l2Address) {
-        require((l2Address != 0) && (l2Address < CairoConstants.FIELD_PRIME), "L2_ADDRESS_OUT_OF_RANGE");
+    modifier onlyValidL2Address(uint256 l2Address) {
+        require(isValidL2Address(l2Address), "L2_ADDRESS_OUT_OF_RANGE");
         _;
     }
 
     function approveBridge(address l1Token, uint256 l2Token)
         external
         onlyGovernance
-        isValidL2Address(l2Token)
+        onlyValidL2Address(l2Token)
     {
         require(l1Token != address(0x0), "l1Token address cannot be 0x0");
 
@@ -115,8 +119,8 @@ contract TokenBridge is
 
     function sendMessage(address l1Token, address from, uint256 l2Recipient, uint256 amount)
         internal
-        isApprovedToken(l1Token)
-        isValidL2Address(l2Recipient)
+        onlyApprovedToken(l1Token)
+        onlyValidL2Address(l2Recipient)
     {
         emit LogDeposit(from, l1Token, amount, l2Recipient);
 
@@ -131,18 +135,19 @@ contract TokenBridge is
         messagingContract.sendMessageToL2(l2TokenBridge, DEPOSIT_HANDLER, payload);
     }
 
-    function sendMessageStaticAToken(address l1Token, uint256 accRewards) 
+    function sendMessageStaticAToken(uint256 rewardsIndex)
         external
-        isApprovedToken(l1Token)
     {
-      uint256 l2Token = l1TokentoL2Token[l1Token];
+      uint256 l2Token = l1TokentoL2Token[msg.sender];
 
-      uint256[] memory payload = new uint256[](4);
-      payload[0] = block.number;
-      payload[1] = l2Token;
-      (payload[2], payload[3]) = toSplitUint(accRewards);
+      if (isValidL2Address(l2Token)) {
+        uint256[] memory payload = new uint256[](4);
+        payload[0] = block.number;
+        payload[1] = l2Token;
+        (payload[2], payload[3]) = toSplitUint(rewardsIndex);
 
-      messagingContract.sendMessageToL2(l2TokenBridge, REWARDS_UPDATE_HANDLER, payload);
+        messagingContract.sendMessageToL2(l2TokenBridge, REWARDS_UPDATE_HANDLER, payload);
+      }
     }
 
     function consumeMessage(address l1Token, uint256 l2sender, address recipient, uint256 amount) internal {
@@ -160,13 +165,13 @@ contract TokenBridge is
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
 
-    function deposit(address l1Token_, uint256 l2Recipient, uint256 amount) isApprovedToken(l1Token_) external {
+    function deposit(address l1Token_, uint256 l2Recipient, uint256 amount) onlyApprovedToken(l1Token_) external {
         IStaticATokenLM l1Token = IStaticATokenLM(l1Token_);
         l1Token.transferFrom(msg.sender, address(this), amount);
         sendMessage(l1Token_, msg.sender, l2Recipient, amount);
     }
 
-    function withdraw(address l1Token_, uint256 l2sender, address recipient, uint256 amount) isApprovedToken(l1Token_) external {
+    function withdraw(address l1Token_, uint256 l2sender, address recipient, uint256 amount) onlyApprovedToken(l1Token_) external {
         consumeMessage(l1Token_, l2sender, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
         IStaticATokenLM l1Token = IStaticATokenLM(l1Token_);
@@ -201,7 +206,7 @@ contract TokenBridge is
         }
 
         for (uint256 i = 0; i < approvedL1Tokens.length; ++i) {
-            IStaticATokenLM(approvedL1Tokens[i]).claimRewardsToSelf(true);
+            IStaticATokenLM(approvedL1Tokens[i]).claimRewardsToSelf();
 
             rewardBalance = rewardToken.balanceOf(self);
 

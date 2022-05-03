@@ -42,8 +42,8 @@ jobs:
 
       - name: Start the devnet
         run: |
-          yarn testnet:starknet &
-          yarn testnet:ganache &
+          yarn testnet:l2 &
+          yarn testnet:l1 &
 
       - name: Compile Cairo
         run: |

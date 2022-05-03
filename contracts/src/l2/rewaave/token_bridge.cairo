@@ -4,7 +4,7 @@ from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math import assert_lt_felt, assert_not_zero
 from starkware.cairo.common.math_cmp import is_le
-from starkware.cairo.common.uint256 import Uint256
+from starkware.cairo.common.uint256 import Uint256, uint256_check
 from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address
 
@@ -14,7 +14,6 @@ from rewaave.tokens.IETHstaticAToken import IETHstaticAToken
 const WITHDRAW_MESSAGE = 0
 const BRIDGE_REWARD_MESSAGE = 1
 const ETH_ADDRESS_BOUND = 2 ** 160
-const HIGH_LOW_BOUND = 2 ** 128 - 1
 
 # Storage.
 
@@ -247,7 +246,9 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 
     let amount = Uint256(low=amount_low, high=amount_high)
 
-    uint256_bounds_check(amount)
+    with_attr error_message("High or low overflows 128 bit bound {amount}"):
+        uint256_check(amount)
+    end
     assert_not_zero(l2_token_address)
 
     # Call mint on l2_token contract.
@@ -288,26 +289,17 @@ func handle_rewards_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
     let rewards = Uint256(low=rewards_low, high=rewards_high)
     let block_number = Uint256(low=block_number_low, high=block_number_high)
 
-    uint256_bounds_check(rewards)
-    uint256_bounds_check(block_number)
+    with_attr error_message("High or low overflows 128 bit bound {rewards}"):
+        uint256_check(rewards)
+    end
+    with_attr error_message("High or low overflows 128 bit bound {block_number}"):
+        uint256_check(block_number)
+    end
 
     # push rewards
     IETHstaticAToken.push_acc_rewards_per_token(
         contract_address=l2_token, block_number=block_number, acc_rewards_per_token=rewards
     )
 
-    return ()
-end
-
-func uint256_bounds_check{range_check_ptr}(num : Uint256):
-    alloc_locals
-    with_attr error_message("Uint256.low overflows 128 bit bound"):
-        let (le) = is_le(num.low, HIGH_LOW_BOUND)
-        assert le = 1
-    end
-    with_attr error_message("Uint256.high overflows 128 bit bound"):
-        let (le) = is_le(num.high, HIGH_LOW_BOUND)
-        assert le = 1
-    end
     return ()
 end

@@ -24,5 +24,9 @@ deployment
 # Yarn error file
 yarn-error.log
 
+# Apple related file
 */.DS_Store 
 
+# Output of static analyzers
+out.sarif
+out.json

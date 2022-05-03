@@ -17,19 +17,29 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.7"] # Cairo was tested with this version
+        node-version: ["16"]
     steps:
       - uses: actions/checkout@v3
 
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "16"
+          node-version: ${{ matrix.node-version }}
           cache: "yarn"
 
       - name: Setup Python
         uses: actions/setup-python@v3
         with:
-          python-version: 3.7 # Cairo was tested with this version
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache Python environment
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
 
       - name: Install dependencies
         run: |
@@ -37,8 +47,11 @@ jobs:
           source .venv/bin/activate
           make
 
-      - name: Static analysis
-        run: .venv/bin/slither .
+      - name: Static analysis for Solidity
+        run: ./scripts/static_analysis_solidity.sh
+
+      - name: Static analysis for Cairo
+        run: ./scripts/static_analysis_cairo.sh
 
       - name: Lint
         run: |

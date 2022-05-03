@@ -23,7 +23,7 @@ from openzeppelin.token.erc20.library import (
     ERC20_burn,
 )
 
-from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner, Ownable_get_owner
+from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner
 
 from rewaave.tokens.claimable import (
     claimable_claim_rewards,

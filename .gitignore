@@ -15,8 +15,8 @@ starknet-artifacts
 #NPM lock file
 package-lock.json
 
-#Private keys
-.env/private
+#env
+.env
 
 #deployment
 deployment

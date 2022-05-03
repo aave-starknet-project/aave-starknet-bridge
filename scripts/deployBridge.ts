@@ -74,50 +74,53 @@ export async function deployL1Bridge(
   let tokenBridgeL1Proxy: Contract;
   let proxyBridgeFactory: ContractFactory;
   let proxiedBridge: Contract;
+  try {
+    const abiCoder = new ethers.utils.AbiCoder();
+    tokenBridgeL1 = await ethers.getContractFactory("TokenBridge", signer);
+    tokenBridgeL1Implementation = await tokenBridgeL1.deploy();
+    await tokenBridgeL1Implementation.deployed();
 
-  const abiCoder = new ethers.utils.AbiCoder();
-  tokenBridgeL1 = await ethers.getContractFactory("TokenBridge", signer);
-  tokenBridgeL1Implementation = await tokenBridgeL1.deploy();
-  await tokenBridgeL1Implementation.deployed();
+    proxyBridgeFactory = await ethers.getContractFactory("ProxyBridge", signer);
+    tokenBridgeL1Proxy = await proxyBridgeFactory.deploy();
+    await tokenBridgeL1Proxy.deployed();
 
-  proxyBridgeFactory = await ethers.getContractFactory("ProxyBridge", signer);
-  tokenBridgeL1Proxy = await proxyBridgeFactory.deploy();
-  await tokenBridgeL1Proxy.deployed();
+    const initData = abiCoder.encode(
+      ["address", "uint256", "address", "address"],
+      [
+        "0x0000000000000000000000000000000000000000",
+        proxyTokenBridgeL2,
+        starknetMessagingAddress,
+        rewAaveTokenAddress,
+      ]
+    );
+    await tokenBridgeL1Proxy.addImplementation(
+      tokenBridgeL1Implementation.address,
+      initData,
+      false
+    );
+    await tokenBridgeL1Proxy.upgradeTo(
+      tokenBridgeL1Implementation.address,
+      initData,
+      false
+    );
 
-  const initData = abiCoder.encode(
-    ["address", "uint256", "address", "address"],
-    [
-      "0x0000000000000000000000000000000000000000",
-      proxyTokenBridgeL2,
-      starknetMessagingAddress,
-      rewAaveTokenAddress,
-    ]
-  );
-  await tokenBridgeL1Proxy.addImplementation(
-    tokenBridgeL1Implementation.address,
-    initData,
-    false
-  );
-  await tokenBridgeL1Proxy.upgradeTo(
-    tokenBridgeL1Implementation.address,
-    initData,
-    false
-  );
+    proxiedBridge = await ethers.getContractAt(
+      "TokenBridge",
+      tokenBridgeL1Proxy.address,
+      signer
+    );
 
-  proxiedBridge = await ethers.getContractAt(
-    "TokenBridge",
-    tokenBridgeL1Proxy.address,
-    signer
-  );
-
-  fs.writeFileSync(
-    `deployment/L1Bridge.json`,
-    JSON.stringify({
-      implementation: tokenBridgeL1Implementation.address,
-      proxy: tokenBridgeL1Proxy.address,
-      rewAaveTokenAddress: rewAaveTokenAddress,
-      starknetMessagingAddress: starknetMessagingAddress,
-      proxyTokenBridgeL2: proxyTokenBridgeL2,
-    })
-  );
+    fs.writeFileSync(
+      `deployment/L1Bridge.json`,
+      JSON.stringify({
+        implementation: tokenBridgeL1Implementation.address,
+        proxy: tokenBridgeL1Proxy.address,
+        rewAaveTokenAddress: rewAaveTokenAddress,
+        starknetMessagingAddress: starknetMessagingAddress,
+        proxyTokenBridgeL2: proxyTokenBridgeL2,
+      })
+    );
+  } catch (error) {
+    console.log(error);
+  }
 }

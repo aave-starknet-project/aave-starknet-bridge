@@ -17,7 +17,7 @@ async function deployAll() {
     //networks
     const STARKNET_NETWORK = hre.config.starknet.network;
 
-    //[l1deployer] = await ethers.getSigners();
+    [l1deployer] = await ethers.getSigners();
     l2deployer = await starknet.deployAccount("OpenZeppelin");
 
     fs.writeFileSync(
@@ -55,12 +55,12 @@ async function deployAll() {
       reward_token: BigInt(proxiedL2RewAaaveToken.address),
     });
 
-    /* const tokenBridgeL1 = await deployL1Bridge(
-    l1deployer,
-    L2ProxyBridge.address,
-    "", //messaging contract
-    "" //rewards token on L1
-  ); */
+    const tokenBridgeL1 = await deployL1Bridge(
+      l1deployer,
+      L2ProxyBridge.address,
+      "", //messaging contract
+      "" //rewards token on L1
+    );
     console.log("Deploying ETHStaticATokens...");
     //deploy first ETHStaticAToken
     deployETHStaticAToken(

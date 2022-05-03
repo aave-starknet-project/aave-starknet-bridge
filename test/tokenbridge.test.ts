@@ -331,6 +331,8 @@ describe("TokenBridge", async function () {
     await usdc.connect(l1user).approve(l1StaticUsdc.address, MAX_UINT256);
     await l1StaticUsdc.connect(l1user).deposit(l1user.address, 1000, 0, true);
 
+    // Track initial balances (on repeated tests using the same testnet these
+    // values will increase on l1 because of the deterministic addresses)
     l1InitialDaiBalance = await dai.balanceOf(l1user.address);
     l1InitialUsdcBalance = await usdc.balanceOf(l1user.address);
     l1InitialADaiBalance = await aDai.balanceOf(l1user.address);
@@ -462,8 +464,8 @@ describe("TokenBridge", async function () {
 
   it('Withdraws aDai and aUsdc to L1 user', async () => {
     // approve L2 bridge with given amount
-    await l2user.invoke(l2StaticADai, 'approve', { spender: BigInt(l2StaticADai.address), amount: { high: 0n, low: 28n } });
-    await l2user.invoke(l2StaticAUsdc, 'approve', { spender: BigInt(l2StaticAUsdc.address), amount: { high: 0n, low: 37n } });
+    await l2user.invoke(l2StaticADai, 'approve', { spender: BigInt(l2StaticADai.address), amount: { high: 0n, low: 30n } });
+    await l2user.invoke(l2StaticAUsdc, 'approve', { spender: BigInt(l2StaticAUsdc.address), amount: { high: 0n, low: 40n } });
 
     // withdraw some tokens from L2
     await l2user.invoke(l2TokenBridge, 'initiate_withdraw', { l2_token: BigInt(l2StaticADai.address), l1_recipient: BigInt(l1user.address), amount: { high: 0n, low: 28n } });

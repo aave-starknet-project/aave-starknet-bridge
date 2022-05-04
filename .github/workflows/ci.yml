@@ -75,4 +75,4 @@ jobs:
 
       - name: Run tests
         run: |
-          yarn test ${{ matrix.tests }}
+          yarn test test/${{ matrix.tests }}

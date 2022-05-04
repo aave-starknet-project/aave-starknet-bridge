@@ -15,7 +15,7 @@ For Aave, one of the main current and future goals is growth of liquidity and us
 
 The bridge allows users to deposit and withdraw `staticATokens` - wrappers converting balance-increasing [aTokens]( https://docs.aave.com/developers/tokens/atoken) into exchange-rate-increasing staticATokens - on StarkNet and get wrapped tokens `ETHStaticATokens` that allow users to keep enjoying the same rewards as on L1. 
 
-The bridge was also shaped for liquidity providers who are able to assume Ethereum cost of deposit/withdrawal, as they transact amounts big enough. They will deposit on Aave Ethereum, bridge the staticATokens to Starknet and make them available for users there to buy and hold, accruing this way yield from L1. 
+The bridge is also shaped for liquidity providers who are able to assume Ethereum cost of deposit/withdrawal, as they transact large amounts. They will deposit on Aave Ethereum, bridge the staticATokens to Starknet and make them available for users there to buy and hold, accruing this way yield from L1. 
 
 ## Architecture
 
@@ -24,71 +24,72 @@ The bridge was also shaped for liquidity providers who are able to assume Ethere
 ## Contracts
 
 `L1`
-  * `StaticATokenLM` - an updated implementation of staticATokens which makes it possible to communicate with its respective L2 token by sending the latest `rewards_index` on token transfer or when explicitly triggered to do so.
-  *  `TokenBridge` -  handles rewards update, deposit & withdrawal of staticATokens & their underlying assets
+  * `StaticATokenLM` - an updated implementation of staticATokens which makes it possible to communicate with its respective L2 token by sending the latest L1 block number and latest `rewards_index` on token transfer.
+  *  `TokenBridge` -  handles rewards update, deposit & withdrawal of staticATokens, their corresponding aTokens and their underlying assets
   *  `Proxy` - A proxy implementation 
 
 `L2`
-  * `ETHStaticAToken` - Tokens on Starknet equivalent to each staticAToken on Ethereum mainnet. Contains the same logic for tracking user rewards as staticATokens and has the same `rewards_index`.
+  * `ETHStaticAToken` - Tokens on Starknet equivalent to each staticAToken on Ethereum mainnet. Contains the same logic for tracking user rewards as staticATokens and whose `rewards_index` is updated at each transfer of its L1 counterpart.
   * `claimable` - tracks users' claimable rewards and current reward index for each `ETHStaticAToken`
+  * `rewAAVE` - an ERC20 representing the rewards on L2
   * `token_bridge` - is responsible for:
     * bridging the staticATokens to and from L2. Minting and burning ETHStaticATokens on message from L1. 
     * bridging rewAAVE token back to L1
     * updating `rewards_index` for each ETHStaticAToken on message from L1 
-  * `rewAAVE` - an ERC20 representing the rewards on L2
-  *  `proxy` - a generic implementation of a proxy in starknet
+  *  `proxy` - a generic implementation of a proxy in cairo
 
 ## ETHStaticATokens on L2
 
-Natively, on Aave aTokens grow in balance, not in value. To be able to create this kind of model, it is important to wrap them before bridging, converting them in a token that grows in value, not in balance.
+Natively, Aave tokens grow in balance, not in value. To be able to create this kind of model, it is important to wrap them before bridging, converting them in a token that grows in value, not in balance.
 
-ETHStaticATokens are an implementation of the wrapped aTokens that will continuously increase in value on Starknet because they are backed by the increasing staticATokens amounts locked in the bridge contract on Ethereum. The ETHStaticATokens can then be bridged back to staticATokens.
+ETHStaticATokens are an implementation of the wrapped aTokens that will continuously increase in value on Starknet because they are backed by the increasing staticATokens amounts locked in the bridge contract on Ethereum. ETHStaticATokens can then be bridged back to staticATokens.
 
 ## Bridging staticATokens from L1<>L2
 
 ### Transfer L1->L2: 
 
-Users can either bridge their staticAToken to L2 by calling `deposit()` on `TokenBridge`, or deposit the underlying asset of the staticAToken directly by calling `depositUnderlying()`.
+
+Users can either bridge their staticAToken to L2 by calling `deposit()` on `TokenBridge`, or deposit the underlying asset (let's say Dai) or the corresponding aToken (i.e. aDai) by calling `depositUnderlying()`.
 
 Calling `deposit` will result in the following:
 
-- staticATokens will be transfered from the user account to the L1 bridge
-- A `deposit` event will be emitted with the L1 token address, the recipient address on L2, and the amount
-- A message will be sent to the  L2 bridge with the amount to be transferred, the L1 token address and the recipient address as parameters.
-- The token bridge on L2 will then be minting the correspending ETHStaticAToken of the L1 token to the user.
+- staticATokens will be transfered from the user account to the L1 bridge.
+- A `deposit` event will be emitted with L1 token address, L2 recipient address and the amount.
+- A message will be sent to the  L2 bridge with the amount to be transferred, the L1 token address and the L2 recipient address as parameters.
+- The token bridge on L2 will then mint the correspending ETHStaticAToken of the L1 token to the user.
 
 Calling `depositUnderlying` will result in the following:
 
 Users will have to approve the bridge to spend the underlying `asset` tokens or `aTokens`, depending on the provided value for `fromAsset` argument when depositing.
 
-- the underlying asset of the staticAToken or the aToken (depending on the user's input )  will be transfered from the user account to the L1 bridge
-- the bridge will then deposit the aTokens/asset on the staticAToken
-- new staticATokens will be minted to the bridge
+- The underlying asset of the staticAToken or the aToken (depending on the user's input )  will be transfered from the user account to the L1 bridge.
+- The bridge will then deposit the aTokens/asset on the staticAToken.
+- New staticATokens will be minted to the bridge.
 - A message will be sent to the  L2 bridge with the amount to be transferred, the L1 token address and the recipient address as parameters.
 - The token bridge on L2 will then be minting the correspending ETHStaticAToken of the L1 token to the user.
 
 
 ### Transfer L2->L1:
 
-To bridge their staticATokens back to L1, users need to call `initiate_withdraw()` on Starknet `token_bridge`. 
+To bridge their staticATokens back to L1, users need to call `initiate_withdraw` on Starknet. 
 
 Calling `initiate_withdraw` will result in the following:
 
 - The amount to withdraw will be burned by the bridge
-- A message will be sent to L1 with the L1 token address, the l1 recipient, the l2 rewards index and the amount
-- The L1 bridge will then transfer the staticATokens to the l1 recipient
-- The L1 bridge also checks for any difference in the l1/l2 rewards index and transfers any unclaimed rewards to the l1 user
+- A message will be sent to L1 with the L1 token address, the L1 recipient, the L2 rewards index and the amount
+- The L1 bridge will then transfer the staticATokens to the L1 recipient
+- The L1 bridge also checks for any difference in the L1/L2 rewards index and transfers any unclaimed rewards to the L1 user
 
 
 ## Synchronisation of rewards on L1 <> L2
 
-Starknet users will continue to enjoy the same rewards as on L1 after bridging their assets; To achieve that we continously update the `rewards_index` of all ETHStaticATokens to match the value of their respective StaticATokens on L1, by tracking the reward index on departure of the static token and sending the rewards accrued during the bridging process to the recipients address.
+Starknet users will continue to enjoy the same rewards as on L1 after bridging their assets. To achieve that we continously update the `rewards_index` of all ETHStaticATokens to match the value of their respective StaticATokens on L1, by tracking the reward index on departure of the static token and sending the rewards accrued during the bridging process to the recipients address.
 
 
 ## Claiming rewards on L2
 
 
-To claim rewards users need to call `claim_rewards()` on ETHStaticAToken contract. The ETHStaticAToken will then be calling the bridge to mint the due `rewAAVE` tokens to the user.
+To claim rewards users need to call `claim_rewards` on ETHStaticAToken contract. The ETHStaticAToken will then call the bridge to mint the due `rewAAVE` tokens to the user.
 
 ## Bridging rewards from L2->L1
 
@@ -99,10 +100,9 @@ To bridge their rewards to L1, users will have to call `bridge_rewards()` on the
 
 All calls made to the following contracts will be handled by a proxy who delegates the calls to the available implementation of these contracts.
 - Token bridge on L2 
-- ETHStaticATokens 
+- ETHStaticATokens on L2
 - Token bridge on L1 
-
-Using proxies during the early release of the bridge will allow us to upgrade and continuously improve the contracts implementations. 
+- rewAAVE token on L2
 
 
 ## Governance

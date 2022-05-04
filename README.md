@@ -11,9 +11,7 @@
 
 ## Overview
 
-For Aave, one of the main current and future goals is growth of liquidity and user base. As seen on side-chains with low transaction cost like Polygon or Avalanche, there is high demand to use the Aave protocol with small amounts to earn high yield.
-
-Both previous points show that having an initial phase on the Aave <> Starknet integration allowing deposit/withdrawal on Aave Ethereum by exclusively transacting on Starknet can be a good idea, target-wise.
+For Aave, one of the main current and future goals is growth of liquidity and user base. As seen on side-chains with low transaction cost like Polygon or Avalanche, there is high demand to use the Aave protocol with small amounts to earn high yield. That's why we brought to you an initial phase of the Aave <> Starknet integration allowing deposit/withdrawal on Aave Ethereum by exclusively transacting on Starknet.
 
 The bridge allows users to deposit and withdraw `staticATokens` - wrappers converting balance-increasing [aTokens]( https://docs.aave.com/developers/tokens/atoken) into exchange-rate-increasing staticATokens - on StarkNet and get wrapped tokens `ETHStaticATokens` that allow users to keep enjoying the same rewards as on L1. 
 
@@ -37,7 +35,7 @@ The bridge was also shaped for liquidity providers who are able to assume Ethere
     * bridging the staticATokens to and from L2. Minting and burning ETHStaticATokens on message from L1. 
     * bridging rewAAVE token back to L1
     * updating `rewards_index` for each ETHStaticAToken on message from L1 
-  * `rewAAVE` - a very basic ERC20 to represent the rewards on L2
+  * `rewAAVE` - an ERC20 representing the rewards on L2
   *  `proxy` - a generic implementation of a proxy in starknet
 
 ## ETHStaticATokens on L2
@@ -76,16 +74,15 @@ To bridge their staticATokens back to L1, users need to call `initiate_withdraw(
 
 Calling `initiate_withdraw` will result in the following:
 
-- The amount withdraw of ETHStaticAToken will be burned by the bridge
-- A message will be sent to L1 with the L1 token address, the l1 recipient, and the amount
-
-(@TODO: add more info on how we bridge the current rewards index when withdrawing..)
- 
+- The amount to withdraw will be burned by the bridge
+- A message will be sent to L1 with the L1 token address, the l1 recipient, the l2 rewards index and the amount
+- The L1 bridge will then transfer the staticATokens to the l1 recipient
+- The L1 bridge also checks for any difference in the l1/l2 rewards index and transfers any unclaimed rewards to the l1 user
 
 
 ## Synchronisation of rewards on L1 <> L2
 
-Starknet users will continue to enjoy the same rewards as on L1 after bridging their assets; To achieve that we continously update the `rewards_index` of all ETHStaticATokens to match the value of their respective StaticATokens on L1. 
+Starknet users will continue to enjoy the same rewards as on L1 after bridging their assets; To achieve that we continously update the `rewards_index` of all ETHStaticATokens to match the value of their respective StaticATokens on L1, by tracking the reward index on departure of the static token and sending the rewards accrued during the bridging process to the recipients address.
 
 
 ## Claiming rewards on L2

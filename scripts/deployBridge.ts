@@ -36,7 +36,6 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
   fs.writeFileSync(
     `deployment/L2Bridge.json`,
     JSON.stringify({
-      proxy_admin: proxy_admin,
       proxy: proxyBridge.address,
       implementation: bridgeImplementation.address,
     })

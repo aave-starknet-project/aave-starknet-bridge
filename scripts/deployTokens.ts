@@ -13,9 +13,6 @@ import fs from "fs";
  * @param symbol token's symbol
  * @param decimals  token's symbol
  * @param initial_supply oken's initial supply
- * @param recipient mints initial supply to recipient
- * @param controller the token controller/owner
- * @param proxy_admin address of the proxy owner
  */
 export async function deployETHStaticAToken(
   deployer: Account,
@@ -23,9 +20,7 @@ export async function deployETHStaticAToken(
   symbol: string,
   decimals: bigint,
   initial_supply: { low: bigint; high: bigint },
-  recipient: bigint,
-  controller: bigint,
-  proxy_admin: bigint
+  owner: bigint
 ) {
   let proxiedETHStaticAToken: StarknetContract;
   let tokenImplementation: StarknetContract;
@@ -36,7 +31,7 @@ export async function deployETHStaticAToken(
   proxyFactoryL2 = await starknet.getContractFactory("proxy");
 
   proxyToken = await proxyFactoryL2.deploy({
-    proxy_admin: proxy_admin,
+    proxy_admin: BigInt(deployer.starknetContract.address),
   });
 
   tokenImplementation = await L2TokenFactory.deploy();
@@ -60,8 +55,8 @@ export async function deployETHStaticAToken(
     symbol: stringToBigInt(symbol),
     decimals: decimals,
     initial_supply: initial_supply,
-    recipient: recipient,
-    controller: controller,
+    recipient: BigInt(deployer.starknetContract.address),
+    controller: owner,
   });
 }
 
@@ -71,9 +66,7 @@ export async function deployL2RewAaveToken(
   symbol: string,
   decimals: bigint,
   initial_supply: { low: bigint; high: bigint },
-  recipient: bigint,
-  owner: bigint,
-  proxy_admin: bigint
+  owner: bigint
 ) {
   let rewAaveTokenImplementation: StarknetContract;
   let proxyFactoryL2: StarknetContractFactory;
@@ -84,7 +77,7 @@ export async function deployL2RewAaveToken(
 
   console.log("deploying rewAAVE token proxy ...");
   proxyToken = await proxyFactoryL2.deploy({
-    proxy_admin: proxy_admin,
+    proxy_admin: BigInt(deployer.starknetContract.address),
   });
 
   console.log("deploying rewAAVE token implementation ...");
@@ -111,7 +104,7 @@ export async function deployL2RewAaveToken(
     symbol: stringToBigInt(symbol),
     decimals: decimals,
     initial_supply: initial_supply,
-    recipient: recipient,
+    recipient: BigInt(deployer.starknetContract.address),
     owner: owner,
   });
   return proxyToken;

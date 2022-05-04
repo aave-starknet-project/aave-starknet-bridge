@@ -16,7 +16,7 @@ async function deployAll() {
     l2deployer = await starknet.deployAccount("OpenZeppelin");
 
     fs.writeFileSync(
-      `deployment/L2deployer.json`,
+      "deployment/L2deployer.json",
       JSON.stringify({
         publicKey: l2deployer.publicKey,
         privateKey: l2deployer.privateKey,
@@ -37,9 +37,7 @@ async function deployAll() {
       "rewAAVE",
       18n,
       { high: 0n, low: 0n },
-      BigInt(l2deployer.starknetContract.address),
-      BigInt(L2ProxyBridge.address),
-      BigInt(l2deployer.starknetContract.address)
+      BigInt(L2ProxyBridge.address)
     );
 
     console.log("setting reward token on L2 token bridge...");
@@ -64,9 +62,7 @@ async function deployAll() {
       "ETHAUSD",
       18n,
       { high: 0n, low: 0n },
-      BigInt(l2deployer.starknetContract.address),
-      BigInt(L2ProxyBridge.address),
-      BigInt(l2deployer.starknetContract.address)
+      BigInt(L2ProxyBridge.address)
     );
   } catch (error) {
     console.log(error);

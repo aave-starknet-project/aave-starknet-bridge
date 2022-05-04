@@ -9,6 +9,8 @@ import { deployL1Bridge, deployL2Bridge } from "./deployBridge";
 import hre, { starknet, network, ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
+const starknetMessagingContract = "0xae0Ee0A63A2cE6BaeEFFE56e7714FB4EFE48D419";
+
 async function deployAll() {
   try {
     let l2deployer: Account;
@@ -58,8 +60,7 @@ async function deployAll() {
     const tokenBridgeL1 = await deployL1Bridge(
       l1deployer,
       L2ProxyBridge.address,
-      "", //messaging contract
-      "" //rewards token on L1
+      starknetMessagingContract
     );
     console.log("Deploying ETHStaticATokens...");
     //deploy first ETHStaticAToken

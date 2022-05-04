@@ -66,8 +66,7 @@ export async function deployL2Bridge(
 export async function deployL1Bridge(
   signer: SignerWithAddress,
   proxyTokenBridgeL2: string,
-  starknetMessagingAddress: string,
-  rewAaveTokenAddress: string
+  starknetMessagingAddress: string
 ) {
   let tokenBridgeL1: ContractFactory;
   let tokenBridgeL1Implementation: Contract;
@@ -86,12 +85,11 @@ export async function deployL1Bridge(
     await tokenBridgeL1Proxy.deployed();
 
     const initData = abiCoder.encode(
-      ["address", "uint256", "address", "address"],
+      ["address", "uint256", "address"],
       [
         "0x0000000000000000000000000000000000000000",
         proxyTokenBridgeL2,
         starknetMessagingAddress,
-        rewAaveTokenAddress,
       ]
     );
     await tokenBridgeL1Proxy.addImplementation(
@@ -116,7 +114,6 @@ export async function deployL1Bridge(
       JSON.stringify({
         implementation: tokenBridgeL1Implementation.address,
         proxy: tokenBridgeL1Proxy.address,
-        rewAaveTokenAddress: rewAaveTokenAddress,
         starknetMessagingAddress: starknetMessagingAddress,
         proxyTokenBridgeL2: proxyTokenBridgeL2,
       })

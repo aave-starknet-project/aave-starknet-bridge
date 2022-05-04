@@ -7,7 +7,6 @@ import { starknet } from "hardhat";
 import { TIMEOUT, L1_TEST_ADDRESS } from "./constants";
 import { expect } from "chai";
 import { wadToRay, decimalToWad } from "../helpers/rayMath";
-const WAD = 10 ** 18;
 
 describe("ETHStaticAToken", function () {
   this.timeout(TIMEOUT);
@@ -176,7 +175,10 @@ describe("ETHStaticAToken", function () {
 
   it("allows owner to update accRewards", async () => {
     await owner.invoke(proxiedL2Token, "push_acc_rewards_per_token", {
-      block: 1,
+      block_number: {
+        high: 0,
+        low: 1,
+      },
       acc_rewards_per_token: {
         high: 0,
         low: BigInt(decimalToWad(2)),
@@ -196,7 +198,10 @@ describe("ETHStaticAToken", function () {
   it("disallows non-owner to update accRewards", async () => {
     try {
       await user1.invoke(proxiedL2Token, "push_acc_rewards_per_token", {
-        block: 2,
+        block_number: {
+          high: 0,
+          low: 2,
+        },
         acc_rewards_per_token: {
           high: 0n,
           low: BigInt(decimalToWad(2)),
@@ -210,7 +215,10 @@ describe("ETHStaticAToken", function () {
   it("only allows increases in accRewards", async () => {
     try {
       await owner.invoke(proxiedL2Token, "push_acc_rewards_per_token", {
-        block: 3,
+        block_number: {
+          high: 0,
+          low: 3,
+        },
         acc_rewards_per_token: {
           high: 0,
           low: 0,
@@ -224,7 +232,10 @@ describe("ETHStaticAToken", function () {
   it("rejects old block numbers", async () => {
     try {
       await owner.invoke(proxiedL2Token, "push_acc_rewards_per_token", {
-        block: 0,
+        block_number: {
+          high: 0,
+          low: 0,
+        },
         acc_rewards_per_token: {
           high: 0,
           low: BigInt(decimalToWad(2)),
@@ -317,7 +328,10 @@ describe("ETHStaticAToken", function () {
 
     //Update the acc rewards per token first
     await owner.invoke(proxiedL2Token, "push_acc_rewards_per_token", {
-      block: 2,
+      block_number: {
+        high: 0,
+        low: 2,
+      },
       acc_rewards_per_token: {
         high: 0,
         low: BigInt(decimalToWad(3)),
@@ -351,7 +365,10 @@ describe("ETHStaticAToken", function () {
   it("Rewards of user are not lost if L2 tokens are burnt before claiming", async () => {
     //To have a non null rewards amount, we update the rewards index
     await owner.invoke(proxiedL2Token, "push_acc_rewards_per_token", {
-      block: 3,
+      block_number: {
+        low: 0,
+        high: 3,
+      },
       acc_rewards_per_token: {
         high: 0,
         low: BigInt(decimalToWad(4)),

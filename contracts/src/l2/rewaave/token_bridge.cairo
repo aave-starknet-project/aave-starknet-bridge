@@ -3,7 +3,8 @@
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math import assert_lt_felt, assert_not_zero
-from starkware.cairo.common.uint256 import Uint256
+from starkware.cairo.common.math_cmp import is_le
+from starkware.cairo.common.uint256 import Uint256, uint256_check
 from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address
 
@@ -239,13 +240,15 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     amount_low : felt,
     amount_high : felt,
 ):
-    # The amount is validated (i.e. amount_low, amount_high < 2**128) by an inner call to
-    # IMintableToken mint function.
+    alloc_locals
 
     auth_l1_handler(from_address_=from_address)
 
     let amount = Uint256(low=amount_low, high=amount_high)
 
+    with_attr error_message("High or low overflows 128 bit bound {amount}"):
+        uint256_check(amount)
+    end
     assert_not_zero(l2_token_address)
 
     # Call mint on l2_token contract.
@@ -274,18 +277,28 @@ end
 @l1_handler
 func handle_rewards_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     from_address : felt,
-    block_number : felt,
+    block_number_low : felt,
+    block_number_high : felt,
     l2_token : felt,
     rewards_low : felt,
     rewards_high : felt,
 ):
+    alloc_locals
     auth_l1_handler(from_address_=from_address)
 
     let rewards = Uint256(low=rewards_low, high=rewards_high)
+    let block_number = Uint256(low=block_number_low, high=block_number_high)
+
+    with_attr error_message("High or low overflows 128 bit bound {rewards}"):
+        uint256_check(rewards)
+    end
+    with_attr error_message("High or low overflows 128 bit bound {block_number}"):
+        uint256_check(block_number)
+    end
 
     # push rewards
     IETHstaticAToken.push_acc_rewards_per_token(
-        contract_address=l2_token, block=block_number, acc_rewards_per_token=rewards
+        contract_address=l2_token, block_number=block_number, acc_rewards_per_token=rewards
     )
 
     return ()

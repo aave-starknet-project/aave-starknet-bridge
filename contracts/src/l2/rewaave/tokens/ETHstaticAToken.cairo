@@ -34,6 +34,8 @@ from rewaave.tokens.claimable import (
     get_claimable_rewards,
 )
 
+from rewaave.math.wad_ray_math import Ray
+
 @contract_interface
 namespace ITokenBridge:
     func mint_rewards(recipient : felt, amount : Uint256):
@@ -202,7 +204,7 @@ func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     let (caller) = get_caller_address()
     let (rewards) = claimable_claim_rewards(caller)
     let (l2_token_bridge_) = l2_token_bridge.read()
-    ITokenBridge.mint_rewards(l2_token_bridge_, recipient, rewards)
+    ITokenBridge.mint_rewards(l2_token_bridge_, recipient, rewards.wad)
     return ()
 end
 
@@ -210,21 +212,23 @@ end
 func push_acc_rewards_per_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     block_number : Uint256, acc_rewards_per_token : Uint256
 ):
-    claimable_push_acc_rewards_per_token(block_number, acc_rewards_per_token)
+    claimable_push_acc_rewards_per_token(block_number, Ray(acc_rewards_per_token))
     return ()
 end
 
 @external
 func get_acc_rewards_per_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     ) -> (acc_rewards_per_token : Uint256):
-    return claimable_get_acc_rewards_per_token()
+    let (res) = claimable_get_acc_rewards_per_token()
+    return (res.ray)
 end
 
 @external
 func get_user_acc_rewards_per_token{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt) -> (user_acc_rewards_per_token : Uint256):
-    return claimable_get_user_acc_rewards_per_token(user)
+    let (res) = claimable_get_user_acc_rewards_per_token(user)
+    return (res.ray)
 end
 
 @external
@@ -232,5 +236,6 @@ func get_user_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*
     user : felt
 ) -> (user_claimable_rewards : Uint256):
     alloc_locals
-    return get_claimable_rewards(user)
+    let (res) = get_claimable_rewards(user)
+    return (res.wad)
 end

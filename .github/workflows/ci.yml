@@ -41,7 +41,7 @@ jobs:
         run: |
           yarn lint
 
-      - name: Start the devnet
+      - name: Start the l2 & l1 test networks
         run: |
           yarn testnet:l2 &
           yarn testnet:l1 &

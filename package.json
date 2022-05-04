@@ -11,9 +11,9 @@
     "lint": "find contracts/ -iname *.cairo -exec .venv/bin/cairo-format -c {} +",
     "compile": "hardhat starknet-compile --cairo-path 'node_modules/@joriksch/oz-cairo/src:contracts/src/l2'",
     "compile:tests": "hardhat starknet-compile --cairo-path 'node_modules/@joriksch/oz-cairo:contracts/src/l2' contracts/test",
-    "deploy:account": "yarn hardhat starknet-deploy-account --starknet-network devnet --wallet OpenZeppelin",
-    "deploy-bridge:l2": "hardhat run --network devnet ./scripts/deploy.ts",
-    "deploy-bridge:l1": "hardhat run --network fork ./scripts/deploy.ts",
+    "deploy:account": "yarn hardhat starknet-deploy-account --starknet-network l2_testnet --wallet OpenZeppelin",
+    "deploy-bridge:l2": "hardhat run --network l2_testnet ./scripts/deploy.ts",
+    "deploy-bridge:l1": "hardhat run --network l1_testnet ./scripts/deploy.ts",
     "compile:openzeppelin": "yarn hardhat starknet-compile node_modules/@joriksch/oz-cairo --cairo-path node_modules/@joriksch/oz-cairo/",
     "prepare": "husky install"
   },

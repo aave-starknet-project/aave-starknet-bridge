@@ -10,11 +10,15 @@ dotenvConfig({ path: resolve(__dirname, "./.env") });
 
 chai.use(solidity);
 
-const mnemonic: string | undefined = process.env.MNEMONIC;
-const ALCHEMY_KEY = process.env.ALCHEMY_KEY;
-if (!mnemonic) {
+const { MNEMONIC, ALCHEMY_KEY } = process.env;
+
+if (!MNEMONIC) {
   throw new Error("Please set your MNEMONIC in your .env file");
 }
+
+/* if (!ALCHEMY_KEY) {
+  throw new Error("Please set your ALCHEMY_KEY in your .env file");
+} */
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
@@ -45,7 +49,7 @@ const config: HardhatUserConfig = {
   },
   starknet: {
     venv: ".venv",
-    network: "devnet",
+    network: "l2_testnet",
     wallets: {
       OpenZeppelin: {
         accountName: "OpenZeppelin",
@@ -56,15 +60,15 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    devnet: {
+    l2_testnet: {
       url: "http://localhost:5000",
     },
-    fork: {
+    l1_testnet: {
       url: "http://localhost:8545",
     },
     mainnet: {
       url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,
-      accounts: [mnemonic],
+      accounts: [MNEMONIC],
     },
   },
 };

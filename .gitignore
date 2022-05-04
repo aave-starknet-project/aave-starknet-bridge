@@ -15,12 +15,14 @@ starknet-artifacts
 #NPM lock file
 package-lock.json
 
-#env
+#Environment variables file
 .env
 
-#deployment
+#deployment artifacts folder
 deployment
 
 # Yarn error file
 yarn-error.log
+
+*/.DS_Store 
 

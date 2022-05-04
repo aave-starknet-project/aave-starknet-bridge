@@ -2,7 +2,7 @@ import { Account } from "hardhat/types";
 import fs from "fs";
 import { deployETHStaticAToken, deployL2RewAaveToken } from "./deployTokens";
 import { deployL1Bridge, deployL2Bridge } from "./deployBridge";
-import hre, { starknet, network, ethers } from "hardhat";
+import { starknet, ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 const starknetMessagingContract = "0xae0Ee0A63A2cE6BaeEFFE56e7714FB4EFE48D419";
@@ -11,9 +11,6 @@ async function deployAll() {
   try {
     let l2deployer: Account;
     let l1deployer: SignerWithAddress;
-
-    //networks
-    const STARKNET_NETWORK = hre.config.starknet.network;
 
     [l1deployer] = await ethers.getSigners();
     l2deployer = await starknet.deployAccount("OpenZeppelin");
@@ -29,12 +26,7 @@ async function deployAll() {
     //deploy L2 token bridge
     const L2ProxyBridge = await deployL2Bridge(
       l2deployer,
-      BigInt(l2deployer.starknetContract.address),
       BigInt(l2deployer.starknetContract.address)
-    );
-
-    console.log(
-      `To verify L2 proxy bridge: npx hardhat starknet-verify --starknet-network ${STARKNET_NETWORK} --path contracts/src/l2/proxy.cairo --address ${L2ProxyBridge.address}`
     );
 
     //deploy rewAAVE token on L2

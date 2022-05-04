@@ -12,13 +12,8 @@ import hre, { starknet, network, ethers } from "hardhat";
  * deploys and initializes ETHStaticAToken on L2
  * @param deployer the deployer starknet account
  * @param proxy_admin address of the proxy owner
- * @param governor_address address of the bridge controller/owner
  */
-export async function deployL2Bridge(
-  deployer: Account,
-  proxy_admin: bigint,
-  governor_address: bigint
-) {
+export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
   let proxiedBridge: StarknetContract;
   let bridgeImplementation: StarknetContract;
   let proxyFactoryL2: StarknetContractFactory;
@@ -41,7 +36,7 @@ export async function deployL2Bridge(
   fs.writeFileSync(
     `deployment/L2Bridge.json`,
     JSON.stringify({
-      governor_address: deployer.starknetContract.address,
+      proxy_admin: proxy_admin,
       proxy: proxyBridge.address,
       implementation: bridgeImplementation.address,
     })
@@ -50,7 +45,7 @@ export async function deployL2Bridge(
 
   console.log("initializing L2 bridge...");
   await deployer.invoke(proxiedBridge, "initialize_token_bridge", {
-    governor_address: governor_address,
+    governor_address: proxy_admin,
   });
 
   return proxiedBridge;
@@ -61,7 +56,6 @@ export async function deployL2Bridge(
  * @param signer the deployer starknet account
  * @param  proxyTokenBridgeL2 address of the proxy bridge on L2
  * @param starknetMessagingAddress
- * @param rewAaveTokenAddress rewAAVE on L1
  */
 export async function deployL1Bridge(
   signer: SignerWithAddress,
@@ -110,7 +104,7 @@ export async function deployL1Bridge(
     );
 
     fs.writeFileSync(
-      `deployment/L1Bridge.json`,
+      "deployment/L1Bridge.json",
       JSON.stringify({
         implementation: tokenBridgeL1Implementation.address,
         proxy: tokenBridgeL1Proxy.address,

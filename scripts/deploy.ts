@@ -1,8 +1,4 @@
-import {
-  StarknetContract,
-  StarknetContractFactory,
-  Account,
-} from "hardhat/types";
+import { Account } from "hardhat/types";
 import fs from "fs";
 import { deployETHStaticAToken, deployL2RewAaveToken } from "./deployTokens";
 import { deployL1Bridge, deployL2Bridge } from "./deployBridge";
@@ -37,6 +33,10 @@ async function deployAll() {
       BigInt(l2deployer.starknetContract.address)
     );
 
+    console.log(
+      `To verify L2 proxy bridge: npx hardhat starknet-verify --starknet-network ${STARKNET_NETWORK} --path contracts/src/l2/proxy.cairo --address ${L2ProxyBridge.address}`
+    );
+
     //deploy rewAAVE token on L2
 
     const proxiedL2RewAaaveToken = await deployL2RewAaveToken(
@@ -57,11 +57,13 @@ async function deployAll() {
       reward_token: BigInt(proxiedL2RewAaaveToken.address),
     });
 
-    const tokenBridgeL1 = await deployL1Bridge(
+    console.log("Deploying L1 token bridge...");
+    await deployL1Bridge(
       l1deployer,
       L2ProxyBridge.address,
       starknetMessagingContract
     );
+
     console.log("Deploying ETHStaticATokens...");
     //deploy first ETHStaticAToken
     deployETHStaticAToken(

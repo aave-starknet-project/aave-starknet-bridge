@@ -331,14 +331,6 @@ describe("TokenBridge", async function () {
     await usdc.connect(l1user).approve(l1StaticUsdc.address, MAX_UINT256);
     await l1StaticUsdc.connect(l1user).deposit(l1user.address, 1000, 0, true);
 
-    // Track initial balances (on repeated tests using the same testnet these
-    // values will increase on l1 because of the deterministic addresses)
-    l1InitialDaiBalance = await dai.balanceOf(l1user.address);
-    l1InitialUsdcBalance = await usdc.balanceOf(l1user.address);
-    l1InitialADaiBalance = await aDai.balanceOf(l1user.address);
-    l1InitialAUsdcBalance = await aUsdc.balanceOf(l1user.address);
-    l1InitialStaticADaiBalance = await l1StaticDai.balanceOf(l1user.address);
-    l1InitialStaticAUsdcBalance = await l1StaticUsdc.balanceOf(l1user.address);
   })
 
   it("initialize the bridge on L1 and L2", async () => {
@@ -369,6 +361,8 @@ describe("TokenBridge", async function () {
     await aUsdc.connect(l1user).approve(l1TokenBridge.address, MAX_UINT256);
 
     // l1user deposits 30 staticADai and 40 staticAUsdc on L1 for l2user on L2
+    l1InitialStaticADaiBalance = await l1StaticDai.balanceOf(l1user.address);
+    l1InitialStaticAUsdcBalance = await l1StaticUsdc.balanceOf(l1user.address);
     await l1TokenBridge.connect(l1user).deposit(l1StaticDai.address, BigInt(l2user.starknetContract.address), 30);
     await l1TokenBridge.connect(l1user).deposit(l1StaticUsdc.address, BigInt(l2user.starknetContract.address), 40);
     expect(await l1StaticDai.balanceOf(l1user.address)).to.equal(l1InitialStaticADaiBalance-30);
@@ -377,6 +371,8 @@ describe("TokenBridge", async function () {
     expect(await l1StaticUsdc.balanceOf(l1TokenBridge.address)).to.equal(40);
 
     // l1user deposits 30 aDai and 40 aUsdc on L1 for l2user on L2
+    l1InitialADaiBalance = await aDai.balanceOf(l1user.address);
+    l1InitialAUsdcBalance = await aUsdc.balanceOf(l1user.address);
     await l1TokenBridge.connect(l1user).depositUnderlying(l1StaticDai.address, BigInt(l2user.starknetContract.address), 30, 0, false);
     await l1TokenBridge.connect(l1user).depositUnderlying(l1StaticUsdc.address, BigInt(l2user.starknetContract.address), 40, 0, false);
     expect(await aDai.balanceOf(l1user.address)).to.equal(l1InitialADaiBalance-30);
@@ -386,6 +382,8 @@ describe("TokenBridge", async function () {
     expect(await l1StaticUsdc.balanceOf(l1TokenBridge.address)).to.equal(77);
 
     // l1user deposits 30 dai and 40 usdc on L1 for l2user on L2
+    l1InitialDaiBalance = await dai.balanceOf(l1user.address);
+    l1InitialUsdcBalance = await usdc.balanceOf(l1user.address);
     txDai = await l1TokenBridge.connect(l1user).depositUnderlying(l1StaticDai.address, BigInt(l2user.starknetContract.address), 30, 0, true);
     txUsdc = await l1TokenBridge.connect(l1user).depositUnderlying(l1StaticUsdc.address, BigInt(l2user.starknetContract.address), 40, 0, true);
     blockNumberDai = txDai.blockNumber;

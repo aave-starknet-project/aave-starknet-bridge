@@ -170,7 +170,7 @@ yarn compile
 ### Start testnets
 
 First get an [alchemy](https://www.alchemy.com/) key and write the following to
-`.env/private`
+`.env`
 
 ```bash
 export $ALCHEMY_KEY="<your key>"
@@ -179,7 +179,7 @@ export $ALCHEMY_KEY="<your key>"
 Then load all the environment variables
 
 ```bash
-source .evn/*
+source .evn
 ```
 
 Then start the testnets. It's wise to do this in two separate shells.

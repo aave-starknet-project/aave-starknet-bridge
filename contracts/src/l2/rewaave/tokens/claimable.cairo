@@ -2,7 +2,13 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.uint256 import Uint256, uint256_add, uint256_sub, uint256_le
-from rewaave.math.wad_ray_math import wad_to_ray, ray_mul_no_rounding, ray_to_wad_no_rounding
+from rewaave.math.wad_ray_math import (
+    Wad,
+    Ray,
+    wad_to_ray,
+    ray_mul_no_rounding,
+    ray_to_wad_no_rounding,
+)
 from openzeppelin.token.erc20.library import ERC20_balanceOf
 from openzeppelin.access.ownable import Ownable_only_owner
 
@@ -75,15 +81,15 @@ func get_pending_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
 ) -> (pending_rewards : Uint256):
     alloc_locals
     let (balance) = ERC20_balanceOf(user)
-    let (balance_in_ray) = wad_to_ray(balance)
+    let (balance_in_ray) = wad_to_ray(Wad(balance))
     let (accRewardsPerToken_) = acc_rewards_per_token.read()
     let (user_snapshot_rewards_per_token_) = user_snapshot_rewards_per_token.read(user)
     let (accrued_since_last_interaction) = uint256_sub(
         accRewardsPerToken_, user_snapshot_rewards_per_token_
     )
-    let (pending_rewards) = ray_mul_no_rounding(accrued_since_last_interaction, balance_in_ray)
+    let (pending_rewards) = ray_mul_no_rounding(Ray(accrued_since_last_interaction), balance_in_ray)
 
-    return (pending_rewards)
+    return (pending_rewards.ray)
 end
 
 func get_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -94,8 +100,8 @@ func get_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
     let (pending) = get_pending_rewards(user)
     let (claimable_rewards, overflow) = uint256_add(unclaimed_rewards_, pending)
     assert overflow = 0
-    let (claimable_rewards_) = ray_to_wad_no_rounding(claimable_rewards)
-    return (claimable_rewards_)
+    let (claimable_rewards_) = ray_to_wad_no_rounding(Ray(claimable_rewards))
+    return (claimable_rewards_.wad)
 end
 
 func claimable_claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(

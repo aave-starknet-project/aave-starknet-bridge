@@ -107,16 +107,11 @@ Using proxies during the early release of the bridge will allow us to upgrade an
 
 ## Governance
 
-L2
 
 * `ETHStaticATokens` are controlled by the `token_bridge`
 * `rewAAVE` token is owned by the `token_bridge`
 
-L1
   
-
-## Deployment 
-
 
 ### Environment
 
@@ -151,12 +146,16 @@ Let’s create a virtual environment. It helps isolate your project’s requirem
 python3.7 -m venv .venv
 source .venv/bin/activate
 ```
+
+
 Install poetry for dependencies management
 
 ```bash
 pip install poetry
 poetry install
 ```
+
+
 
 ### Build the cairo files
 
@@ -166,12 +165,10 @@ yarn compile
 
 ### Start testnets
 
-First get an [alchemy](https://www.alchemy.com/) key and write the following to
-`.env`
+First make sure to create a `.env` file in your project (see [`.env.example`](https://github.com/aave-starknet-project/aave-starknet-bridge/blob/main/.env.example)for the needed variables in your environment).
 
-```bash
-export $ALCHEMY_KEY="<your key>"
-```
+You can get an `ALCHEMY KEY` [here](https://www.alchemy.com/) 
+
 
 Then load all the environment variables
 
@@ -196,6 +193,17 @@ hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin) and
 
 ```
 yarn test
+```
+
+
+## Deployment 
+
+to deploy the bridge
+
+```bash
+yarn deploy-bridge:l1 
+#or
+yarn deploy-bridge:l2
 ```
 
 Contributors

@@ -1,1 +1,1 @@
-.venv/bin/amarna contracts -o out.sarif -summary
+.venv/bin/amarna contracts -o out_cairo.sarif -summary

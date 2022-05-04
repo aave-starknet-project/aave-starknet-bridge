@@ -15,6 +15,9 @@ async function deployAll() {
     [l1deployer] = await ethers.getSigners();
     l2deployer = await starknet.deployAccount("OpenZeppelin");
 
+    if (!fs.existsSync("./deployment")) {
+      fs.mkdirSync("./deployment");
+    }
     fs.writeFileSync(
       "deployment/L2deployer.json",
       JSON.stringify({
@@ -64,6 +67,7 @@ async function deployAll() {
       { high: 0n, low: 0n },
       BigInt(L2ProxyBridge.address)
     );
+    console.log("deployed successfully");
   } catch (error) {
     console.log(error);
   }

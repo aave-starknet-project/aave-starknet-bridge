@@ -176,17 +176,17 @@ export $ALCHEMY_KEY="<your key>"
 Then load all the environment variables
 
 ```bash
-source .evn
+source .env/*
 ```
 
 Then start the testnets. It's wise to do this in two separate shells.
 
 ```bash
-yarn testnet:ganache
+yarn testnet:l1
 ```
 
 ```bash
-yarn testnet:starknet
+yarn testnet:l2
 ```
 
 ### Run the tests

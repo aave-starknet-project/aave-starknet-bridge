@@ -3,9 +3,11 @@
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math import assert_lt_felt, assert_not_zero
-from starkware.cairo.common.uint256 import Uint256
+from starkware.cairo.common.math_cmp import is_le
+from starkware.cairo.common.uint256 import Uint256, uint256_check
 from starkware.starknet.common.messages import send_message_to_l1
-from starkware.starknet.common.syscalls import get_caller_address, get_contract_address
+from starkware.starknet.common.syscalls import get_caller_address
+
 from rewaave.tokens.IERC20 import IERC20
 from rewaave.tokens.IETHstaticAToken import IETHstaticAToken
 
@@ -38,7 +40,7 @@ func withdraw_initiated(l2_token : felt, l1_recipient : felt, amount : Uint256, 
 end
 
 @event
-func deposit_handled(l2_token : felt, account : felt, amount : Uint256):
+func deposit_handled(l2_token : felt, l1_sender : felt, account : felt, amount : Uint256):
 end
 
 @event
@@ -46,19 +48,7 @@ func minted_rewards(l2_reward_token : felt, account : felt, amount : Uint256):
 end
 
 @event
-func bridged_rewards(l2_token : felt, acocunt : felt, amount : Uint256):
-end
-
-# Constructor.
-
-# To finish the init you have to initialize the L2 token contract and the L1 bridge contract.
-@constructor
-func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    governor_address : felt
-):
-    assert_not_zero(governor_address)
-    governor.write(value=governor_address)
-    return ()
+func bridged_rewards(caller : felt, l1_recipient : felt, amount : Uint256):
 end
 
 # Getters.
@@ -109,6 +99,20 @@ func auth_l1_handler{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
 end
 
 # Externals.
+
+# To finish the init you have to initialize the L2 token contract and the L1 bridge contract.
+@external
+func initialize_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    governor_address : felt
+):
+    let (governor_) = governor.read()
+    with_attr error_message("Bridge already initialized"):
+        assert governor_ = 0
+    end
+    assert_not_zero(governor_address)
+    governor.write(value=governor_address)
+    return ()
+end
 
 @external
 func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -190,24 +194,21 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     let (message_payload : felt*) = alloc()
     assert message_payload[0] = WITHDRAW_MESSAGE
     assert message_payload[1] = l1_token
-    assert message_payload[2] = l1_recipient
-    assert message_payload[3] = amount.low
-    assert message_payload[4] = amount.high
+    assert message_payload[2] = caller_address
+    assert message_payload[3] = l1_recipient
+    assert message_payload[4] = amount.low
+    assert message_payload[5] = amount.high
 
-    send_message_to_l1(to_address=to_address, payload_size=5, payload=message_payload)
+    send_message_to_l1(to_address=to_address, payload_size=6, payload=message_payload)
     withdraw_initiated.emit(l2_token, l1_recipient, amount, caller_address)
     return ()
 end
 
 @external
 func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    l2_token : felt, l1_recipient : felt, amount : Uint256
+    l1_recipient : felt, amount : Uint256
 ):
     let (to_address) = get_l1_token_bridge()
-
-    is_token(l2_token)
-
-    let (l1_token) = l2_token_to_l1_token.read(l2_token)
 
     let (token_owner) = get_caller_address()
 
@@ -219,13 +220,13 @@ func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     # Send message for bridging tokens
     let (message_payload : felt*) = alloc()
     assert message_payload[0] = BRIDGE_REWARD_MESSAGE
-    assert message_payload[1] = l1_token
+    assert message_payload[1] = token_owner
     assert message_payload[2] = l1_recipient
     assert message_payload[3] = amount.low
     assert message_payload[4] = amount.high
 
     send_message_to_l1(to_address=to_address, payload_size=5, payload=message_payload)
-    bridged_rewards.emit(l2_token, l1_recipient, amount)
+    bridged_rewards.emit(token_owner, l1_recipient, amount)
 
     return ()
 end
@@ -233,24 +234,27 @@ end
 @l1_handler
 func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     from_address : felt,
+    l1_sender : felt,
     l2_recipient : felt,
     l2_token_address : felt,
     amount_low : felt,
     amount_high : felt,
 ):
-    # The amount is validated (i.e. amount_low, amount_high < 2**128) by an inner call to
-    # IMintableToken mint function.
+    alloc_locals
 
     auth_l1_handler(from_address_=from_address)
 
     let amount = Uint256(low=amount_low, high=amount_high)
 
+    with_attr error_message("High or low overflows 128 bit bound {amount}"):
+        uint256_check(amount)
+    end
     assert_not_zero(l2_token_address)
 
     # Call mint on l2_token contract.
 
     IERC20.mint(contract_address=l2_token_address, recipient=l2_recipient, amount=amount)
-    deposit_handled.emit(l2_token_address, l2_recipient, amount)
+    deposit_handled.emit(l2_token_address, l1_sender, l2_recipient, amount)
     return ()
 end
 
@@ -273,18 +277,28 @@ end
 @l1_handler
 func handle_rewards_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     from_address : felt,
-    block_number : felt,
+    block_number_low : felt,
+    block_number_high : felt,
     l2_token : felt,
     rewards_low : felt,
     rewards_high : felt,
 ):
+    alloc_locals
     auth_l1_handler(from_address_=from_address)
 
     let rewards = Uint256(low=rewards_low, high=rewards_high)
+    let block_number = Uint256(low=block_number_low, high=block_number_high)
+
+    with_attr error_message("High or low overflows 128 bit bound {rewards}"):
+        uint256_check(rewards)
+    end
+    with_attr error_message("High or low overflows 128 bit bound {block_number}"):
+        uint256_check(block_number)
+    end
 
     # push rewards
     IETHstaticAToken.push_acc_rewards_per_token(
-        contract_address=l2_token, block=block_number, acc_rewards_per_token=rewards
+        contract_address=l2_token, block_number=block_number, acc_rewards_per_token=rewards
     )
 
     return ()

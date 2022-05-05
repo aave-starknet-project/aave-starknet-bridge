@@ -149,13 +149,13 @@ contract TokenBridge is
 
         uint256 l2TokenAddress = l1TokentoL2Token[l1Token];
 
-        uint256[] memory payload = new uint256[](8);
+        uint256[] memory payload = new uint256[](9);
         payload[0] = uint256(from);
         payload[1] = l2Recipient;
         payload[2] = l2TokenAddress;
         (payload[3], payload[4]) = toSplitUint(amount);
-        payload[5] = blockNumber;
-        (payload[6], payload[7]) = toSplitUint(currentRewardsIndex);
+        (payload[5], payload[6]) = toSplitUint(blockNumber);
+        (payload[7], payload[8]) = toSplitUint(currentRewardsIndex);
 
         messagingContract.sendMessageToL2(l2TokenBridge, DEPOSIT_HANDLER, payload);
     }

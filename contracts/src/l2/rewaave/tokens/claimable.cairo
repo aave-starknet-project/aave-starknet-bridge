@@ -136,8 +136,8 @@ func claimable_push_acc_rewards_per_token{
     alloc_locals
     claimable_only_token_bridge()
     let (last_block_number) = last_update.read()
-    let (block_number_1) = uint256_sub(block_number, Uint256(1, 0))
-    let (le) = uint256_le(last_block_number, block_number_1)
+    # This is le because the rewards may update in a block
+    let (le) = uint256_le(last_block_number, block_number)
     if le == 1:
         let (prev_acc) = acc_rewards_per_token.read()
         let (le) = uint256_le(prev_acc.ray, acc_rewards_per_token_.ray)

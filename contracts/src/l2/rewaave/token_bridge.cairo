@@ -3,9 +3,17 @@
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math import assert_lt_felt, assert_not_zero
-from starkware.cairo.common.uint256 import Uint256, uint256_check
+from starkware.cairo.common.math_cmp import is_le
+from starkware.cairo.common.uint256 import (
+    Uint256,
+    uint256_check,
+    uint256_le,
+    uint256_sub,
+    uint256_mul,
+)
 from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address
+from rewaave.math.wad_ray_math import wad_to_ray, ray_mul_no_rounding, ray_to_wad_no_rounding
 
 from rewaave.math.wad_ray_math import Ray
 from rewaave.tokens.IERC20 import IERC20
@@ -258,7 +266,8 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     l2_token : felt,
     amount_low : felt,
     amount_high : felt,
-    block_number : felt,
+    block_number_low : felt,
+    block_number_high : felt,
     l1_rewards_index_low : felt,
     l1_rewards_index_high : felt,
 ):
@@ -267,17 +276,36 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 
     let amount = Uint256(low=amount_low, high=amount_high)
     let l1_rewards_index = Uint256(low=l1_rewards_index_low, high=l1_rewards_index_high)
+    let block_number = Uint256(low=block_number_low, high=block_number_high)
 
     with_attr error_message("High or low overflows 128 bit bound {amount}"):
         uint256_check(amount)
     end
 
+    with_attr error_message("High or low overflows 128 bit bound {l1_rewards_index}"):
+        uint256_check(l1_rewards_index)
+    end
+
+    with_attr error_message("High or low overflows 128 bit bound {block_number}"):
+        uint256_check(block_number)
+    end
+
     assert_not_zero(l2_token)
 
-    # push rewards
-    IETHstaticAToken.push_acc_rewards_per_token(
-        contract_address=l2_token, block=block_number, acc_rewards_per_token=l1_rewards_index
-    )
+    # handle the difference of the index at send and recieve
+    let (current_index) = IETHstaticAToken.get_acc_rewards_per_token()
+    let (le) = uint256_le(current_index, l1_rewards_index)
+    if le == 1:
+        IETHstaticAToken.push_acc_rewards_per_token(
+            contract_address=l2_token, block=block_number, acc_rewards_per_token=l1_rewards_index
+        )
+    else:
+        let (amount_ray) = wad_to_ray(amount)
+        let (reward_diff) = uint256_sub(l1_rewards_index, current_index)
+        let (reward_outstanding_ray) = ray_mul_no_rounding(reward_dif, amount_ray)
+        let (reward_outstanding) = ray_to_wad_no_rounding(reward_outstanding_ray)
+        IERCH20.mint(reward_token, l2_recipient, reward_outstanding)
+    end
 
     # Call mint on l2_token contract.
     IERC20.mint(contract_address=l2_token, recipient=l2_recipient, amount=amount)

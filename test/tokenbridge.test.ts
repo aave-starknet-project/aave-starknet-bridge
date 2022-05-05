@@ -52,6 +52,7 @@ describe("TokenBridge", async function () {
   let proxyAdmin: SignerWithAddress;
 
   let l1user: SignerWithAddress;
+  let l2owner: Account;
   let l2user: Account;
   let signer: SignerWithAddress;
   let daiWhale: providers.JsonRpcSigner;
@@ -79,6 +80,8 @@ describe("TokenBridge", async function () {
   let l2StaticAUsdcProxy: StarknetContract;
   let l2StaticAUsdc: StarknetContract;
 
+  let l2rewAAVEImpl: StarknetContract;
+  let l2rewAAVEProxy: StarknetContract;
   let l2rewAAVE: StarknetContract;
 
   //// token bridge
@@ -147,7 +150,19 @@ describe("TokenBridge", async function () {
     l2StaticAUsdcProxy = await l2ProxyFactory.deploy({proxy_admin: BigInt(l2user.starknetContract.address)});
 
     const rewAaveContractFactory = await starknet.getContractFactory('rewAAVE');
-    l2rewAAVE = await rewAaveContractFactory.deploy({
+    l2rewAAVEImpl = await rewAaveContractFactory.deploy();
+    l2rewAAVEProxy = await l2ProxyFactory.deploy({
+      proxy_admin: BigInt(l2owner.starknetContract.address),
+    });
+
+    await l2owner.invoke(l2rewAAVEProxy, "initialize_proxy", {
+      implementation_address: BigInt(l2rewAAVEImpl.address),
+    });
+    l2rewAAVE = rewAaveContractFactory.getContractAt(
+      l2rewAAVEProxy.address
+    );
+
+    await l2owner.invoke(l2rewAAVE, "initialize_rewAAVE", {
       name: 444,
       symbol: 444,
       decimals: 8,

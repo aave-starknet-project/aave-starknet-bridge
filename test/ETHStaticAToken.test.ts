@@ -13,12 +13,14 @@ describe("ETHStaticAToken", function () {
 
   let l2token: StarknetContract;
   let bridgeContract: StarknetContract;
-  let rewAaveTokenL2: StarknetContract;
   let ProxyFactoryL2: StarknetContractFactory;
   let proxyTokenBridgeL2: StarknetContract;
   let proxiedTokenBridgeL2: StarknetContract;
   let proxyL2Token: StarknetContract;
+  let proxyRewAAVEToken: StarknetContract;
   let proxiedL2Token: StarknetContract;
+  let proxiedRewAAVE: StarknetContract;
+  let rewAaveTokenImplementation: StarknetContract;
   let owner: Account;
   let user1: Account;
   let user2: Account;
@@ -73,7 +75,20 @@ describe("ETHStaticAToken", function () {
       governor_address: BigInt(owner.starknetContract.address),
     });
 
-    rewAaveTokenL2 = await rewAaveContractFactory.deploy({
+    rewAaveTokenImplementation = await rewAaveContractFactory.deploy();
+
+    proxyRewAAVEToken = await ProxyFactoryL2.deploy({
+      proxy_admin: BigInt(owner.starknetContract.address),
+    });
+
+    await owner.invoke(proxyRewAAVEToken, "initialize_proxy", {
+      implementation_address: BigInt(rewAaveTokenImplementation.address),
+    });
+    proxiedRewAAVE = rewAaveContractFactory.getContractAt(
+      proxyRewAAVEToken.address
+    );
+
+    await owner.invoke(proxiedRewAAVE, "initialize_rewAAVE", {
       name: 444,
       symbol: 444,
       decimals: 8,
@@ -84,7 +99,7 @@ describe("ETHStaticAToken", function () {
 
     //set rewAave address on l2 token bridge
     await owner.invoke(proxiedTokenBridgeL2, "set_reward_token", {
-      reward_token: BigInt(rewAaveTokenL2.address),
+      reward_token: BigInt(proxiedRewAAVE.address),
     });
 
     //approve l1_l2 token bridge
@@ -258,7 +273,7 @@ describe("ETHStaticAToken", function () {
       recipient: BigInt(user1.starknetContract.address),
     });
 
-    const user1RewardsBalance = await rewAaveTokenL2.call("balanceOf", {
+    const user1RewardsBalance = await proxiedRewAAVE.call("balanceOf", {
       account: BigInt(user1.starknetContract.address),
     });
 
@@ -298,7 +313,7 @@ describe("ETHStaticAToken", function () {
   });
 
   it("mints rewards correctly to different user", async () => {
-    const user2RewAaveBalanceBeforeClaim = await rewAaveTokenL2.call(
+    const user2RewAaveBalanceBeforeClaim = await proxiedRewAAVE.call(
       "balanceOf",
       {
         account: BigInt(user2.starknetContract.address),
@@ -335,7 +350,7 @@ describe("ETHStaticAToken", function () {
       recipient: BigInt(user2.starknetContract.address),
     });
 
-    const user2RewAaveBalanceAfterClaim = await rewAaveTokenL2.call(
+    const user2RewAaveBalanceAfterClaim = await proxiedRewAAVE.call(
       "balanceOf",
       {
         account: BigInt(user2.starknetContract.address),
@@ -378,7 +393,7 @@ describe("ETHStaticAToken", function () {
       low: 0n,
     });
 
-    const {user_claimable_rewards} = await proxiedL2Token.call(
+    const { user_claimable_rewards } = await proxiedL2Token.call(
       "get_user_claimable_rewards",
       {
         user: BigInt(user1.starknetContract.address),

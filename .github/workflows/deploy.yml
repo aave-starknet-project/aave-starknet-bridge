@@ -15,7 +15,7 @@ env:
   STKAAVE_WHALE: "0x32b61bb22cbe4834bc3e73dce85280037d944a4d"
 
 jobs:
-  test:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -50,6 +50,6 @@ jobs:
         run: |
           yarn compile
 
-      - name: Run tests
+      - name: Deploy bridge
         run: |
-          yarn test
+          yarn deploy-bridge

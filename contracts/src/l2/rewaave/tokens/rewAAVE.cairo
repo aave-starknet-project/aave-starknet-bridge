@@ -26,8 +26,8 @@ from openzeppelin.token.erc20.library import (
 
 from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner
 
-@constructor
-func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+@external
+func initialize_rewAAVE{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     name : felt,
     symbol : felt,
     decimals : felt,

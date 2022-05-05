@@ -1,4 +1,4 @@
-.venv/bin/slither . --exclude-low --exclude-medium --exclude-dependencies --exclude-optimization --sarif out_solidity.sarif
+.venv/bin/slither . --exclude-low --exclude-medium --exclude-dependencies --exclude-optimization --sarif vulnerabilities/results_solidity.sarif
 
 if [ $? > 0 ]
 then

@@ -11,16 +11,16 @@ import { wadToRay, decimalToWad } from "../helpers/rayMath";
 describe("ETHStaticAToken", function () {
   this.timeout(TIMEOUT);
 
-  let L2ProxyFactory: StarknetContractFactory;
+  let l2ProxyFactory: StarknetContractFactory;
   let ETHStaticATokenProxy: StarknetContract;
   let ETHStaticATokenImplementation: StarknetContract;
   let ETHStaticAToken: StarknetContract;
-  let L2TokenBridgeProxy: StarknetContract;
-  let L2TokenBridgeImplementation: StarknetContract;
-  let L2TokenBridge: StarknetContract;
-  let L2RewAaveProxy: StarknetContract;
-  let L2RewAaveImplementation: StarknetContract;
-  let L2RewAave: StarknetContract;
+  let l2TokenBridgeProxy: StarknetContract;
+  let l2TokenBridgeImplementation: StarknetContract;
+  let l2TokenBridge: StarknetContract;
+  let l2RewAaveProxy: StarknetContract;
+  let l2RewAaveImplementation: StarknetContract;
+  let l2RewAave: StarknetContract;
   let owner: Account;
   let user1: Account;
   let user2: Account;
@@ -36,31 +36,31 @@ describe("ETHStaticAToken", function () {
       "ETHstaticAToken"
     );
     const rewAaveContractFactory = await starknet.getContractFactory("rewAAVE");
-    const L2TokenBridgeImplementationFactory =
+    const l2TokenBridgeImplementationFactory =
       await starknet.getContractFactory("token_bridge");
-    L2ProxyFactory = await starknet.getContractFactory("proxy");
+    l2ProxyFactory = await starknet.getContractFactory("proxy");
 
-    L2TokenBridgeProxy = await L2ProxyFactory.deploy({
+    l2TokenBridgeProxy = await l2ProxyFactory.deploy({
       proxy_admin: BigInt(owner.starknetContract.address),
     });
-    ETHStaticATokenProxy = await L2ProxyFactory.deploy({
+    ETHStaticATokenProxy = await l2ProxyFactory.deploy({
       proxy_admin: BigInt(owner.starknetContract.address),
     });
 
-    L2TokenBridgeImplementation =
-      await L2TokenBridgeImplementationFactory.deploy();
+    l2TokenBridgeImplementation =
+      await l2TokenBridgeImplementationFactory.deploy();
 
     ETHStaticATokenImplementation = await ETHStaticATokenFactory.deploy();
 
     ETHStaticAToken = ETHStaticATokenFactory.getContractAt(
       ETHStaticATokenProxy.address
     );
-    L2TokenBridge = L2TokenBridgeImplementationFactory.getContractAt(
-      L2TokenBridgeProxy.address
+    l2TokenBridge = l2TokenBridgeImplementationFactory.getContractAt(
+      l2TokenBridgeProxy.address
     );
 
-    await owner.invoke(L2TokenBridgeProxy, "initialize_proxy", {
-      implementation_address: BigInt(L2TokenBridgeImplementation.address),
+    await owner.invoke(l2TokenBridgeProxy, "initialize_proxy", {
+      implementation_address: BigInt(l2TokenBridgeImplementation.address),
     });
     await owner.invoke(ETHStaticATokenProxy, "initialize_proxy", {
       implementation_address: BigInt(ETHStaticATokenImplementation.address),
@@ -75,37 +75,37 @@ describe("ETHStaticAToken", function () {
       controller: BigInt(owner.starknetContract.address),
     });
 
-    await owner.invoke(L2TokenBridge, "initialize_token_bridge", {
+    await owner.invoke(l2TokenBridge, "initialize_token_bridge", {
       governor_address: BigInt(owner.starknetContract.address),
     });
 
-    L2RewAaveImplementation = await rewAaveContractFactory.deploy();
+    l2RewAaveImplementation = await rewAaveContractFactory.deploy();
 
-    L2RewAaveProxy = await L2ProxyFactory.deploy({
+    l2RewAaveProxy = await l2ProxyFactory.deploy({
       proxy_admin: BigInt(owner.starknetContract.address),
     });
 
-    await owner.invoke(L2RewAaveProxy, "initialize_proxy", {
-      implementation_address: BigInt(L2RewAaveImplementation.address),
+    await owner.invoke(l2RewAaveProxy, "initialize_proxy", {
+      implementation_address: BigInt(l2RewAaveImplementation.address),
     });
-    L2RewAave = rewAaveContractFactory.getContractAt(L2RewAaveProxy.address);
+    l2RewAave = rewAaveContractFactory.getContractAt(l2RewAaveProxy.address);
 
-    await owner.invoke(L2RewAave, "initialize_rewAAVE", {
+    await owner.invoke(l2RewAave, "initialize_rewAAVE", {
       name: 444,
       symbol: 444,
       decimals: 8,
       initial_supply: { high: 0, low: 0 },
       recipient: BigInt(user1.starknetContract.address),
-      owner: BigInt(L2TokenBridgeProxy.address),
+      owner: BigInt(l2TokenBridgeProxy.address),
     });
 
     //set rewAave address on l2 token bridge
-    await owner.invoke(L2TokenBridge, "set_reward_token", {
-      reward_token: BigInt(L2RewAave.address),
+    await owner.invoke(l2TokenBridge, "set_reward_token", {
+      reward_token: BigInt(l2RewAave.address),
     });
 
     //approve l1_l2 token bridge
-    await owner.invoke(L2TokenBridge, "approve_bridge", {
+    await owner.invoke(l2TokenBridge, "approve_bridge", {
       l1_token: BigInt(L1_TEST_ADDRESS),
       l2_token: BigInt(ETHStaticAToken.address),
     });
@@ -113,13 +113,13 @@ describe("ETHStaticAToken", function () {
 
   it("allows owner to set l2 token bridge", async () => {
     await owner.invoke(ETHStaticAToken, "set_l2_token_bridge", {
-      l2_token_bridge_: BigInt(L2TokenBridge.address),
+      l2_token_bridge_: BigInt(l2TokenBridge.address),
     });
   });
   it("disallows non-owner to set l2 token bridge", async () => {
     try {
       await user1.invoke(ETHStaticAToken, "set_l2_token_bridge", {
-        l2_token_bridge_: BigInt(L2TokenBridgeImplementation.address),
+        l2_token_bridge_: BigInt(l2TokenBridgeImplementation.address),
       });
     } catch (err: any) {
       expect(err.message).to.contain("Ownable: caller is not the owner");
@@ -275,7 +275,7 @@ describe("ETHStaticAToken", function () {
       recipient: BigInt(user1.starknetContract.address),
     });
 
-    const user1RewardsBalance = await L2RewAave.call("balanceOf", {
+    const user1RewardsBalance = await l2RewAave.call("balanceOf", {
       account: BigInt(user1.starknetContract.address),
     });
 
@@ -315,7 +315,7 @@ describe("ETHStaticAToken", function () {
   });
 
   it("mints rewards correctly to different user", async () => {
-    const user2RewAaveBalanceBeforeClaim = await L2RewAave.call("balanceOf", {
+    const user2RewAaveBalanceBeforeClaim = await l2RewAave.call("balanceOf", {
       account: BigInt(user2.starknetContract.address),
     });
 
@@ -349,7 +349,7 @@ describe("ETHStaticAToken", function () {
       recipient: BigInt(user2.starknetContract.address),
     });
 
-    const user2RewAaveBalanceAfterClaim = await L2RewAave.call("balanceOf", {
+    const user2RewAaveBalanceAfterClaim = await l2RewAave.call("balanceOf", {
       account: BigInt(user2.starknetContract.address),
     });
 
@@ -358,7 +358,7 @@ describe("ETHStaticAToken", function () {
     );
   });
 
-  it("Rewards of user are not lost if L2 tokens are burnt before claiming", async () => {
+  it("Rewards of user are not lost if l2 tokens are burnt before claiming", async () => {
     //To have a non null rewards amount, we update the rewards index
     await owner.invoke(ETHStaticAToken, "push_acc_rewards_per_token", {
       block_number: {
@@ -371,7 +371,7 @@ describe("ETHStaticAToken", function () {
       },
     });
 
-    //burn all ETHStaticAToken of user on L2==>this is the same as calling init_withdraw on bridge
+    //burn all ETHStaticAToken of user on l2==>this is the same as calling init_withdraw on bridge
     await owner.invoke(ETHStaticAToken, "burn", {
       account: BigInt(user1.starknetContract.address),
       amount: {

@@ -6,10 +6,10 @@ import { expect } from "chai";
 describe("Proxy", function () {
   this.timeout(TIMEOUT);
 
-  let tokenContractA: StarknetContract;
-  let tokenContractB: StarknetContract;
   let proxyTokenContract: StarknetContract;
-  let proxiedTokenContract: StarknetContract;
+  let tokenImplementationA: StarknetContract;
+  let tokenImplementationB: StarknetContract;
+  let tokenContract: StarknetContract;
   let owner: Account;
   let randomUser: Account;
 
@@ -22,17 +22,17 @@ describe("Proxy", function () {
     owner = await starknet.deployAccount("OpenZeppelin");
     randomUser = await starknet.deployAccount("OpenZeppelin");
 
-    tokenContractA = await TokenContractFactory.deploy();
-    tokenContractB = await TokenContractFactory.deploy();
+    tokenImplementationA = await TokenContractFactory.deploy();
+    tokenImplementationB = await TokenContractFactory.deploy();
 
     proxyTokenContract = await ProxyFactory.deploy({
       proxy_admin: owner.starknetContract.address,
     });
 
     await owner.invoke(proxyTokenContract, "initialize_proxy", {
-      implementation_address: BigInt(tokenContractA.address),
+      implementation_address: BigInt(tokenImplementationA.address),
     });
-    proxiedTokenContract = TokenContractFactory.getContractAt(
+    tokenContract = TokenContractFactory.getContractAt(
       proxyTokenContract.address
     );
   });
@@ -43,7 +43,7 @@ describe("Proxy", function () {
   });
 
   it("initialize token A through proxy", async () => {
-    await owner.invoke(proxiedTokenContract, "initialize_ETHstaticAToken", {
+    await owner.invoke(tokenContract, "initialize_ETHstaticAToken", {
       name: 666n,
       symbol: 666n,
       decimals: 4n,
@@ -52,20 +52,20 @@ describe("Proxy", function () {
       controller: BigInt(owner.starknetContract.address),
     });
 
-    const { name } = await proxiedTokenContract.call("name");
+    const { name } = await tokenContract.call("name");
     expect(name).to.equal(666n);
 
-    const { symbol } = await proxiedTokenContract.call("symbol");
+    const { symbol } = await tokenContract.call("symbol");
     expect(symbol).to.equal(666n);
 
-    const { decimals } = await proxiedTokenContract.call("decimals");
+    const { decimals } = await tokenContract.call("decimals");
     expect(decimals).to.equal(4n);
   });
 
   it("disallows random user to upgrade", async () => {
     try {
       await randomUser.invoke(proxyTokenContract, "upgrade_implementation", {
-        new_implementation: BigInt(tokenContractB.address),
+        new_implementation: BigInt(tokenImplementationB.address),
       });
     } catch (e: any) {
       expect(e.message).to.contain("Proxy: caller is not admin");
@@ -83,12 +83,12 @@ describe("Proxy", function () {
 
   it("allows owner to upgrade", async () => {
     await randomUser.invoke(proxyTokenContract, "upgrade_implementation", {
-      new_implementation: BigInt(tokenContractB.address),
+      new_implementation: BigInt(tokenImplementationB.address),
     });
     const { implementation } = await proxyTokenContract.call(
       "get_implementation",
       {}
     );
-    expect(implementation).to.equal(BigInt(tokenContractB.address));
+    expect(implementation).to.equal(BigInt(tokenImplementationB.address));
   });
 });

@@ -215,7 +215,11 @@ contract TokenBridge is
         address recipient,
         uint256 amount,
         bool toAsset
-    ) onlyApprovedToken(l1Token) external {
+    ) 
+        onlyApprovedToken(l1Token)
+        onlyValidL2Address(l2sender)
+        external
+    {
         consumeMessage(l1Token, l2sender, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
         require(
@@ -230,7 +234,11 @@ contract TokenBridge is
         uint256 l2sender,
         address recipient,
         uint256 amount
-    ) onlyApprovedToken(l1Token) external {
+    )
+        onlyApprovedToken(l1Token)
+        onlyValidL2Address(l2sender)
+        external
+    {
         consumeMessage(l1Token, l2sender, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
         require(

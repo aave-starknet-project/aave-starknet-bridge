@@ -11,6 +11,7 @@ from rewaave.math.wad_ray_math import (
     ray_mul_no_rounding,
     ray_to_wad_no_rounding,
 )
+from starkware.starknet.common.syscalls import get_caller_address
 from openzeppelin.token.erc20.library import ERC20_balanceOf
 
 @storage_var

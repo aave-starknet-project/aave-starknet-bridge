@@ -3,10 +3,7 @@
 
 [![Tests](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/ci.yml)
 [![Tests](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/deploy.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/deploy.yml)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/cdnjs/cdnjs.svg?style=flat)](https://github.com/aave-starknet-project/aave-starknet-bridge/pulls)
-[![Issues](https://img.shields.io/github/issues-raw/tterb/PlayMusic.svg?maxAge=25000)](https://github.com/aave-starknet-project/aave-starknet-bridge/issues)
-
- <a href="https://github.com/aave-starknet-project/aave-starknet-bridge/blob/main/LICENSE.md"><img src="https://img.shields.io/github/license/sourcerer-io/hall-of-fame.svg?colorB=ff0000"></a>
+<a href="https://github.com/aave-starknet-project/aave-starknet-bridge/blob/main/LICENSE.md"><img src="https://img.shields.io/github/license/sourcerer-io/hall-of-fame.svg?colorB=ff0000"></a>
 
 :warning: This codebase is still in an experimental phase, has not been audited, might contain bugs and should not be used in production.
 
@@ -72,7 +69,7 @@ ETHStaticATokens are an implementation of the wrapped aTokens that will continuo
 
 
 Users can either bridge their aToken (let's say aDai) to L2 by calling `deposit()` on `TokenBridge`, or deposit the underlying asset (i.e Dai).
-Users wil then have to approve the bridge to spend the underlying `asset` tokens or `aTokens`, depending on the provided value for `fromAsset` argument when depositing.
+Users wil have to approve the bridge to spend the underlying `asset` tokens or `aTokens`, depending on the provided value for `fromAsset` argument when depositing.
 
 
 Calling `deposit` will result in the following: 
@@ -80,9 +77,8 @@ Calling `deposit` will result in the following:
 If depositing underlying `asset`:
 
 - The `asset` token will be transfered from the user account to the L1 bridge.
-- The bridge will then deposit the `asset` token on the aToken.
-- New aTokens will be minted to the bridge.
-- A message will be sent to the  L2 bridge with the amount to be transferred, the L1 token address and the recipient address as parameters.
+- The bridge will then deposit the `asset` token in the aToken.
+- A message will be sent to the  L2 bridge with the amount of `ETHstaticAToken` to be transferred, the L1 token address and the recipient address as parameters.
 - The token bridge on L2 will then be minting the correspending ETHStaticAToken of the L1 token to the user.
 
 If depositing `aTokens`:

@@ -139,6 +139,7 @@ describe("TokenBridge", async function () {
 
     // L2 deployments
 
+    l2owner = await starknet.deployAccount("OpenZeppelin");
     l2user = await starknet.deployAccount("OpenZeppelin");
 
     l2TokenBridgeFactory = await starknet.getContractFactory('rewaave/token_bridge');
@@ -266,8 +267,9 @@ describe("TokenBridge", async function () {
           symbol: 123n,
           decimals: 18n,
           initial_supply: {high:0n, low:0n},
-          recipient: BigInt(l2TokenBridgeProxy.address),
-          controller: BigInt(l2TokenBridgeProxy.address),
+          recipient: BigInt(l2TokenBridge.address),
+          owner: BigInt(l2owner.starknetContract.address),
+          l2_token_bridge_: BigInt(l2TokenBridge.address),
         });
 
     {
@@ -284,8 +286,9 @@ describe("TokenBridge", async function () {
           symbol: 321n,
           decimals: 18n,
           initial_supply: {high:0n, low:0n},
-          recipient: BigInt(l2TokenBridgeProxy.address),
-          controller: BigInt(l2TokenBridgeProxy.address)
+          recipient: BigInt(l2TokenBridge.address),
+          owner: BigInt(l2owner.starknetContract.address),
+          l2_token_bridge_: BigInt(l2TokenBridge.address),
     });
 
     {
@@ -485,7 +488,13 @@ describe("TokenBridge", async function () {
     // expect(await l2StaticAUsdc.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0, low: BigInt(blockNumberUsdc)}});
   });
 
+  it('Updates rewards on transfer', async () => {
+    await network.provider.send("evm_increaseTime", [1296000])
+    await network.provider.send("evm_mine")
 
+    l1StaticDai.connect(l1user).transfer(l1user.address, 10);
+
+  });
 
   it('Withdraws staticADai and staticAUsdc', async () => {
     // approve L2 bridge with given amount
@@ -614,10 +623,15 @@ describe("TokenBridge", async function () {
     expect(await l2StaticAUsdc.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  0n } });
   })
 
-
   it('L2 user sends back reward accrued to L1 user', async () => {
     // Initiate bridge back rewards from L2
-    const rewardsBalance = await l2rewAAVE.invoke("balanceOf", { account: BigInt(l2user.starknetContract.address) });
+    let rewardsBalance = await l2rewAAVE.call("balanceOf", { account: BigInt(l2user.starknetContract.address) });
+    console.log("Rewards before", rewardsBalance)
+    await l2user.invoke(l2StaticADai, "claim_rewards", { recipient: BigInt(l2user.starknetContract.address) });
+    rewardsBalance = await l2rewAAVE.call("balanceOf", { account: BigInt(l2user.starknetContract.address) });
+    console.log("Rewards after dai", rewardsBalance)
+    await l2user.invoke(l2StaticAUsdc, "claim_rewards", { recipient: BigInt(l2user.starknetContract.address) });
+    rewardsBalance = await l2rewAAVE.call("balanceOf", { account: BigInt(l2user.starknetContract.address) });
     console.log("Rewards", rewardsBalance)
     await l2user.invoke(l2TokenBridge, 'bridge_rewards', { l1_recipient: BigInt(l1user.address), amount: {high: 0, low: 30} });
 

@@ -40,7 +40,7 @@ namespace IETHstaticAToken:
     func mint(recipient : felt, amount : Uint256):
     end
 
-    func claimRewards(user : felt, recipient : felt) -> (claimed : Uint256):
+    func claim_rewards(recipient : felt) -> (claimed : Uint256):
     end
 
     func increaseLifetimeRewards(amount : Uint256):

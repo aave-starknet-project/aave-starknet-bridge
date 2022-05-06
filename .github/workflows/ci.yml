@@ -50,8 +50,8 @@ jobs:
       - name: Static analysis for Solidity
         run: ./scripts/static_analysis_solidity.sh
 
-      - name: Static analysis for Cairo
-        run: python scripts/static_analysis_cairo.py
+      # - name: Static analysis for Cairo
+      #   run: python scripts/static_analysis_cairo.py
 
       - name: Lint
         run: |

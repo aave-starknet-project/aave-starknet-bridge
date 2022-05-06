@@ -9,10 +9,11 @@ import "../../test/IStarknetMessaging.sol";
 
 import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {IStaticATokenLM} from "@swp0x0/protocol-v2/contracts/interfaces/IStaticATokenLM.sol";
-import {WadRayMath} from "@swp0x0/protocol-v2/contracts/protocol/libraries/math/WadRayMath.sol";
-import {RayMathNoRounding} from "@swp0x0/protocol-v2/contracts/protocol/libraries/math/RayMathNoRounding.sol";
-import {SafeMath} from "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
+import {WadRayMath} from '@swp0x0/protocol-v2/contracts/protocol/libraries/math/WadRayMath.sol';
+import {ILendingPool} from "@swp0x0/protocol-v2/contracts/interfaces/ILendingPool.sol";
+import {IAaveIncentivesController} from "@swp0x0/protocol-v2/contracts/interfaces/IAaveIncentivesController.sol";
+
+import {IATokenWithPool} from "./IATokenWithPool.sol";
 
 contract TokenBridge is
     GenericGovernance,
@@ -20,23 +21,19 @@ contract TokenBridge is
     ProxySupport
 {
     using SafeERC20 for IERC20;
-    using SafeERC20 for IStaticATokenLM;
-
     using WadRayMath for uint256;
-    using RayMathNoRounding for uint256;
-    using SafeMath for uint256;
 
-    event LogDeposit(address sender, IStaticATokenLM token, uint256 amount, uint256 l2Recipient, uint256 blockNumber, uint256 rewardsIndex);
-    event LogWithdrawal(IStaticATokenLM token, uint256 l2sender, address recipient, uint256 amount);
+    event LogDeposit(address sender, address token, uint256 amount, uint256 l2Recipient);
+    event LogWithdrawal(address token, uint256 l2sender, address recipient, uint256 amount);
     event LogBridgeReward(uint256 l2sender, address recipient, uint256 amount);
-    event LogBridgeAdded(IStaticATokenLM l1Token, uint256 l2Token);
+    event LogBridgeAdded(address l1Token, uint256 l2Token);
 
-
-    mapping(IStaticATokenLM => uint256) public l1TokentoL2Token;
+    mapping(address => uint256) public l1TokentoL2Token;
     IStarknetMessaging public messagingContract;
     uint256 l2TokenBridge;
-    IStaticATokenLM[] approvedL1Tokens;
+    address[] approvedL1Tokens;
     IERC20 public rewardToken;
+    IAaveIncentivesController public incentivesController;
 
     // The selector of the "handle_deposit" l1_handler on L2.
     uint256 constant DEPOSIT_HANDLER =
@@ -80,7 +77,7 @@ contract TokenBridge is
         _;
     }
 
-    modifier onlyApprovedToken(IStaticATokenLM token) {
+    modifier onlyApprovedToken(address token) {
         uint256 l2TokenAddress = l1TokentoL2Token[token];
         require(isValidL2Address(l2TokenAddress), "L2_TOKEN_HAS_NOT_BEEN_APPROVED");
         _;
@@ -104,24 +101,29 @@ contract TokenBridge is
         rewardToken = rewardToken_;
     }
 
-    function approveBridge(IStaticATokenLM l1Token, uint256 l2Token)
+    function approveBridge(address l1AToken, uint256 l2Token)
         external
         onlyGovernance
         onlyValidL2Address(l2Token)
     {
-        require(l1Token != IStaticATokenLM(0x0), "l1Token address cannot be 0x0");
+        require(l1AToken != address(0x0), "l1Token address cannot be 0x0");
 
-        uint256 l2Token_ = l1TokentoL2Token[l1Token];
+        uint256 l2Token_ = l1TokentoL2Token[l1AToken];
         require(l2Token_ == 0, "l2Token already set");
 
-        require(IStaticATokenLM(l1Token).REWARD_TOKEN() == rewardToken, "L1 TOKEN CONFIGURED WITH WRONG REWARD TOKEN");
+        require(
+            IATokenWithPool(l1AToken).getIncentivesController() == incentivesController,
+            "L1 TOKEN CONFIGURED WITH WRONG INCENTIVES CONTROLLER"
+        );
 
-        l1Token.ASSET().safeApprove(address(l1Token), type(uint256).max);
-        l1Token.ATOKEN().safeApprove(address(l1Token), type(uint256).max);
+        IERC20 underlyingAsset = IERC20(IATokenWithPool(l1AToken).UNDERLYING_ASSET_ADDRESS());
+        ILendingPool lendingPool = IATokenWithPool(l1AToken).POOL();
 
-        emit LogBridgeAdded(l1Token, l2Token);
-        l1TokentoL2Token[l1Token] = l2Token;
-        approvedL1Tokens.push(l1Token);
+        underlyingAsset.safeApprove(address(lendingPool), type(uint256).max);
+
+        emit LogBridgeAdded(l1AToken, l2Token);
+        l1TokentoL2Token[l1AToken] = l2Token;
+        approvedL1Tokens.push(l1AToken);
     }
 
     function claimOrderSwap(uint256 idx1, uint256 idx2) external {
@@ -132,14 +134,7 @@ contract TokenBridge is
         (approvedL1Tokens[idx2], approvedL1Tokens[idx1]);
     }
 
-    function sendMessage(
-        IStaticATokenLM l1Token,
-        address from,
-        uint256 l2Recipient,
-        uint256 amount,
-        uint256 blockNumber,
-        uint256 currentRewardsIndex
-    )
+    function sendMessage(address l1Token, address from, uint256 l2Recipient, uint256 amount)
         internal
         onlyApprovedToken(l1Token)
         onlyValidL2Address(l2Recipient)
@@ -163,7 +158,7 @@ contract TokenBridge is
     function sendMessageStaticAToken(uint256 rewardsIndex)
         external
     {
-      uint256 l2Token = l1TokentoL2Token[IStaticATokenLM(msg.sender)];
+      uint256 l2Token = l1TokentoL2Token[msg.sender];
 
       if (isValidL2Address(l2Token)) {
         uint256[] memory payload = new uint256[](5);
@@ -176,7 +171,7 @@ contract TokenBridge is
     }
 
     function consumeMessage(
-        IStaticATokenLM l1Token,
+        address l1Token,
         uint256 l2sender,
         address recipient,
         uint256 amount,
@@ -197,100 +192,59 @@ contract TokenBridge is
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
 
-    function deposit(
-        IStaticATokenLM l1Token,
-        uint256 l2Recipient,
-        uint256 amount
-    )
-        onlyApprovedToken(l1Token)
-        onlyValidL2Address(l2Recipient)
-        external
-    {
-        uint256 rewardsIndex = l1Token.getCurrentRewardsIndex();
-
-        l1Token.safeTransferFrom(msg.sender, address(this), amount);
-        sendMessage(l1Token, msg.sender, l2Recipient, amount, block.number, rewardsIndex);
+    function _dynamicToStaticAmount(uint256 amount, address asset, ILendingPool lendingPool) internal view returns (uint256) {
+        return amount.rayDiv(lendingPool.getReserveNormalizedIncome(asset));
+    }
+    function _staticToDynamicAmount(uint256 amount, address asset, ILendingPool lendingPool) internal view returns (uint256) {
+        return amount.rayMul(lendingPool.getReserveNormalizedIncome(asset));
     }
 
-    function depositUnderlying(
-        IStaticATokenLM l1Token,
+    function deposit(
+        IATokenWithPool l1AToken,
         uint256 l2Recipient,
         uint256 amount,
-        uint16 refferalCode,
+        uint16 referralCode,
         bool fromAsset
     )
-        onlyApprovedToken(l1Token)
+        onlyApprovedToken(address(l1AToken))
         onlyValidL2Address(l2Recipient)
         external
     {
-        uint256 rewardsIndex = l1Token.getCurrentRewardsIndex();
+        address underlyingAsset = l1AToken.UNDERLYING_ASSET_ADDRESS();
+        ILendingPool lendingPool = l1AToken.POOL();
 
         if (fromAsset) {
-          l1Token.ASSET().safeTransferFrom(msg.sender, address(this), amount);
+            IERC20(underlyingAsset).safeTransferFrom(msg.sender, address(this), amount);
+            lendingPool.deposit(underlyingAsset, amount, address(this), referralCode);
         } else {
-          l1Token.ATOKEN().safeTransferFrom(msg.sender, address(this), amount);
+            IERC20(l1AToken).safeTransferFrom(msg.sender, address(this), amount);
         }
-
-        amount = l1Token.deposit(address(this), amount, refferalCode, fromAsset);
-        sendMessage(l1Token, msg.sender, l2Recipient, amount, block.number, rewardsIndex);
-    }
-
-    function withdrawUnderlying(
-        IStaticATokenLM l1Token,
-        uint256 l2sender,
-        address recipient,
-        uint256 amount,
-        uint256 l2RewardsIndex,
-        bool toAsset
-    ) 
-        onlyApprovedToken(l1Token)
-        onlyValidL2Address(l2sender)
-        external
-    {
-        consumeMessage(l1Token, l2sender, recipient, amount, l2RewardsIndex);
-
-        require(recipient != address(0x0), "INVALID_RECIPIENT");
-        require(
-            l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender),
-            "WITHDRAW UNDERFLOW"
-        );
-
-        uint256 rewardsAmount = computeRewardsDiff(l1Token, amount, l2RewardsIndex);
-
-        l1Token.withdraw(recipient, amount, toAsset);
-        transferRewards(recipient, rewardsAmount);
+        sendMessage(address(l1AToken), msg.sender, l2Recipient, _dynamicToStaticAmount(amount, underlyingAsset, lendingPool));
     }
 
     function withdraw(
-        IStaticATokenLM l1Token,
+        IATokenWithPool l1AToken,
         uint256 l2sender,
         address recipient,
-        uint256 amount,
-        uint256 l2RewardsIndex
-    )
-        onlyApprovedToken(l1Token)
+        uint256 staticAmount,
+        bool toAsset
+    ) 
+        onlyApprovedToken(address(l1AToken))
         onlyValidL2Address(l2sender)
         external
     {
-        consumeMessage(l1Token, l2sender, recipient, amount, l2RewardsIndex);
-
+        consumeMessage(address(l1AToken), l2sender, recipient, staticAmount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
-        require(
-            l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender),
-            "WITHDRAW UNDERFLOW"
-        );
 
-        uint256 rewardsAmount = computeRewardsDiff(l1Token, amount, l2RewardsIndex);
+        address underlyingAsset = l1AToken.UNDERLYING_ASSET_ADDRESS();
+        ILendingPool lendingPool = l1AToken.POOL();
+        uint256 amount = _staticToDynamicAmount(staticAmount, underlyingAsset, lendingPool);
 
-        l1Token.safeTransfer(recipient, amount);
-        transferRewards(recipient, rewardsAmount);
-    }
-
-    function computeRewardsDiff(IStaticATokenLM l1Token, uint256 amount, uint256 l2RewardsIndex) internal returns (uint256) {
-        uint256 rewardsIndex = l1Token.getCurrentRewardsIndex();
-
-        uint256 rayAmount = amount.wadToRay();
-        return (rayAmount.rayMulNoRounding(rewardsIndex.sub(l2RewardsIndex))).rayToWad();
+        if (toAsset) {
+            lendingPool.withdraw(underlyingAsset, amount, recipient);
+        } else {
+            IERC20(l1AToken).safeTransfer(recipient, amount);
+        }
     }
 
      function consumeBridgeRewardMessage(uint256 l2sender, address recipient, uint256 amount) internal {
@@ -316,22 +270,18 @@ contract TokenBridge is
 
         uint256 rewardBalance = rewardToken.balanceOf(self);
 
-        if (rewardBalance >= rewardsAmount) {
-          rewardToken.safeTransfer(recipient, rewardsAmount);
+        if (rewardBalance < amount) {
+            rewardBalance += incentivesController.claimRewards(
+                approvedL1Tokens,
+                amount - rewardBalance,
+                self
+            );
+        }
+
+        if (rewardBalance >= amount) {
+          rewardToken.safeTransfer(recipient, amount);
           return;
         }
-
-        for (uint256 i = 0; i < approvedL1Tokens.length; ++i) {
-            approvedL1Tokens[i].claimRewardsToSelf();
-
-            rewardBalance = rewardToken.balanceOf(self);
-
-            if (rewardBalance >= rewardsAmount) {
-              rewardToken.safeTransfer(recipient, rewardsAmount);
-              return;
-            }
-        }
-
         revert("NOT ENOUGH REWARDS");
     }
 }

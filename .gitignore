@@ -26,3 +26,5 @@ yarn-error.log
 
 # Apple related file
 */.DS_Store 
+
+.idea

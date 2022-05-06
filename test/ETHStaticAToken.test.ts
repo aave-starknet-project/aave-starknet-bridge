@@ -67,8 +67,9 @@ describe("ETHStaticAToken", function () {
       symbol: 123n,
       decimals: 18n,
       initial_supply: { high: 0n, low: 0n },
-      recipient: BigInt(user1.starknetContract.address),
-      controller: BigInt(owner.starknetContract.address),
+      recipient: BigInt(owner.starknetContract.address),
+      owner: BigInt(owner.starknetContract.address),
+      l2_token_bridge: BigInt(proxiedTokenBridgeL2.address),
     });
 
     await owner.invoke(proxiedTokenBridgeL2, "initialize_token_bridge", {
@@ -111,13 +112,13 @@ describe("ETHStaticAToken", function () {
 
   it("allows owner to set l2 token bridge", async () => {
     await owner.invoke(proxiedL2Token, "set_l2_token_bridge", {
-      l2_token_bridge_: BigInt(proxiedTokenBridgeL2.address),
+      l2_token_bridge: BigInt(proxiedTokenBridgeL2.address),
     });
   });
   it("disallows non-owner to set l2 token bridge", async () => {
     try {
       await user1.invoke(proxiedL2Token, "set_l2_token_bridge", {
-        l2_token_bridge_: BigInt(bridgeContract.address),
+        l2_token_bridge: BigInt(bridgeContract.address),
       });
     } catch (err: any) {
       expect(err.message).to.contain("Ownable: caller is not the owner");

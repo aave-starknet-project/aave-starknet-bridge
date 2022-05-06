@@ -51,7 +51,7 @@ jobs:
         run: ./scripts/static_analysis_solidity.sh
 
       - name: Static analysis for Cairo
-        run: ./scripts/static_analysis_cairo.sh
+        run: python scripts/static_analysis_cairo.py
 
       - name: Lint
         run: |

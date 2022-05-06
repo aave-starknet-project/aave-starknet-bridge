@@ -129,7 +129,21 @@ describe("ETHStaticAToken", function () {
         },
       });
     } catch (err: any) {
-      expect(err.message).to.contain("Ownable: caller is not the owner");
+      expect(err.message).to.contain("Caller address should be token_bridge");
+    }
+  });
+
+  it("disallows non-bridge to burn", async () => {
+    try {
+      await user1.invoke(token, "burn", {
+        account: BigInt(user1.starknetContract.address),
+        amount: {
+          high: 0n,
+          low: BigInt(decimalToWad(100)),
+        },
+      });
+    } catch (err: any) {
+      expect(err.message).to.contain("Caller address should be token_bridge");
     }
   });
 
@@ -172,7 +186,7 @@ describe("ETHStaticAToken", function () {
         },
       });
     } catch (err: any) {
-      expect(err.message).to.contain("Ownable: caller is not the owner");
+      expect(err.message).to.contain("Caller address should be token_bridge");
     }
   });
 
@@ -300,6 +314,11 @@ describe("ETHStaticAToken", function () {
       low: 0n,
     });
 
+    // Switch to the bridge user in order to push fake updates
+    await owner.invoke(token, "set_l2_token_bridge", {
+      l2_token_bridge: BigInt(bridge.starknetContract.address),
+    });
+
     //Update the acc rewards per token first
     await bridge.invoke(token, "push_acc_rewards_per_token", {
       block_number: {
@@ -312,6 +331,11 @@ describe("ETHStaticAToken", function () {
           low: BigInt(decimalToWad(3)),
         },
       },
+    });
+
+    // Switch back to the bridge in order to enable reward claims
+    await owner.invoke(token, "set_l2_token_bridge", {
+      l2_token_bridge: BigInt(tokenBridge.address),
     });
 
     const user1ClaimableRewards = await token.call(
@@ -339,6 +363,11 @@ describe("ETHStaticAToken", function () {
   });
 
   it("Rewards of user are not lost if L2 tokens are burnt before claiming", async () => {
+    // Switch to the bridge user in order to push fake updates
+    await owner.invoke(token, "set_l2_token_bridge", {
+      l2_token_bridge: BigInt(bridge.starknetContract.address),
+    });
+
     //To have a non null rewards amount, we update the rewards index
     await bridge.invoke(token, "push_acc_rewards_per_token", {
       block_number: {

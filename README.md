@@ -18,8 +18,8 @@ The bridge allows users to deposit and withdraw their `aTokens` on StarkNet and 
 The bridge is also shaped for liquidity providers who are able to assume Ethereum cost of deposit/withdrawal, as they transact large amounts. They will deposit on Aave Ethereum, bridge the staticATokens to Starknet and make them available for users there to buy and hold, accruing this way yield from L1. 
 
 ## Architecture
+![aave_bridge_v2](https://user-images.githubusercontent.com/37840702/167132315-70923006-e5ef-42a8-a431-37bdb6c252c8.png)
 
-coming soon
 
 ## Contracts
 

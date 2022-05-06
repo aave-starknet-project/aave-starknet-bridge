@@ -8,6 +8,7 @@ import "@joriksch/sg-contracts/src/starkware/cairo/eth/CairoConstants.sol";
 import "../../test/IStarknetMessaging.sol";
 
 import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IStaticATokenLM} from "@swp0x0/protocol-v2/contracts/interfaces/IStaticATokenLM.sol";
 
 contract TokenBridge is
@@ -15,6 +16,10 @@ contract TokenBridge is
     ContractInitializer,
     ProxySupport
 {
+
+    using SafeERC20 for IERC20;
+    using SafeERC20 for IStaticATokenLM;
+
     event LogDeposit(address sender, address token, uint256 amount, uint256 l2Recipient);
     event LogWithdrawal(address token, uint256 l2sender, address recipient, uint256 amount);
     event LogBridgeReward(uint256 l2sender, address recipient, uint256 amount);
@@ -167,7 +172,7 @@ contract TokenBridge is
 
     function deposit(address l1Token_, uint256 l2Recipient, uint256 amount) onlyApprovedToken(l1Token_) external {
         IStaticATokenLM l1Token = IStaticATokenLM(l1Token_);
-        l1Token.transferFrom(msg.sender, address(this), amount);
+        l1Token.safeTransferFrom(msg.sender, address(this), amount);
         sendMessage(l1Token_, msg.sender, l2Recipient, amount);
     }
 
@@ -176,7 +181,7 @@ contract TokenBridge is
         require(recipient != address(0x0), "INVALID_RECIPIENT");
         IStaticATokenLM l1Token = IStaticATokenLM(l1Token_);
         require(l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender), "UNDERFLOW");
-        l1Token.transfer(recipient, amount);
+        l1Token.safeTransfer(recipient, amount);
     }
 
      function consumeBridgeRewardMessage(uint256 l2sender, address recipient, uint256 amount) internal {
@@ -201,7 +206,7 @@ contract TokenBridge is
         uint256 rewardBalance = rewardToken.balanceOf(self);
 
         if (rewardBalance >= amount) {
-          rewardToken.transfer(recipient, amount);
+          rewardToken.safeTransfer(recipient, amount);
           return;
         }
 
@@ -211,7 +216,7 @@ contract TokenBridge is
             rewardBalance = rewardToken.balanceOf(self);
 
             if (rewardBalance >= amount) {
-              rewardToken.transfer(recipient, amount);
+              rewardToken.safeTransfer(recipient, amount);
               return;
             }
         }

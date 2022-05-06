@@ -2,16 +2,11 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math import assert_not_zero
-from starkware.starknet.common.syscalls import (
-    delegate_l1_handler,
-    delegate_call,
-    get_caller_address,
-)
+from starkware.starknet.common.syscalls import delegate_l1_handler, delegate_call
 from openzeppelin.upgrades.library import (
     Proxy_initialized,
     Proxy_get_admin,
     Proxy_get_implementation,
-    Proxy_initializer,
     Proxy_only_admin,
     Proxy_set_admin,
     Proxy_set_implementation,

@@ -138,7 +138,6 @@ func ray_div{range_check_ptr}(a : Uint256, b : Uint256) -> (res : Uint256):
     let (halfB, _) = uint256_unsigned_div_rem(b, Uint256(2, 0))
 
     let (UINT256_MAX) = uint256_max()
-    let (HALF_RAY_UINT) = half_ray()
     let (RAY_UINT) = ray()
 
     with_attr error_message("RAY multiplication overflow"):

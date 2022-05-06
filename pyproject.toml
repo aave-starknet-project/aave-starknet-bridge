@@ -9,3 +9,4 @@ python = "^3.7.2"
 cairo-lang = "^0.8.1"
 starknet-devnet = "^0.1.23"
 marshmallow-dataclass = "8.5.3" # to fix an error with cairo-compile
+slither-analyzer = "^0.8.3"

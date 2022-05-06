@@ -4,4 +4,3 @@ install:
 	yarn
 	pip install poetry
 	poetry install
-

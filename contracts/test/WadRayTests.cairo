@@ -63,7 +63,7 @@ end
 func test_wad_mul_overflow{range_check_ptr}():
     alloc_locals
     let (uint256_max_) = uint256_max()
-    let (res) = wad_mul(uint256_max_, uint256_max_)  # expected to revert
+    wad_mul(uint256_max_, uint256_max_)  # expected to revert
     return ()
 end
 
@@ -112,7 +112,7 @@ end
 func test_ray_mul_overflow{range_check_ptr}():
     alloc_locals
     let (uint256_max_) = uint256_max()
-    let (res) = ray_mul(uint256_max_, uint256_max_)  # expected to revert
+    ray_mul(uint256_max_, uint256_max_)  # expected to revert
     return ()
 end
 
@@ -263,7 +263,7 @@ end
 func test_ray_mul_no_rounding_overflow{range_check_ptr}():
     alloc_locals
     let (uint256_max_) = uint256_max()
-    let (res) = ray_mul_no_rounding(uint256_max_, uint256_max_)  # expected to revert
+    ray_mul_no_rounding(uint256_max_, uint256_max_)  # expected to revert
     return ()
 end
 

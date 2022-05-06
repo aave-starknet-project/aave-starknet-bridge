@@ -5,7 +5,7 @@ cache
 artifacts
 
 #Python artifacts
-.venv
+.venv*
 __pycache__
 .pytest_cache
 
@@ -24,5 +24,5 @@ deployment
 # Yarn error file
 yarn-error.log
 
+# Apple related file
 */.DS_Store 
-

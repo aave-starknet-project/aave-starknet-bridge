@@ -49,7 +49,8 @@ describe("Proxy", function () {
       decimals: 4n,
       initial_supply: { high: 0n, low: 0n },
       recipient: BigInt(owner.starknetContract.address),
-      controller: BigInt(owner.starknetContract.address),
+      owner: BigInt(owner.starknetContract.address),
+      l2_token_bridge: BigInt(owner.starknetContract.address),
     });
 
     const { name } = await proxiedTokenContract.call("name");

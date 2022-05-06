@@ -79,7 +79,7 @@ end
 
 # Internals.
 
-func auth_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+func only_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
     with_attr error_message("Caller address should be {governor_}"):
@@ -88,7 +88,7 @@ func auth_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     return ()
 end
 
-func auth_l1_handler{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func only_l1_handler{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     from_address_ : felt
 ):
     let (expected_from_address) = get_l1_token_bridge()
@@ -119,7 +119,7 @@ func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
     l1_bridge_address : felt
 ):
     # The call is restricted to the governor.
-    auth_governor()
+    only_governor()
 
     # Check l1_bridge isn't already set.
     let (l1_bridge_) = get_l1_token_bridge()
@@ -140,7 +140,7 @@ func set_reward_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
 ):
     alloc_locals
     # The call is restricted to the governor.
-    auth_governor()
+    only_governor()
 
     rewAAVE.write(reward_token)
     return ()
@@ -151,7 +151,7 @@ func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     l1_token : felt, l2_token : felt
 ):
     # The call is restricted to the governor.
-    auth_governor()
+    only_governor()
 
     let (l1_token_) = l2_token_to_l1_token.read(l2_token)
     with_attr error_message("L2 to L1 Bridge already setup"):
@@ -241,7 +241,7 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     amount_high : felt,
 ):
     alloc_locals
-    auth_l1_handler(from_address_=from_address)
+    only_l1_handler(from_address_=from_address)
 
     let amount = Uint256(low=amount_low, high=amount_high)
 
@@ -283,7 +283,7 @@ func handle_rewards_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
     rewards_high : felt,
 ):
     alloc_locals
-    auth_l1_handler(from_address_=from_address)
+    only_l1_handler(from_address_=from_address)
 
     let rewards = Uint256(low=rewards_low, high=rewards_high)
     let block_number = Uint256(low=block_number_low, high=block_number_high)

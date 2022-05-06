@@ -1,4 +1,4 @@
-name: aave-starknet-bridge CI
+name: E2E tests
 
 on:
   push:

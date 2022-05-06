@@ -12,7 +12,10 @@ from rewaave.math.wad_ray_math import (
     ray_to_wad_no_rounding,
 )
 from openzeppelin.token.erc20.library import ERC20_balanceOf
-from openzeppelin.access.ownable import Ownable_only_owner
+
+@storage_var
+func l2_token_bridge() -> (address : felt):
+end
 
 @storage_var
 func last_update() -> (block_number : Uint256):
@@ -26,6 +29,7 @@ end
 @storage_var
 func user_snapshot_rewards_per_token(user : felt) -> (acc_rewards_per_token : Ray):
 end
+
 # user => unclaimed_rewards (in RAYs)
 @storage_var
 func unclaimed_rewards(user : felt) -> (unclaimed : Ray):
@@ -126,7 +130,7 @@ func claimable_push_acc_rewards_per_token{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(block_number : Uint256, acc_rewards_per_token_ : Ray):
     alloc_locals
-    Ownable_only_owner()
+    claimable_only_token_bridge()
     let (last_block_number) = last_update.read()
     let (block_number_1) = uint256_sub(block_number, Uint256(1, 0))
     let (le) = uint256_le(last_block_number, block_number_1)
@@ -166,4 +170,27 @@ end
 func claimable_get_last_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     ) -> (block_number : Uint256):
     return last_update.read()
+end
+
+func claimable_set_l2_token_bridge{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(l2_token_bridge_ : felt):
+    l2_token_bridge.write(l2_token_bridge_)
+    return ()
+end
+
+func claimable_get_l2_token_bridge{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}() -> (l2_token_bridge_ : felt):
+    return l2_token_bridge.read()
+end
+
+func claimable_only_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    ):
+    let (caller_address) = get_caller_address()
+    let (l2_token_bridge_) = l2_token_bridge.read()
+    with_attr error_message("Caller address should be token_bridge: {l2_token_bridge_}"):
+        assert caller_address = l2_token_bridge_
+    end
+    return ()
 end

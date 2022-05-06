@@ -209,7 +209,7 @@ contract TokenBridge is
         amount = l1Token.deposit(address(this), amount, refferalCode, fromAsset);
         sendMessage(l1Token, msg.sender, l2Recipient, amount);
     }
-}
+
     function withdrawUnderlying(
         IStaticATokenLM l1Token,
         uint256 l2sender,

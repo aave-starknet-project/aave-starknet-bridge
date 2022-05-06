@@ -54,7 +54,8 @@ end
 
 @view
 func get_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-        res : felt):
+    res : felt
+):
     let (res) = governor.read()
     return (res)
 end
@@ -69,7 +70,8 @@ end
 
 @view
 func get_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-        res : felt):
+    res : felt
+):
     let (res) = l1_token_bridge.read()
     return (res)
 end
@@ -86,7 +88,8 @@ func auth_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
 end
 
 func auth_l1_handler{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        from_address_ : felt):
+    from_address_ : felt
+):
     let (expected_from_address) = get_l1_token_bridge()
     with_attr error_message("Expected deposit from l1_token_bridge: {expected_from_address}"):
         assert from_address_ = expected_from_address
@@ -99,7 +102,8 @@ end
 # To finish the init you have to initialize the L2 token contract and the L1 bridge contract.
 @external
 func initialize_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        governor_address : felt):
+    governor_address : felt
+):
     let (governor_) = governor.read()
     with_attr error_message("Bridge already initialized"):
         assert governor_ = 0
@@ -111,7 +115,8 @@ end
 
 @external
 func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        l1_bridge_address : felt):
+    l1_bridge_address : felt
+):
     # The call is restricted to the governor.
     auth_governor()
 
@@ -130,7 +135,8 @@ end
 
 @external
 func set_reward_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        reward_token : felt):
+    reward_token : felt
+):
     alloc_locals
     # The call is restricted to the governor.
     auth_governor()
@@ -141,7 +147,8 @@ end
 
 @external
 func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        l1_token : felt, l2_token : felt):
+    l1_token : felt, l2_token : felt
+):
     # The call is restricted to the governor.
     auth_governor()
 
@@ -160,7 +167,8 @@ end
 
 @external
 func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        l2_token : felt, l1_recipient : felt, amount : Uint256):
+    l2_token : felt, l1_recipient : felt, amount : Uint256
+):
     # The amount is validated (i.e. amount.low, amount.high < 2**128) by an inner call to
     # IMintableToken burn function.
 
@@ -197,7 +205,8 @@ end
 
 @external
 func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        l1_recipient : felt, amount : Uint256):
+    l1_recipient : felt, amount : Uint256
+):
     let (to_address) = get_l1_token_bridge()
 
     let (token_owner) = get_caller_address()
@@ -223,8 +232,13 @@ end
 
 @l1_handler
 func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        from_address : felt, l1_sender : felt, l2_recipient : felt, l2_token_address : felt,
-        amount_low : felt, amount_high : felt):
+    from_address : felt,
+    l1_sender : felt,
+    l2_recipient : felt,
+    l2_token_address : felt,
+    amount_low : felt,
+    amount_high : felt,
+):
     alloc_locals
 
     auth_l1_handler(from_address_=from_address)
@@ -245,7 +259,8 @@ end
 
 @external
 func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        recipient : felt, amount : Uint256):
+    recipient : felt, amount : Uint256
+):
     # get the address of the ETHStaticAToken
     let (l2_token) = get_caller_address()
     # Verify that it's a valid token by checking for its counterpart on l1
@@ -260,8 +275,13 @@ end
 
 @l1_handler
 func handle_rewards_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        from_address : felt, block_number_low : felt, block_number_high : felt, l2_token : felt,
-        rewards_low : felt, rewards_high : felt):
+    from_address : felt,
+    block_number_low : felt,
+    block_number_high : felt,
+    l2_token : felt,
+    rewards_low : felt,
+    rewards_high : felt,
+):
     alloc_locals
     auth_l1_handler(from_address_=from_address)
 
@@ -277,7 +297,8 @@ func handle_rewards_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
 
     # push rewards
     IETHstaticAToken.push_acc_rewards_per_token(
-        contract_address=l2_token, block_number=block_number, acc_rewards_per_token=rewards)
+        contract_address=l2_token, block_number=block_number, acc_rewards_per_token=rewards
+    )
 
     return ()
 end

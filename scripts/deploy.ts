@@ -65,7 +65,8 @@ async function deployAll() {
       "ETHAUSD",
       18n,
       { high: 0n, low: 0n },
-      BigInt(L2ProxyBridge.address)
+      BigInt(l2deployer.starknetContract.address),
+      BigInt(L2ProxyBridge.address),
     );
     console.log("deployed successfully");
   } catch (error) {

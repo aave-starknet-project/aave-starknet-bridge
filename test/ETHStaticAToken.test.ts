@@ -56,7 +56,7 @@ describe("ETHStaticAToken", function () {
     });
 
     //set rewAave address on l2 token bridge
-    await owner.invoke(token, "set_reward_token", {
+    await owner.invoke(tokenBridge, "set_reward_token", {
       reward_token: BigInt(rewAAVE.address),
     });
 

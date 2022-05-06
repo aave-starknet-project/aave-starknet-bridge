@@ -5,7 +5,7 @@ cache
 artifacts
 
 #Python artifacts
-.venv
+.venv*
 __pycache__
 .pytest_cache
 

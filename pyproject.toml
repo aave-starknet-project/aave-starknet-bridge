@@ -10,4 +10,3 @@ cairo-lang = "^0.8.1"
 starknet-devnet = "^0.1.23"
 marshmallow-dataclass = "8.5.3" # to fix an error with cairo-compile
 slither-analyzer = "^0.8.3"
-amarna = {git = "https://github.com/crytic/amarna.git", rev = "fe02c8d886621a220c0467b638fe199dde9a535c"}

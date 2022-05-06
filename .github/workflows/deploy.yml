@@ -1,4 +1,4 @@
-name: aave-starknet-bridge CI
+name: Test deployment script
 
 on:
   push:

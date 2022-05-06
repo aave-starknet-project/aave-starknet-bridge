@@ -2,12 +2,35 @@
 # AAVE Starknet Bridge
 
 [![Tests](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/ci.yml)
+[![Tests](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/deploy.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/deploy.yml)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/cdnjs/cdnjs.svg?style=flat)](https://github.com/aave-starknet-project/aave-starknet-bridge/pulls)
 [![Issues](https://img.shields.io/github/issues-raw/tterb/PlayMusic.svg?maxAge=25000)](https://github.com/aave-starknet-project/aave-starknet-bridge/issues)
 
  <a href="https://github.com/aave-starknet-project/aave-starknet-bridge/blob/main/LICENSE.md"><img src="https://img.shields.io/github/license/sourcerer-io/hall-of-fame.svg?colorB=ff0000"></a>
 
 :warning: This codebase is still in an experimental phase, has not been audited, might contain bugs and should not be used in production.
+
+
+## Table of contents
+  * [Overview](#overview)
+  * [Architecture](#architecture)
+  * [Contracts](#contracts)
+  * [ETHStaticATokens on L2](#ethstaticatokens-on-l2)
+  * [Bridging aTokens from L1<>L2](#bridging-atokens-from-l1--l2)
+    + [Transfer L1->L2](#transfer-l1--l2-)
+    + [Transfer L2->L1](#transfer-l2--l1-)
+  * [Synchronisation of rewards on L1 <> L2](#synchronisation-of-rewards-on-l1----l2)
+  * [Claiming rewards on L2](#claiming-rewards-on-l2)
+  * [Bridging rewards from L2->L1](#bridging-rewards-from-l2--l1)
+  * [Proxies](#proxies)
+  * [Governance](#governance)
+  * [Environment](#environment)
+  * [Build](#build-the-cairo-files)
+  * [Network](#start-testnets)
+  * [Tests](#run-the-tests)
+  * [Deployment](#deployment)
+
+
 
 ## Overview
 
@@ -43,9 +66,9 @@ Natively, Aave tokens grow in balance, not in value. To be able to create this k
 
 ETHStaticATokens are an implementation of the wrapped aTokens that will continuously increase in value on Starknet because they are backed by the increasing staticATokens amounts locked in the bridge contract on Ethereum. ETHStaticATokens can then be bridged back to aTokens.
 
-## Bridging aTokens from L1<>L2
+## Bridging aTokens from L1<>L2 <a name="bridging-atokens-from-l1--l2"></a>
 
-### Transfer L1->L2: 
+### Transfer L1->L2: <a name="transfer-l1--l2-"></a>
 
 
 Users can either bridge their aToken (let's say aDai) to L2 by calling `deposit()` on `TokenBridge`, or deposit the underlying asset (i.e Dai).
@@ -68,7 +91,7 @@ If depositing `aTokens`:
 - A message will be sent to the  L2 bridge with the amount to be transferred, the L1 token address and the recipient address as parameters.
 - The token bridge on L2 will then be minting the correspending ETHStaticAToken of the L1 token to the user.
 
-### Transfer L2->L1:
+### Transfer L2->L1: <a name="transfer-l2--l1-"></a>
 
 To bridge their staticATokens back to L1, users need to call `initiate_withdraw` on Starknet. 
 
@@ -80,7 +103,7 @@ Calling `initiate_withdraw` will result in the following:
 - The L1 bridge also checks for any difference in the L1/L2 rewards index and transfers any unclaimed rewards to the L1 user
 
 
-## Synchronisation of rewards on L1 <> L2
+## Synchronisation of rewards on L1 <> L2 <a name="synchronisation-of-rewards-on-l1----l2"></a>
 
 Starknet users will continue to enjoy the same rewards as on L1 after bridging their assets. To achieve that we continously update the `rewards_index` of all ETHStaticATokens to match the value of their respective aTokens on L1, by tracking the reward index on departure of the static token and sending the rewards accrued during the bridging process to the recipients address.
 
@@ -90,8 +113,8 @@ Starknet users will continue to enjoy the same rewards as on L1 after bridging t
 
 To claim rewards users need to call `claim_rewards` on ETHStaticAToken contract. The ETHStaticAToken will then call the bridge to mint the due `rewAAVE` tokens to the user.
 
-## Bridging rewards from L2->L1
-
+## Bridging rewards from L2->L1  <a name="bridging-rewards-from-l2--l1"></a>
+ 
 
 
 Calling `bridge_rewards`on L2 token bridge results in: 
@@ -118,6 +141,7 @@ All calls made to the following contracts will be handled by a proxy who delegat
 * `rewAAVE` token is owned by the `token_bridge`
 
   
+## Setup
 
 ### Environment
 
@@ -202,7 +226,7 @@ yarn test
 ```
 
 
-## Deployment 
+### Deployment 
 
 To deploy the bridge on testnets:
 

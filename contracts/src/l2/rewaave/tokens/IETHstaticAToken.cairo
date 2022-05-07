@@ -1,6 +1,7 @@
 %lang starknet
 
 from starkware.cairo.common.uint256 import Uint256
+from rewaave.math.wad_ray_math import Ray
 
 @contract_interface
 namespace IETHstaticAToken:
@@ -49,7 +50,7 @@ namespace IETHstaticAToken:
     func burn(account : felt, amount : Uint256):
     end
 
-    func push_acc_rewards_per_token(block_number : Uint256, acc_rewards_per_token : Uint256):
+    func push_acc_rewards_per_token(block_number : Uint256, acc_rewards_per_token : Ray):
     end
 
     func initialize_ETHstaticAToken(

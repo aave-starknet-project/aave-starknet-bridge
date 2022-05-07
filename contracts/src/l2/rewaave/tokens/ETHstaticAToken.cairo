@@ -210,9 +210,9 @@ end
 
 @external
 func push_acc_rewards_per_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    block_number : Uint256, acc_rewards_per_token : Uint256
+    block_number : Uint256, acc_rewards_per_token : Ray
 ):
-    claimable_push_acc_rewards_per_token(block_number, Ray(acc_rewards_per_token))
+    claimable_push_acc_rewards_per_token(block_number, acc_rewards_per_token)
     return ()
 end
 

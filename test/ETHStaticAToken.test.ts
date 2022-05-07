@@ -180,8 +180,10 @@ describe("ETHStaticAToken", function () {
         low: 1,
       },
       acc_rewards_per_token: {
-        high: 0,
-        low: BigInt(decimalToWad(2)),
+        ray: {
+          high: 0,
+          low: BigInt(decimalToWad(2)),
+        },
       },
     });
 
@@ -203,8 +205,10 @@ describe("ETHStaticAToken", function () {
           low: 2,
         },
         acc_rewards_per_token: {
-          high: 0n,
-          low: BigInt(decimalToWad(2)),
+          ray: {
+            high: 0n,
+            low: BigInt(decimalToWad(2)),
+          },
         },
       });
     } catch (err: any) {
@@ -220,8 +224,10 @@ describe("ETHStaticAToken", function () {
           low: 3,
         },
         acc_rewards_per_token: {
-          high: 0,
-          low: 0,
+          ray: {
+            high: 0,
+            low: 0,
+          },
         },
       });
     } catch (e) {
@@ -237,8 +243,10 @@ describe("ETHStaticAToken", function () {
           low: 0,
         },
         acc_rewards_per_token: {
-          high: 0,
-          low: BigInt(decimalToWad(2)),
+          ray: {
+            high: 0,
+            low: BigInt(decimalToWad(2)),
+          },
         },
       });
     } catch (e) {
@@ -333,8 +341,10 @@ describe("ETHStaticAToken", function () {
         low: 2,
       },
       acc_rewards_per_token: {
-        high: 0,
-        low: BigInt(decimalToWad(3)),
+        ray: {
+          high: 0,
+          low: BigInt(decimalToWad(3)),
+        },
       },
     });
 
@@ -370,8 +380,10 @@ describe("ETHStaticAToken", function () {
         high: 3,
       },
       acc_rewards_per_token: {
-        high: 0,
-        low: BigInt(decimalToWad(4)),
+        ray: {
+          high: 0,
+          low: BigInt(decimalToWad(4)),
+        }
       },
     });
 

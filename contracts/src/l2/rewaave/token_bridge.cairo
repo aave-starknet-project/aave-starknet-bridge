@@ -7,6 +7,7 @@ from starkware.cairo.common.uint256 import Uint256, uint256_check
 from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address
 
+from rewaave.math.wad_ray_math import Ray
 from rewaave.tokens.IERC20 import IERC20
 from rewaave.tokens.IETHstaticAToken import IETHstaticAToken
 
@@ -297,7 +298,7 @@ func handle_rewards_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
 
     # push rewards
     IETHstaticAToken.push_acc_rewards_per_token(
-        contract_address=l2_token, block_number=block_number, acc_rewards_per_token=rewards
+        contract_address=l2_token, block_number=block_number, acc_rewards_per_token=Ray(rewards)
     )
 
     return ()

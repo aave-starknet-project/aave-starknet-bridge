@@ -19,6 +19,12 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
     using SafeERC20 for IERC20;
     using WadRayMath for uint256;
 
+    struct ATokenData {
+        uint256 l2TokenAddress;
+        IERC20 underlyingAsset;
+        ILendingPool lendingPool;
+    }
+
     event LogDeposit(
         address sender,
         address token,
@@ -34,7 +40,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
     event LogBridgeReward(uint256 l2sender, address recipient, uint256 amount);
     event LogBridgeAdded(address l1Token, uint256 l2Token);
 
-    mapping(address => uint256) public l1TokentoL2Token;
+    mapping(address => ATokenData) public aTokenData;
     IStarknetMessaging public messagingContract;
     uint256 l2TokenBridge;
     address[] approvedL1Tokens;
@@ -82,7 +88,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         override
     {}
 
-    function isValidL2Address(uint256 l2Address) internal returns (bool) {
+    function isValidL2Address(uint256 l2Address) internal pure returns (bool) {
         return (l2Address != 0) && (l2Address < CairoConstants.FIELD_PRIME);
     }
 
@@ -91,10 +97,10 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         _;
     }
 
+    // TODO: most probably this modifier should be removed/replaced with different logic to optimize gas usage
     modifier onlyApprovedToken(address token) {
-        uint256 l2TokenAddress = l1TokentoL2Token[token];
         require(
-            isValidL2Address(l2TokenAddress),
+            isValidL2Address(aTokenData[token].l2TokenAddress),
             "L2_TOKEN_HAS_NOT_BEEN_APPROVED"
         );
         _;
@@ -136,8 +142,10 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
     {
         require(l1AToken != address(0x0), "l1Token address cannot be 0x0");
 
-        uint256 l2Token_ = l1TokentoL2Token[l1AToken];
-        require(l2Token_ == 0, "l2Token already set");
+        require(
+            aTokenData[l1AToken].l2TokenAddress == 0,
+            "l2Token already set"
+        );
 
         require(
             IATokenWithPool(l1AToken).getIncentivesController() ==
@@ -149,11 +157,14 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
             IATokenWithPool(l1AToken).UNDERLYING_ASSET_ADDRESS()
         );
         ILendingPool lendingPool = IATokenWithPool(l1AToken).POOL();
-
         underlyingAsset.safeApprove(address(lendingPool), type(uint256).max);
 
-        emit LogBridgeAdded(l1AToken, l2Token);
-        l1TokentoL2Token[l1AToken] = l2Token;
+        emit LogBridgeAdded(l1AToken, l2Token); // TODO: any reason to emit the event before assigning data?
+        aTokenData[l1AToken] = ATokenData(
+            l2Token,
+            underlyingAsset,
+            lendingPool
+        );
         approvedL1Tokens.push(l1AToken);
     }
 
@@ -167,6 +178,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         );
     }
 
+    // TODO: shouldn't be view?
     function sendMessage(
         address l1Token,
         address from,
@@ -175,12 +187,10 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
     ) internal onlyApprovedToken(l1Token) onlyValidL2Address(l2Recipient) {
         emit LogDeposit(from, l1Token, amount, l2Recipient);
 
-        uint256 l2TokenAddress = l1TokentoL2Token[l1Token];
-
         uint256[] memory payload = new uint256[](9);
         payload[0] = uint256(from);
         payload[1] = l2Recipient;
-        payload[2] = l2TokenAddress;
+        payload[2] = aTokenData[l1Token].l2TokenAddress;
         (payload[3], payload[4]) = toSplitUint(amount);
         (payload[5], payload[6]) = toSplitUint(blockNumber);
         (payload[7], payload[8]) = toSplitUint(currentRewardsIndex);
@@ -192,8 +202,10 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         );
     }
 
+    // TODO: shouldn't it be view?
+    // TODO: why decorator not used here?
     function sendMessageStaticAToken(uint256 rewardsIndex) external {
-        uint256 l2Token = l1TokentoL2Token[msg.sender];
+        uint256 l2Token = aTokenData[msg.sender].l2TokenAddress;
 
         if (isValidL2Address(l2Token)) {
             uint256[] memory payload = new uint256[](5);
@@ -216,6 +228,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         uint256 amount,
         uint256 l2RewardsIndex
     ) internal {
+        // TODO: shouldn't it be view?
         emit LogWithdrawal(l1Token, l2sender, recipient, amount);
 
         uint256[] memory payload = new uint256[](8);
@@ -248,27 +261,19 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
     }
 
     function deposit(
-        IATokenWithPool l1AToken,
+        address l1AToken,
         uint256 l2Recipient,
         uint256 amount,
         uint16 referralCode,
         bool fromAsset
-    )
-        external
-        onlyApprovedToken(address(l1AToken))
-        onlyValidL2Address(l2Recipient)
-    {
-        address underlyingAsset = l1AToken.UNDERLYING_ASSET_ADDRESS();
-        ILendingPool lendingPool = l1AToken.POOL();
+    ) external onlyApprovedToken(l1AToken) onlyValidL2Address(l2Recipient) {
+        IERC20 underlyingAsset = aTokenData[l1AToken].underlyingAsset;
+        ILendingPool lendingPool = aTokenData[l1AToken].lendingPool;
 
         if (fromAsset) {
-            IERC20(underlyingAsset).safeTransferFrom(
-                msg.sender,
-                address(this),
-                amount
-            );
+            underlyingAsset.safeTransferFrom(msg.sender, address(this), amount);
             lendingPool.deposit(
-                underlyingAsset,
+                address(underlyingAsset),
                 amount,
                 address(this),
                 referralCode
@@ -280,30 +285,30 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
                 amount
             );
         }
-        sendMessage(
-            address(l1AToken),
+        sendMessage( //TODO: onlyApprovedToken check called twice, it boils down down to extra read from storage. In the same time sendMessage function used only here
+            l1AToken,
             msg.sender,
             l2Recipient,
-            _dynamicToStaticAmount(amount, underlyingAsset, lendingPool)
+            _dynamicToStaticAmount(
+                amount,
+                address(underlyingAsset),
+                lendingPool
+            )
         );
     }
 
     function withdraw(
-        IATokenWithPool l1AToken,
+        address l1AToken,
         uint256 l2sender,
         address recipient,
         uint256 staticAmount,
         bool toAsset
-    )
-        external
-        onlyApprovedToken(address(l1AToken))
-        onlyValidL2Address(l2sender)
-    {
-        consumeMessage(address(l1AToken), l2sender, recipient, staticAmount);
+    ) external onlyApprovedToken(l1AToken) onlyValidL2Address(l2sender) {
+        consumeMessage(l1AToken, l2sender, recipient, staticAmount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
 
-        address underlyingAsset = l1AToken.UNDERLYING_ASSET_ADDRESS();
-        ILendingPool lendingPool = l1AToken.POOL();
+        address underlyingAsset = address(aTokenData[l1AToken].underlyingAsset);
+        ILendingPool lendingPool = aTokenData[l1AToken].lendingPool;
         uint256 amount = _staticToDynamicAmount(
             staticAmount,
             underlyingAsset,

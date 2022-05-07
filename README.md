@@ -21,9 +21,7 @@
   * [Bridging rewards from L2->L1](#bridging-rewards-from-l2--l1)
   * [Proxies](#proxies)
   * [Governance](#governance)
-  * [Environment](#environment)
-  * [Build](#build-the-cairo-files)
-  * [Network](#start-testnets)
+  * [Setup](#environment)
   * [Tests](#run-the-tests)
   * [Deployment](#deployment)
 

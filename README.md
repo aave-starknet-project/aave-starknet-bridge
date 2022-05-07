@@ -61,7 +61,7 @@ The bridge is also shaped for liquidity providers who are able to assume Ethereu
 
 Natively, Aave tokens grow in balance, not in value. To be able to create this kind of model, it is important to wrap them before bridging, converting them in a token that grows in value, not in balance.
 
-ETHStaticATokens are an implementation of the wrapped aTokens that will continuously increase in value on Starknet because they are backed by the increasing staticATokens amounts locked in the bridge contract on Ethereum. ETHStaticATokens can then be bridged back to aTokens.
+ETHStaticATokens are an implementation of the wrapped aTokens that will continuously increase in value on Starknet because they are backed by the increasing aTokens amounts locked in the bridge contract on Ethereum. ETHStaticATokens can then be bridged back to aTokens.
 
 ## Bridging aTokens from L1<>L2 <a name="bridging-atokens-from-l1--l2"></a>
 
@@ -76,20 +76,20 @@ Calling `deposit` will result in the following:
 
 If depositing underlying `asset`:
 
-- The `asset` token will be transfered from the user account to the L1 bridge.
+- The `asset` token will be transferred from the user account to the L1 bridge.
 - The bridge will then deposit the `asset` token in the aToken.
 - A message will be sent to the  L2 bridge with the amount of `ETHstaticAToken` to be transferred, the L1 token address and the recipient address as parameters.
-- The token bridge on L2 will then be minting the correspending ETHStaticAToken of the L1 token to the user.
+- The token bridge on L2 will then be minting the corresponding ETHStaticAToken of the L1 token to the user.
 
 If depositing `aTokens`:
 
-- The `aTokens` will be transfered from the user account to the L1 bridge.
+- The `aTokens` will be transferred from the user account to the L1 bridge.
 - A message will be sent to the  L2 bridge with the amount to be transferred, the L1 token address and the recipient address as parameters.
-- The token bridge on L2 will then be minting the correspending ETHStaticAToken of the L1 token to the user.
+- The token bridge on L2 will then be minting the corresponding ETHStaticAToken of the L1 token to the user.
 
 ### Transfer L2->L1: <a name="transfer-l2--l1-"></a>
 
-To bridge their staticATokens back to L1, users need to call `initiate_withdraw` on Starknet. 
+To bridge their aTokens back to L1, users need to call `initiate_withdraw` on Starknet. 
 
 Calling `initiate_withdraw` will result in the following:
 
@@ -101,19 +101,19 @@ Calling `initiate_withdraw` will result in the following:
 
 ## Synchronisation of rewards on L1 <> L2 <a name="synchronisation-of-rewards-on-l1----l2"></a>
 
-Starknet users will continue to enjoy the same rewards as on L1 after bridging their assets. To achieve that we continously update the `rewards_index` of all ETHStaticATokens to match the value of their respective aTokens on L1, by tracking the reward index on departure of the static token and sending the rewards accrued during the bridging process to the recipients address.
+Starknet users will continue to enjoy the same rewards as on L1 after bridging their assets. To achieve that we continuously update the `rewards_index` of all ETHStaticATokens to match the value of their respective aTokens on L1, by tracking the reward index on departure of the static token and sending the rewards accrued during the bridging process to the recipients address.
 
 
 ## Claiming rewards on L2
 
 
-To claim rewards users need to call `claim_rewards` on ETHStaticAToken contract. The ETHStaticAToken will then call the bridge to mint the due `rewAAVE` tokens to the user.
+To claim rewards users need to call `claim_rewards` on ETHStaticAToken contract which calls the bridge in return to mint the due `rewAAVE` tokens to the user.
 
 ## Bridging rewards from L2->L1  <a name="bridging-rewards-from-l2--l1"></a>
  
 
 
-Calling `bridge_rewards`on L2 token bridge results in: 
+Calling `bridge_rewards` on L2 token bridge results in: 
 
 - The bridged amount of `rewAAVE` tokens will be burned.
 - The L1 bridge receives the bridging message and claims the rewards amount to self by calling `claimRewards` on the `IncentivesController` contract.

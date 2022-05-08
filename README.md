@@ -21,7 +21,7 @@
   * [Bridging rewards from L2->L1](#bridging-rewards-from-l2--l1)
   * [Proxies](#proxies)
   * [Governance](#governance)
-  * [Setup](#environment)
+  * [Development Setup](#environment)
   * [Tests](#run-the-tests)
   * [Deployment](#deployment)
 

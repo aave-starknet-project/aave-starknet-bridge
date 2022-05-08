@@ -421,7 +421,7 @@ describe("TokenBridge", async function () {
     l1InitialAUsdcBalance = await aUsdc.balanceOf(l1user.address);
     await l1TokenBridge.connect(l1user).depositUnderlying(l1StaticUsdc.address, BigInt(l2user.starknetContract.address), 40, 0, false);
     /////// WARNING: there is an off by 1 here because the previous action updates the aToken rate
-    expect(await aUsdc.balanceOf(l1user.address)).to.equal(l1InitialAUsdcBalance-39);
+    expect(await aUsdc.balanceOf(l1user.address)).to.equal(l1InitialAUsdcBalance-40);
 
     // Numbers are different due to multiplication with rate
     expect(await l1StaticDai.balanceOf(l1TokenBridge.address)).to.equal(58);

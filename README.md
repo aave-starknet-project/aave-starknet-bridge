@@ -5,6 +5,8 @@
 [![Tests](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/deploy.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/deploy.yml)
 <a href="https://github.com/aave-starknet-project/aave-starknet-bridge/blob/main/LICENSE.md"><img src="https://img.shields.io/github/license/sourcerer-io/hall-of-fame.svg?colorB=ff0000"></a>
 
+[![Known Vulnerabilities](https://snyk.io/test/github/aave-starknet-project/aave-starknet-bridge/badge.svg)](https://snyk.io/test/github/aave-starknet-project/aave-starknet-bridge)
+
 :warning: This codebase is still in an experimental phase, has not been audited, might contain bugs and should not be used in production.
 
 
@@ -13,7 +15,7 @@
   * [1. Overview](#overview)
   * [2. Architecture](#architecture)
     * [2.1. Contracts](#contracts)
-    * [2.2. ETHStaticATokens on L2](#ethstaticatokens-on-l2)
+    * [2.2. StaticATokens on L2](#staticatokens-on-l2)
     * [2.3. Bridging aTokens from L1<>L2](#bridging-atokens-from-l1--l2)
       * [2.3.1. Transfer L1->L2](#transfer-l1--l2-)
       * [2.3.2. Transfer L2->L1](#transfer-l2--l1-)
@@ -72,7 +74,7 @@ Users can either bridge their aToken (let's say aDai) to L2 by calling `deposit(
 Users wil have to approve the bridge to spend the underlying `asset` tokens or `aTokens`, depending on the provided value for `fromAsset` argument when depositing.
 
 
-Calling `deposit` will result in the following: 
+Calling `deposit` allows users deposit `aToken` or their underlying `asset`: 
 
 If depositing underlying `asset`:
 

@@ -205,7 +205,7 @@ func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     let (caller) = get_caller_address()
     let (rewards) = claimable_claim_rewards(caller)
     let (l2_token_bridge) = claimable_get_l2_token_bridge()
-    ITokenBridge.mint_rewards(l2_token_bridge_, recipient, rewards.wad)
+    ITokenBridge.mint_rewards(l2_token_bridge, recipient, rewards.wad)
     return ()
 end
 

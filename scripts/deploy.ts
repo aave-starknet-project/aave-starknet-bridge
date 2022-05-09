@@ -31,33 +31,32 @@ async function deployAll() {
     );
 
     //deploy L2 token bridge
-    const L2ProxyBridge = await deployL2Bridge(
+    const l2Bridge = await deployL2Bridge(
       l2deployer,
       BigInt(l2deployer.starknetContract.address)
     );
 
     //deploy rewAAVE token on L2
-
-    const proxiedL2RewAaaveToken = await deployL2rewAAVE(
+    const l2rewAAVE = await deployL2rewAAVE(
       l2deployer,
       "rewAAVE Token",
       "rewAAVE",
       18n,
       { high: 0n, low: 0n },
-      BigInt(L2ProxyBridge.address)
+      BigInt(l2Bridge.address)
     );
 
     console.log("setting reward token on L2 token bridge...");
 
     //set rewAAVE on L2 token bridge
-    await l2deployer.invoke(L2ProxyBridge, "set_reward_token", {
-      reward_token: BigInt(proxiedL2RewAaaveToken.address),
+    await l2deployer.invoke(l2Bridge, "set_reward_token", {
+      reward_token: BigInt(l2rewAAVE.address),
     });
 
     console.log("Deploying L1 token bridge...");
     await deployL1Bridge(
       l1deployer,
-      L2ProxyBridge.address,
+      l2Bridge.address,
       STARKNET_MESSAGING_CONTRACT,
       INCENTIVES_CONTROLLER
     );
@@ -71,7 +70,7 @@ async function deployAll() {
       18n,
       { high: 0n, low: 0n },
       BigInt(l2deployer.starknetContract.address),
-      BigInt(L2ProxyBridge.address)
+      BigInt(l2Bridge.address),
     );
     console.log("deployed successfully");
   } catch (error) {

@@ -85,9 +85,7 @@ end
 
 func claimable_get_pending_rewards{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
-}(
-    user : felt
-) -> (pending_rewards : Uint256):
+}(user : felt) -> (pending_rewards : Uint256):
     alloc_locals
     let (balance) = ERC20_balanceOf(user)
     let (balance_in_ray) = wad_to_ray(Wad(balance))
@@ -101,10 +99,9 @@ func claimable_get_pending_rewards{
     return (pending_rewards)
 end
 
-<<<<<<< HEAD
-func claimable_get_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    user : felt
-) -> (claimable_rewards : Wad):
+func claimable_get_claimable_rewards{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(user : felt) -> (claimable_rewards : Wad):
     alloc_locals
     let (unclaimed_rewards_) = unclaimed_rewards.read(user)
     let (pending) = get_pending_rewards(user)

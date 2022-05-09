@@ -512,14 +512,14 @@ describe("TokenBridge", async function () {
     await l2user.invoke(l2TokenBridge, 'initiate_withdraw', { l2_token: BigInt(l2StaticAUsdc.address), l1_recipient: BigInt(l1user.address), amount: { high: 0n, low:  40n } });
 
     {
-    const d = await incentives.getAssetData(l1tokenDai.address);
+    const d = await incentives.getAssetData(l1StaticDai.address);
     console.log(d);
     }
 
     {
-    const d = await incentives.getAssetData(l1tokenUsdc.address);
+    const d = await incentives.getAssetData(l1StaticUsdc.address);
     console.log(d);
-    const {0: index, 1: emissionsPerSecond, 2: lastUpdateTimeStamp} = await incentives.getAssetData(l1tokenUsdc.address);
+    const {0: index, 1: emissionsPerSecond, 2: lastUpdateTimeStamp} = await incentives.getAssetData(l1StaticUsdc.address);
     console.log(index, emissionsPerSecond, lastUpdateTimeStamp);
     }
 

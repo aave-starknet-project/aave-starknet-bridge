@@ -307,31 +307,26 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     let (reward_token) = rewAAVE.read()
 
     # handle the difference of the index at send and recieve
-    let (current_index) = IETHstaticAToken.get_acc_rewards_per_token()
+    let (current_index) = IETHstaticAToken.get_acc_rewards_per_token(l2_token)
     let (le) = ray_le(current_index, l1_rewards_index)
     if le == 1:
-        IETHstaticAToken.push_acc_ = rewards_per_token(
+        IETHstaticAToken.push_acc_rewards_per_token(
             contract_address=l2_token,
             block_number=block_number,
-            acc_rewards_per_token=l1_rewards_index
-            )
+            acc_rewards_per_token=l1_rewards_index,
+        )
     else:
         let (amount_ray) = wad_to_ray(amount)
         let (reward_diff) = ray_sub(l1_rewards_index, current_index)
-        let (reward_outstanding_ray) = ray_mul_no_rounding(reward_dif, amount_ray)
+        let (reward_outstanding_ray) = ray_mul_no_rounding(reward_diff, amount_ray)
         let (reward_outstanding) = ray_to_wad_no_rounding(reward_outstanding_ray)
-        IERCH20.mint(reward_token, l2_recipient, reward_outstanding.wad)
+        IERC20.mint(reward_token, l2_recipient, reward_outstanding.wad)
     end
 
     # Call mint on l2_token contract.
     IERC20.mint(l2_token, l2_recipient, amount.wad)
     deposit_handled.emit(
-        l2_token,
-        l1_sender,
-        l2_recipient,
-        amount,
-        block_number,
-        l1_rewards_index.ray_to_wad_no_rounding,
+        l2_token, l1_sender, l2_recipient, amount.wad, block_number, l1_rewards_index.ray
     )
     return ()
 end

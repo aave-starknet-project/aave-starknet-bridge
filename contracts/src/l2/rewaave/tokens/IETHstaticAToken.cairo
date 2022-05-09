@@ -63,6 +63,6 @@ namespace IETHstaticAToken:
     ):
     end
 
-    func get_acc_rewards_per_token() -> (rewards_index : Uint256):
+    func get_acc_rewards_per_token() -> (rewards_index : Ray):
     end
 end

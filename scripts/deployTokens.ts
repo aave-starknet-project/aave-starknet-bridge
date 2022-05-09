@@ -20,7 +20,8 @@ export async function deployETHStaticAToken(
   symbol: string,
   decimals: bigint,
   initial_supply: { low: bigint; high: bigint },
-  owner: bigint
+  owner: bigint,
+  l2_token_bridge: bigint,
 ) {
   let proxiedETHStaticAToken: StarknetContract;
   let tokenImplementation: StarknetContract;
@@ -56,7 +57,8 @@ export async function deployETHStaticAToken(
     decimals: decimals,
     initial_supply: initial_supply,
     recipient: BigInt(deployer.starknetContract.address),
-    controller: owner,
+    owner: owner,
+    l2_token_bridge: l2_token_bridge,
   });
 }
 

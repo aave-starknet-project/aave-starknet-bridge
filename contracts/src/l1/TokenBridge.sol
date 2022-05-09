@@ -16,19 +16,18 @@ contract TokenBridge is
     ContractInitializer,
     ProxySupport
 {
-
     using SafeERC20 for IERC20;
     using SafeERC20 for IStaticATokenLM;
 
-    event LogDeposit(address sender, address token, uint256 amount, uint256 l2Recipient);
-    event LogWithdrawal(address token, uint256 l2sender, address recipient, uint256 amount);
+    event LogDeposit(address sender, IStaticATokenLM token, uint256 amount, uint256 l2Recipient);
+    event LogWithdrawal(IStaticATokenLM token, uint256 l2sender, address recipient, uint256 amount);
     event LogBridgeReward(uint256 l2sender, address recipient, uint256 amount);
-    event LogBridgeAdded(address l1Token, uint256 l2Token);
+    event LogBridgeAdded(IStaticATokenLM l1Token, uint256 l2Token);
 
-    mapping(address => uint256) public l1TokentoL2Token;
+    mapping(IStaticATokenLM => uint256) public l1TokentoL2Token;
     IStarknetMessaging public messagingContract;
     uint256 l2TokenBridge;
-    address[] approvedL1Tokens;
+    IStaticATokenLM[] approvedL1Tokens;
     IERC20 public rewardToken;
 
     // The selector of the "handle_deposit" l1_handler on L2.
@@ -68,7 +67,12 @@ contract TokenBridge is
         return (l2Address != 0) && (l2Address < CairoConstants.FIELD_PRIME);
     }
 
-    modifier onlyApprovedToken(address token) {
+    modifier onlyValidL2Address(uint256 l2Address) {
+        require(isValidL2Address(l2Address), "L2_ADDRESS_OUT_OF_RANGE");
+        _;
+    }
+
+    modifier onlyApprovedToken(IStaticATokenLM token) {
         uint256 l2TokenAddress = l1TokentoL2Token[token];
         require(isValidL2Address(l2TokenAddress), "L2_TOKEN_HAS_NOT_BEEN_APPROVED");
         _;
@@ -92,22 +96,20 @@ contract TokenBridge is
         rewardToken = rewardToken_;
     }
 
-    modifier onlyValidL2Address(uint256 l2Address) {
-        require(isValidL2Address(l2Address), "L2_ADDRESS_OUT_OF_RANGE");
-        _;
-    }
-
-    function approveBridge(address l1Token, uint256 l2Token)
+    function approveBridge(IStaticATokenLM l1Token, uint256 l2Token)
         external
         onlyGovernance
         onlyValidL2Address(l2Token)
     {
-        require(l1Token != address(0x0), "l1Token address cannot be 0x0");
+        require(l1Token != IStaticATokenLM(0x0), "l1Token address cannot be 0x0");
 
         uint256 l2Token_ = l1TokentoL2Token[l1Token];
         require(l2Token_ == 0, "l2Token already set");
 
         require(IStaticATokenLM(l1Token).REWARD_TOKEN() == rewardToken, "L1 TOKEN CONFIGURED WITH WRONG REWARD TOKEN");
+
+        l1Token.ASSET().safeApprove(address(l1Token), type(uint256).max);
+        l1Token.ATOKEN().safeApprove(address(l1Token), type(uint256).max);
 
         emit LogBridgeAdded(l1Token, l2Token);
         l1TokentoL2Token[l1Token] = l2Token;
@@ -122,7 +124,7 @@ contract TokenBridge is
         (approvedL1Tokens[idx2], approvedL1Tokens[idx1]);
     }
 
-    function sendMessage(address l1Token, address from, uint256 l2Recipient, uint256 amount)
+    function sendMessage(IStaticATokenLM l1Token, address from, uint256 l2Recipient, uint256 amount)
         internal
         onlyApprovedToken(l1Token)
         onlyValidL2Address(l2Recipient)
@@ -143,7 +145,7 @@ contract TokenBridge is
     function sendMessageStaticAToken(uint256 rewardsIndex)
         external
     {
-      uint256 l2Token = l1TokentoL2Token[msg.sender];
+      uint256 l2Token = l1TokentoL2Token[IStaticATokenLM(msg.sender)];
 
       if (isValidL2Address(l2Token)) {
         uint256[] memory payload = new uint256[](5);
@@ -155,12 +157,17 @@ contract TokenBridge is
       }
     }
 
-    function consumeMessage(address l1Token, uint256 l2sender, address recipient, uint256 amount) internal {
+    function consumeMessage(
+        IStaticATokenLM l1Token,
+        uint256 l2sender,
+        address recipient,
+        uint256 amount
+    ) internal {
         emit LogWithdrawal(l1Token, l2sender, recipient, amount);
 
         uint256[] memory payload = new uint256[](6);
         payload[0] = TRANSFER_FROM_STARKNET;
-        payload[1] = uint256(l1Token);
+        payload[1] = uint256(address(l1Token));
         payload[2] = l2sender;
         payload[3] = uint256(recipient);
         (payload[4], payload[5]) = toSplitUint(amount);
@@ -170,17 +177,75 @@ contract TokenBridge is
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
 
-    function deposit(address l1Token_, uint256 l2Recipient, uint256 amount) onlyApprovedToken(l1Token_) external {
-        IStaticATokenLM l1Token = IStaticATokenLM(l1Token_);
+    function deposit(
+        IStaticATokenLM l1Token,
+        uint256 l2Recipient,
+        uint256 amount
+    )
+        onlyApprovedToken(l1Token)
+        onlyValidL2Address(l2Recipient)
+        external
+    {
         l1Token.safeTransferFrom(msg.sender, address(this), amount);
-        sendMessage(l1Token_, msg.sender, l2Recipient, amount);
+        sendMessage(l1Token, msg.sender, l2Recipient, amount);
     }
 
-    function withdraw(address l1Token_, uint256 l2sender, address recipient, uint256 amount) onlyApprovedToken(l1Token_) external {
-        consumeMessage(l1Token_, l2sender, recipient, amount);
+    function depositUnderlying(
+        IStaticATokenLM l1Token,
+        uint256 l2Recipient,
+        uint256 amount,
+        uint16 refferalCode,
+        bool fromAsset
+    )
+        onlyApprovedToken(l1Token)
+        onlyValidL2Address(l2Recipient)
+        external
+    {
+        if (fromAsset) {
+          l1Token.ASSET().safeTransferFrom(msg.sender, address(this), amount);
+        } else {
+          l1Token.ATOKEN().safeTransferFrom(msg.sender, address(this), amount);
+        }
+        amount = l1Token.deposit(address(this), amount, refferalCode, fromAsset);
+        sendMessage(l1Token, msg.sender, l2Recipient, amount);
+    }
+
+    function withdrawUnderlying(
+        IStaticATokenLM l1Token,
+        uint256 l2sender,
+        address recipient,
+        uint256 amount,
+        bool toAsset
+    ) 
+        onlyApprovedToken(l1Token)
+        onlyValidL2Address(l2sender)
+        external
+    {
+        consumeMessage(l1Token, l2sender, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
-        IStaticATokenLM l1Token = IStaticATokenLM(l1Token_);
-        require(l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender), "UNDERFLOW");
+        require(
+            l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender),
+            "WITHDRAW UNDERFLOW"
+        );
+        l1Token.withdraw(recipient, amount, toAsset);
+    }
+
+    function withdraw(
+        IStaticATokenLM l1Token,
+        uint256 l2sender,
+        address recipient,
+        uint256 amount
+    )
+        onlyApprovedToken(l1Token)
+        onlyValidL2Address(l2sender)
+        external
+    {
+        consumeMessage(l1Token, l2sender, recipient, amount);
+        require(recipient != address(0x0), "INVALID_RECIPIENT");
+        require(
+            l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender),
+            "WITHDRAW UNDERFLOW"
+        );
         l1Token.safeTransfer(recipient, amount);
     }
 
@@ -197,7 +262,7 @@ contract TokenBridge is
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
 
-    function receiveRewards(uint256 l2sender, address recipient, uint256 amount) external {
+    function receiveRewards(uint256 l2sender, address recipient, uint256 amount) onlyValidL2Address(l2sender) external {
         consumeBridgeRewardMessage(l2sender, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
 
@@ -211,7 +276,7 @@ contract TokenBridge is
         }
 
         for (uint256 i = 0; i < approvedL1Tokens.length; ++i) {
-            IStaticATokenLM(approvedL1Tokens[i]).claimRewardsToSelf();
+            approvedL1Tokens[i].claimRewardsToSelf();
 
             rewardBalance = rewardToken.balanceOf(self);
 

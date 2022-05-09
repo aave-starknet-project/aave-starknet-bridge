@@ -286,10 +286,8 @@ contract TokenBridge is
         transferRewards(recipient, rewardsAmount);
     }
 
-    function computeRewardsDiff(IStaticATokenLM l1Token, uint256 amount, uint256 l2RewardsIndex) return (uint256) internal {
-        (bool success, bytes memory result) = l1Token.call(abi.encodeWithSignature("_getCurrentRewardsIndex()"));
-        if (!success) { revert("Cannot get current reward index"); }
-        uint256 rewardsIndex = abi.decode(result, (uint256));
+    function computeRewardsDiff(IStaticATokenLM l1Token, uint256 amount, uint256 l2RewardsIndex) internal returns (uint256) {
+        uint256 rewardsIndex = l1Token.getCurrentRewardsIndex();
 
         uint256 rayAmount = amount.wadToRay();
         return (rayAmount.rayMulNoRounding(rewardsIndex.sub(l2RewardsIndex))).rayToWad();

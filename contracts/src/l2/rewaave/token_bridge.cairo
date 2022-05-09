@@ -288,11 +288,11 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 
     let block_number = Uint256(low=block_number_low, high=block_number_high)
 
-    with_attr error_message("High or low overflows 128 bit bound {amount}"):
+    with_attr error_message("High or low overflows 128 bit bound {amount_}"):
         uint256_check(amount_)
     end
 
-    with_attr error_message("High or low overflows 128 bit bound {l1_rewards_index}"):
+    with_attr error_message("High or low overflows 128 bit bound {l1_rewards_index}_"):
         uint256_check(l1_rewards_index_)
     end
 

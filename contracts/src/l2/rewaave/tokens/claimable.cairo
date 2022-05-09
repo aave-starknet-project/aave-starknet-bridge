@@ -28,7 +28,7 @@ end
 
 # user => rewards index at last interaction (in RAYs)
 @storage_var
-func user_snapshot_rewards_per_token(user : felt) -> (rewards_index : Ray):
+func user_snapshot_rewards_index(user : felt) -> (rewards_index : Ray):
 end
 
 # user => unclaimed_rewards (in RAYs)
@@ -36,11 +36,11 @@ end
 func unclaimed_rewards(user : felt) -> (unclaimed : Ray):
 end
 
-func update_user_snapshot_rewards_per_token{
+func update_user_snapshot_rewards_index{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt):
     let (rewards_index_) = rewards_index.read()
-    user_snapshot_rewards_per_token.write(user, rewards_index_)
+    user_snapshot_rewards_index.write(user, rewards_index_)
     return ()
 end
 
@@ -48,14 +48,14 @@ func update_user{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     alloc_locals
     let (balance) = ERC20_balanceOf(user)
     if balance.high + balance.low == 0:
-        update_user_snapshot_rewards_per_token(user)
+        update_user_snapshot_rewards_index(user)
     else:
         let (pending) = claimable_get_pending_rewards(user)
         let (unclaimed) = claimable_get_user_unclaimed_rewards(user)
         let (unclaimed, overflow) = ray_add(unclaimed, pending)
         assert overflow = 0
         unclaimed_rewards.write(user, unclaimed)
-        update_user_snapshot_rewards_per_token(user)
+        update_user_snapshot_rewards_index(user)
     end
     return ()
 end
@@ -90,9 +90,9 @@ func claimable_get_pending_rewards{
     let (balance) = ERC20_balanceOf(user)
     let (balance_in_ray) = wad_to_ray(Wad(balance))
     let (rewards_index_) = rewards_index.read()
-    let (user_snapshot_rewards_per_token_) = user_snapshot_rewards_per_token.read(user)
+    let (user_snapshot_rewards_index_) = user_snapshot_rewards_index.read(user)
     let (rewards_index_since_last_interaction) = ray_sub(
-        rewards_index_, user_snapshot_rewards_per_token_
+        rewards_index_, user_snapshot_rewards_index_
     )
     let (pending_rewards) = ray_mul_no_rounding(
         rewards_index_since_last_interaction, balance_in_ray
@@ -124,7 +124,7 @@ func claimable_claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, r
     if rewards.wad.high + rewards.wad.low == 0:
         return (Wad(Uint256(0, 0)))
     else:
-        update_user_snapshot_rewards_per_token(user)
+        update_user_snapshot_rewards_index(user)
         return (rewards)
     end
 end
@@ -160,7 +160,7 @@ end
 func claimable_get_user_rewards_index{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt) -> (res : Ray):
-    return user_snapshot_rewards_per_token.read(user)
+    return user_snapshot_rewards_index.read(user)
 end
 
 func claimable_get_user_unclaimed_rewards{

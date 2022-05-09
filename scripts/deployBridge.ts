@@ -104,9 +104,6 @@ export async function deployL1Bridge(
       signer
     );
 
-    const test = await proxiedBridge.incentivesController();
-    console.log(test, "incentive controller");
-
     fs.writeFileSync(
       "deployment/L1Bridge.json",
       JSON.stringify({

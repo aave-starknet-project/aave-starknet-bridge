@@ -5,7 +5,7 @@ import "@joriksch/sg-contracts/src/starkware/contracts/components/GenericGoverna
 import "@joriksch/sg-contracts/src/starkware/contracts/interfaces/ContractInitializer.sol";
 import "@joriksch/sg-contracts/src/starkware/contracts/interfaces/ProxySupport.sol";
 import "@joriksch/sg-contracts/src/starkware/cairo/eth/CairoConstants.sol";
-import "../../test/IStarknetMessaging.sol";
+import "./interfaces/IStarknetMessaging.sol";
 
 import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";

@@ -15,7 +15,7 @@ describe("Proxy", function () {
 
   before(async () => {
     const TokenContractFactory = await starknet.getContractFactory(
-      "ETHstaticAToken"
+      "static_a_token"
     );
     const ProxyFactory = await starknet.getContractFactory("proxy");
 
@@ -43,7 +43,7 @@ describe("Proxy", function () {
   });
 
   it("initialize token A through proxy", async () => {
-    await owner.invoke(proxiedTokenContract, "initialize_ETHstaticAToken", {
+    await owner.invoke(proxiedTokenContract, "initialize_static_a_token", {
       name: 666n,
       symbol: 666n,
       decimals: 4n,

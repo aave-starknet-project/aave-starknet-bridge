@@ -26,7 +26,7 @@ describe("ETHStaticAToken", function () {
   });
 
   it("Deploy token and reward token", async () => {
-    const tokenFactory = await starknet.getContractFactory("ETHstaticAToken");
+    const tokenFactory = await starknet.getContractFactory("static_a_token");
     const rewAAVEFactory = await starknet.getContractFactory("rewAAVE");
     const l2TokenBridgeFactory = await starknet.getContractFactory("token_bridge");
 
@@ -34,7 +34,7 @@ describe("ETHStaticAToken", function () {
     rewAAVE = await rewAAVEFactory.deploy();
     tokenBridge = await l2TokenBridgeFactory.deploy()
 
-    await owner.invoke(token, "initialize_ETHstaticAToken", {
+    await owner.invoke(token, "initialize_static_a_token", {
       name: 1234n,
       symbol: 123n,
       decimals: 18n,

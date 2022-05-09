@@ -59,7 +59,8 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
 export async function deployL1Bridge(
   signer: SignerWithAddress,
   proxyTokenBridgeL2: string,
-  starknetMessagingAddress: string
+  starknetMessagingAddress: string,
+  incentivesController: string
 ) {
   let tokenBridgeL1: ContractFactory;
   let tokenBridgeL1Implementation: Contract;
@@ -78,11 +79,12 @@ export async function deployL1Bridge(
     await tokenBridgeL1Proxy.deployed();
 
     const initData = abiCoder.encode(
-      ["address", "uint256", "address"],
+      ["address", "uint256", "address", "address"],
       [
         "0x0000000000000000000000000000000000000000",
         proxyTokenBridgeL2,
         starknetMessagingAddress,
+        incentivesController,
       ]
     );
     await tokenBridgeL1Proxy.addImplementation(
@@ -101,6 +103,9 @@ export async function deployL1Bridge(
       tokenBridgeL1Proxy.address,
       signer
     );
+
+    const test = await proxiedBridge.incentivesController();
+    console.log(test, "incentive controller");
 
     fs.writeFileSync(
       "deployment/L1Bridge.json",

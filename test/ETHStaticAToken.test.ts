@@ -148,12 +148,12 @@ describe("ETHStaticAToken", function () {
   });
 
   it("allows bridge to update accRewards", async () => {
-    await bridge.invoke(token, "push_acc_rewards_per_token", {
+    await bridge.invoke(token, "push_rewards_index", {
       block_number: {
         high: 0,
         low: 1,
       },
-      acc_rewards_per_token: {
+      rewards_index: {
         ray: {
           high: 0,
           low: BigInt(decimalToWad(2)),
@@ -161,11 +161,11 @@ describe("ETHStaticAToken", function () {
       },
     });
 
-    const { acc_rewards_per_token } = await token.call(
-      "get_acc_rewards_per_token"
+    const { rewards_index } = await token.call(
+      "get_rewards_index"
     );
 
-    expect(acc_rewards_per_token).to.deep.equal({
+    expect(rewards_index).to.deep.equal({
       high: 0n,
       low: BigInt(decimalToWad(2)),
     });
@@ -173,12 +173,12 @@ describe("ETHStaticAToken", function () {
 
   it("disallows rando from updating accRewards", async () => {
     try {
-      await user1.invoke(token, "push_acc_rewards_per_token", {
+      await user1.invoke(token, "push_rewards_index", {
         block_number: {
           high: 0,
           low: 2,
         },
-        acc_rewards_per_token: {
+        rewards_index: {
           ray: {
             high: 0n,
             low: BigInt(decimalToWad(2)),
@@ -192,12 +192,12 @@ describe("ETHStaticAToken", function () {
 
   it("only allows increases in accRewards", async () => {
     try {
-      await bridge.invoke(token, "push_acc_rewards_per_token", {
+      await bridge.invoke(token, "push_rewards_index", {
         block_number: {
           high: 0,
           low: 3,
         },
-        acc_rewards_per_token: {
+        rewards_index: {
           ray: {
             high: 0,
             low: 0,
@@ -211,12 +211,12 @@ describe("ETHStaticAToken", function () {
 
   it("rejects old block numbers", async () => {
     try {
-      await bridge.invoke(token, "push_acc_rewards_per_token", {
+      await bridge.invoke(token, "push_rewards_index", {
         block_number: {
           high: 0,
           low: 0,
         },
-        acc_rewards_per_token: {
+        rewards_index: {
           ray: {
             high: 0,
             low: BigInt(decimalToWad(2)),
@@ -286,13 +286,13 @@ describe("ETHStaticAToken", function () {
 
   it("updates user accumulated rewards per token after claim", async () => {
     const userAccruedRewardsPerToken = await token.call(
-      "get_user_acc_rewards_per_token",
+      "get_user_rewards_index",
       {
         user: BigInt(user1.starknetContract.address),
       }
     );
 
-    expect(userAccruedRewardsPerToken.user_acc_rewards_per_token).to.deep.equal(
+    expect(userAccruedRewardsPerToken.user_rewards_index).to.deep.equal(
       {
         high: 0n,
         low: BigInt(decimalToWad(2)),
@@ -320,12 +320,12 @@ describe("ETHStaticAToken", function () {
     });
 
     //Update the acc rewards per token first
-    await bridge.invoke(token, "push_acc_rewards_per_token", {
+    await bridge.invoke(token, "push_rewards_index", {
       block_number: {
         high: 0,
         low: 2,
       },
-      acc_rewards_per_token: {
+      rewards_index: {
         ray: {
           high: 0,
           low: BigInt(decimalToWad(3)),
@@ -369,12 +369,12 @@ describe("ETHStaticAToken", function () {
     });
 
     //To have a non null rewards amount, we update the rewards index
-    await bridge.invoke(token, "push_acc_rewards_per_token", {
+    await bridge.invoke(token, "push_rewards_index", {
       block_number: {
         low: 0,
         high: 3,
       },
-      acc_rewards_per_token: {
+      rewards_index: {
         ray: {
           high: 0,
           low: BigInt(decimalToWad(4)),

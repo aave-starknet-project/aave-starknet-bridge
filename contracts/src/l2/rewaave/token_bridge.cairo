@@ -370,8 +370,8 @@ func handle_rewards_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
     end
 
     # push rewards
-    IETHstaticAToken.push_acc_rewards_per_token(
-        contract_address=l2_token, block_number=block_number, acc_rewards_per_token=Ray(rewards)
+    IETHstaticAToken.push_rewards_index(
+        contract_address=l2_token, block_number=block_number, rewards_index=Ray(rewards)
     )
 
     return ()

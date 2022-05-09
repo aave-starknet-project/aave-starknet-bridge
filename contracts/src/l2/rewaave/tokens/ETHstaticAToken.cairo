@@ -26,10 +26,10 @@ from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner
 
 from rewaave.tokens.claimable import (
     claimable_claim_rewards,
-    claimable_push_acc_rewards_per_token,
+    claimable_push_rewards_index,
     claimable_before_token_transfer,
-    claimable_get_acc_rewards_per_token,
-    claimable_get_user_acc_rewards_per_token,
+    claimable_get_rewards_index,
+    claimable_get_user_rewards_index,
     claimable_get_last_update,
     claimable_set_l2_token_bridge,
     claimable_get_l2_token_bridge,
@@ -210,25 +210,26 @@ func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
 end
 
 @external
-func push_acc_rewards_per_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    block_number : Uint256, acc_rewards_per_token : Ray
+func push_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    block_number : Uint256, rewards_index : Ray
 ):
-    claimable_push_acc_rewards_per_token(block_number, acc_rewards_per_token)
+    claimable_push_rewards_index(block_number, rewards_index)
     return ()
 end
 
-@view
-func get_acc_rewards_per_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    ) -> (acc_rewards_per_token : Uint256):
-    let (res) = claimable_get_acc_rewards_per_token()
+@external
+func get_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    rewards_index : Uint256
+):
+    let (res) = claimable_get_rewards_index()
     return (res.ray)
 end
 
-@view
-func get_user_acc_rewards_per_token{
-    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
-}(user : felt) -> (user_acc_rewards_per_token : Uint256):
-    let (res) = claimable_get_user_acc_rewards_per_token(user)
+@external
+func get_user_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    user : felt
+) -> (user_rewards_index : Uint256):
+    let (res) = claimable_get_user_rewards_index(user)
     return (res.ray)
 end
 

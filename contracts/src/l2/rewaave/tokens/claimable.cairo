@@ -23,12 +23,12 @@ func last_update() -> (block_number : Uint256):
 end
 
 @storage_var
-func acc_rewards_per_token() -> (res : Ray):
+func rewards_index() -> (res : Ray):
 end
 
-# user => accRewardsPerToken at last interaction (in RAYs)
+# user => rewards index at last interaction (in RAYs)
 @storage_var
-func user_snapshot_rewards_per_token(user : felt) -> (acc_rewards_per_token : Ray):
+func user_snapshot_rewards_per_token(user : felt) -> (rewards_index : Ray):
 end
 
 # user => unclaimed_rewards (in RAYs)
@@ -39,8 +39,8 @@ end
 func update_user_snapshot_rewards_per_token{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt):
-    let (acc_rewards_per_token_) = acc_rewards_per_token.read()
-    user_snapshot_rewards_per_token.write(user, acc_rewards_per_token_)
+    let (rewards_index_) = rewards_index.read()
+    user_snapshot_rewards_per_token.write(user, rewards_index_)
     return ()
 end
 
@@ -89,12 +89,14 @@ func claimable_get_pending_rewards{
     alloc_locals
     let (balance) = ERC20_balanceOf(user)
     let (balance_in_ray) = wad_to_ray(Wad(balance))
-    let (accRewardsPerToken_) = acc_rewards_per_token.read()
+    let (rewards_index_) = rewards_index.read()
     let (user_snapshot_rewards_per_token_) = user_snapshot_rewards_per_token.read(user)
-    let (accrued_since_last_interaction) = ray_sub(
-        accRewardsPerToken_, user_snapshot_rewards_per_token_
+    let (rewards_index_since_last_interaction) = ray_sub(
+        rewards_index_, user_snapshot_rewards_per_token_
     )
-    let (pending_rewards) = ray_mul_no_rounding(accrued_since_last_interaction, balance_in_ray)
+    let (pending_rewards) = ray_mul_no_rounding(
+        rewards_index_since_last_interaction, balance_in_ray
+    )
 
     return (pending_rewards)
 end
@@ -127,20 +129,20 @@ func claimable_claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, r
     end
 end
 
-func claimable_push_acc_rewards_per_token{
+func claimable_push_rewards_index{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
-}(block_number : Uint256, acc_rewards_per_token_ : Ray):
+}(block_number : Uint256, new_rewards_index : Ray):
     alloc_locals
     claimable_only_token_bridge()
     let (last_block_number) = last_update.read()
     # This is le because the rewards may update in a block
     let (le) = uint256_le(last_block_number, block_number)
     if le == 1:
-        let (prev_acc) = acc_rewards_per_token.read()
-        let (le) = uint256_le(prev_acc.ray, acc_rewards_per_token_.ray)
+        let (prev_index) = rewards_index.read()
+        let (le) = uint256_le(prev_index.ray, new_rewards_index.ray)
         if le == 1:
             last_update.write(block_number)
-            acc_rewards_per_token.write(acc_rewards_per_token_)
+            rewards_index.write(new_rewards_index)
             return ()
         else:
             return ()
@@ -150,13 +152,12 @@ func claimable_push_acc_rewards_per_token{
     end
 end
 
-func claimable_get_acc_rewards_per_token{
-    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
-}() -> (res : Ray):
-    return acc_rewards_per_token.read()
+func claimable_get_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    ) -> (res : Ray):
+    return rewards_index.read()
 end
 
-func claimable_get_user_acc_rewards_per_token{
+func claimable_get_user_rewards_index{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt) -> (res : Ray):
     return user_snapshot_rewards_per_token.read(user)

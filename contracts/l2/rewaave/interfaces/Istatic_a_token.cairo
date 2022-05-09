@@ -1,10 +1,10 @@
 %lang starknet
 
 from starkware.cairo.common.uint256 import Uint256
-from rewaave.math.wad_ray_math import Ray
+from rewaave.lib.wad_ray_math import Ray
 
 @contract_interface
-namespace IETHstaticAToken:
+namespace Istatic_a_token:
     func name() -> (name : felt):
     end
 
@@ -53,7 +53,7 @@ namespace IETHstaticAToken:
     func push_rewards_index(block_number : Uint256, rewards_index : Ray):
     end
 
-    func initialize_ETHstaticAToken(
+    func initialize_static_a_token(
         name : felt,
         symbol : felt,
         decimals : felt,

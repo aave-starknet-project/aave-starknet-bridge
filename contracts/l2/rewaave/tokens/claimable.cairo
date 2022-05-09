@@ -2,7 +2,7 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.uint256 import Uint256, uint256_add, uint256_sub, uint256_le
-from rewaave.math.wad_ray_math import (
+from rewaave.lib.wad_ray_math import (
     Wad,
     Ray,
     wad_to_ray,

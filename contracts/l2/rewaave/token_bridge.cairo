@@ -13,6 +13,7 @@ from starkware.cairo.common.uint256 import (
 )
 from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address
+
 from rewaave.math.wad_ray_math import (
     Ray,
     Wad,
@@ -23,7 +24,7 @@ from rewaave.math.wad_ray_math import (
     ray_to_wad_no_rounding,
 )
 from rewaave.tokens.IERC20 import IERC20
-from rewaave.tokens.IETHstaticAToken import IETHstaticAToken
+from rewaave.tokens.Istatic_a_token import Istatic_a_token
 
 const WITHDRAW_MESSAGE = 0
 const BRIDGE_REWARD_MESSAGE = 1

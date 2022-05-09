@@ -16,7 +16,7 @@ import {ILendingPool} from "@swp0x0/protocol-v2/contracts/interfaces/ILendingPoo
 import {IAaveIncentivesController} from "@swp0x0/protocol-v2/contracts/interfaces/IAaveIncentivesController.sol";
 import {IScaledBalanceToken} from "@swp0x0/protocol-v2/contracts/interfaces/IScaledBalanceToken.sol";
 
-import {IATokenWithPool} from "./IATokenWithPool.sol";
+import {IATokenWithPool} from "./interfaces/IATokenWithPool.sol";
 
 contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
     using SafeERC20 for IERC20;

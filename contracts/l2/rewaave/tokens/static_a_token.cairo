@@ -36,8 +36,7 @@ from rewaave.tokens.claimable import (
     claimable_only_token_bridge,
     claimable_get_claimable_rewards,
 )
-
-from rewaave.math.wad_ray_math import Ray
+from rewaave.lib.wad_ray_math import Ray
 
 @contract_interface
 namespace ITokenBridge:
@@ -108,7 +107,7 @@ end
 #
 
 @external
-func initialize_ETHstaticAToken{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func initialize_static_a_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     name : felt,
     symbol : felt,
     decimals : felt,
@@ -121,7 +120,7 @@ func initialize_ETHstaticAToken{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*
     let (symbol_) = ERC20_symbol()
     let (decimals_) = ERC20_decimals()
 
-    with_attr error_message("ETHstaticAToken already initialized"):
+    with_attr error_message("static_a_token already initialized"):
         assert name_ = 0
         assert symbol_ = 0
         assert decimals_ = 0

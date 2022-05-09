@@ -140,7 +140,7 @@ describe("TokenBridge", async function () {
       owner: BigInt(l2TokenBridgeProxy.address),
     });
 
-    l2TokenFactory = await starknet.getContractFactory('ETHstaticAToken');
+    l2TokenFactory = await starknet.getContractFactory('static_a_token');
     l2StaticADaiImpl = await l2TokenFactory.deploy();
     l2StaticAUsdcImpl = await l2TokenFactory.deploy();
 
@@ -217,7 +217,7 @@ describe("TokenBridge", async function () {
   });
 
   it('initialize L2 ETHStaticATokens', async () => {
-    await l2user.invoke(l2StaticADai, 'initialize_ETHstaticAToken', {
+    await l2user.invoke(l2StaticADai, 'initialize_static_a_token', {
           name: 1234n,
           symbol: 123n,
           decimals: 18n,
@@ -236,7 +236,7 @@ describe("TokenBridge", async function () {
       expect(decimals).to.equal(18n);
     }
 
-    await l2user.invoke(l2StaticAUsdc, 'initialize_ETHstaticAToken', {
+    await l2user.invoke(l2StaticAUsdc, 'initialize_static_a_token', {
           name: 4321n,
           symbol: 321n,
           decimals: 18n,

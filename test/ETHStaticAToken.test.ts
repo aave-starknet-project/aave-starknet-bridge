@@ -171,7 +171,7 @@ describe("ETHStaticAToken", function () {
     });
   });
 
-  it("disallows rando from updating accRewards", async () => {
+  it("disallows rando from updating rewards index", async () => {
     try {
       await user1.invoke(token, "push_rewards_index", {
         block_number: {
@@ -190,7 +190,7 @@ describe("ETHStaticAToken", function () {
     }
   });
 
-  it("only allows increases in accRewards", async () => {
+  it("only allows increases in rewards index", async () => {
     try {
       await bridge.invoke(token, "push_rewards_index", {
         block_number: {
@@ -205,7 +205,7 @@ describe("ETHStaticAToken", function () {
         },
       });
     } catch (e) {
-      expect.fail("allows decreasing accRewards");
+      expect.fail("allows decreasing rewards index");
     }
   });
 
@@ -224,7 +224,7 @@ describe("ETHStaticAToken", function () {
         },
       });
     } catch (e) {
-      expect.fail("accRewards accepted for old block number");
+      expect.fail("rewards index accepted for old block number");
     }
   });
 
@@ -285,14 +285,14 @@ describe("ETHStaticAToken", function () {
   });
 
   it("updates user accumulated rewards per token after claim", async () => {
-    const userAccruedRewardsPerToken = await token.call(
+    const usersRewardsIndex = await token.call(
       "get_user_rewards_index",
       {
         user: BigInt(user1.starknetContract.address),
       }
     );
 
-    expect(userAccruedRewardsPerToken.user_rewards_index).to.deep.equal(
+    expect(usersRewardsIndex.user_rewards_index).to.deep.equal(
       {
         high: 0n,
         low: BigInt(decimalToWad(2)),

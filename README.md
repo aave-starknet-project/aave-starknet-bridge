@@ -5,7 +5,6 @@
 [![Tests](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/deploy.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/deploy.yml)
 <a href="https://github.com/aave-starknet-project/aave-starknet-bridge/blob/main/LICENSE.md"><img src="https://img.shields.io/github/license/sourcerer-io/hall-of-fame.svg?colorB=ff0000"></a>
 
-[![Known Vulnerabilities](https://snyk.io/test/github/aave-starknet-project/aave-starknet-bridge/badge.svg)](https://snyk.io/test/github/aave-starknet-project/aave-starknet-bridge)
 
 :warning: This codebase is still in an experimental phase, has not been audited, might contain bugs and should not be used in production.
 

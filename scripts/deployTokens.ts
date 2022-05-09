@@ -14,7 +14,7 @@ import fs from "fs";
  * @param decimals  token's symbol
  * @param initial_supply oken's initial supply
  */
-export async function deployETHStaticAToken(
+export async function deployStaticAToken(
   deployer: Account,
   name: string,
   symbol: string,
@@ -23,35 +23,36 @@ export async function deployETHStaticAToken(
   owner: bigint,
   l2_token_bridge: bigint
 ) {
-  let proxiedETHStaticAToken: StarknetContract;
-  let tokenImplementation: StarknetContract;
-  let proxyFactoryL2: StarknetContractFactory;
-  let proxyToken: StarknetContract;
+  let proxyFactory: StarknetContractFactory;
+  let staticATokenProxy: StarknetContract;
+  let staticATokenImpl: StarknetContract;
+  let staticAToken: StarknetContract;
 
-  const L2TokenFactory = await starknet.getContractFactory("ETHstaticAToken");
-  proxyFactoryL2 = await starknet.getContractFactory("proxy");
+  const staticATokenFactory = await starknet.getContractFactory("static_a_tokens");
+  proxyFactory = await starknet.getContractFactory("proxy");
 
-  proxyToken = await proxyFactoryL2.deploy({
+  staticATokenProxy = await proxyFactory.deploy({
     proxy_admin: BigInt(deployer.starknetContract.address),
   });
 
-  tokenImplementation = await L2TokenFactory.deploy();
+  staticATokenImpl = await staticATokenFactory.deploy();
 
-  await deployer.invoke(proxyToken, "initialize_proxy", {
-    implementation_address: BigInt(tokenImplementation.address),
+  await deployer.invoke(staticATokenProxy, "initialize_proxy", {
+    implementation_address: BigInt(staticATokenImpl.address),
   });
 
   fs.writeFileSync(
     `deployment/${name}.json`,
     JSON.stringify({
       token: name,
-      proxy: proxyToken.address,
-      implementation: tokenImplementation.address,
+      proxy: staticATokenProxy.address,
+      implementation: staticATokenImpl.address,
     })
   );
-  proxiedETHStaticAToken = L2TokenFactory.getContractAt(proxyToken.address);
 
-  await deployer.invoke(proxiedETHStaticAToken, "initialize_ETHstaticAToken", {
+  staticAToken = staticATokenFactory.getContractAt(staticATokenProxy.address);
+
+  await deployer.invoke(staticAToken, "initialize_ETHstaticAToken", {
     name: stringToBigInt(name),
     symbol: stringToBigInt(symbol),
     decimals: decimals,
@@ -62,7 +63,7 @@ export async function deployETHStaticAToken(
   });
 }
 
-export async function deployL2RewAaveToken(
+export async function deployL2rewAAVE(
   deployer: Account,
   name: string,
   symbol: string,
@@ -70,38 +71,41 @@ export async function deployL2RewAaveToken(
   initial_supply: { low: bigint; high: bigint },
   owner: bigint
 ) {
-  let rewAaveTokenImplementation: StarknetContract;
-  let proxyFactoryL2: StarknetContractFactory;
-  let proxyToken: StarknetContract;
-  let proxiedRewAAVE: StarknetContract;
-  const rewAaveContractFactory = await starknet.getContractFactory("rewAAVE");
-  proxyFactoryL2 = await starknet.getContractFactory("proxy");
+  let proxyFactory: StarknetContractFactory;
+  let rewAAVEFactory: StarknetContractFactory;
+
+  let rewAAVEImpl: StarknetContract;
+  let rewAAVEProxy: StarknetContract;
+  let rewAAVE: StarknetContract;
+
+  rewAAVEFactory = await starknet.getContractFactory("rewAAVE");
+  proxyFactory = await starknet.getContractFactory("proxy");
 
   console.log("deploying rewAAVE token proxy ...");
-  proxyToken = await proxyFactoryL2.deploy({
+  rewAAVEProxy = await proxyFactory.deploy({
     proxy_admin: BigInt(deployer.starknetContract.address),
   });
 
   console.log("deploying rewAAVE token implementation ...");
-  rewAaveTokenImplementation = await rewAaveContractFactory.deploy();
+  rewAAVEImpl = await rewAAVEFactory.deploy();
 
   fs.writeFileSync(
     `deployment/${name}.json`,
     JSON.stringify({
       token: name,
-      proxy: proxyToken.address,
-      implementation: rewAaveTokenImplementation.address,
+      proxy: rewAAVEProxy.address,
+      implementation: rewAAVEImpl.address,
     })
   );
 
   console.log("initializing rewAAVE token proxy...");
-  await deployer.invoke(proxyToken, "initialize_proxy", {
-    implementation_address: BigInt(rewAaveTokenImplementation.address),
+  await deployer.invoke(rewAAVEProxy, "initialize_proxy", {
+    implementation_address: BigInt(rewAAVEImpl.address),
   });
 
-  proxiedRewAAVE = rewAaveContractFactory.getContractAt(proxyToken.address);
+  rewAAVE = rewAAVEFactory.getContractAt(rewAAVEProxy.address);
 
-  await deployer.invoke(proxiedRewAAVE, "initialize_rewAAVE", {
+  await deployer.invoke(rewAAVE, "initialize_rewAAVE", {
     name: stringToBigInt(name),
     symbol: stringToBigInt(symbol),
     decimals: decimals,
@@ -109,7 +113,7 @@ export async function deployL2RewAaveToken(
     recipient: BigInt(deployer.starknetContract.address),
     owner: owner,
   });
-  return proxyToken;
+  return rewAAVEProxy;
 }
 
 function stringToBigInt(str: string) {

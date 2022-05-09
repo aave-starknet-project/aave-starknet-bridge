@@ -1,6 +1,6 @@
 import { Account } from "hardhat/types";
 import fs from "fs";
-import { deployETHStaticAToken, deployL2RewAaveToken } from "./deployTokens";
+import { deployStaticAToken, deployL2rewAAVE } from "./deployTokens";
 import { deployL1Bridge, deployL2Bridge } from "./deployBridge";
 import { starknet, ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -38,7 +38,7 @@ async function deployAll() {
 
     //deploy rewAAVE token on L2
 
-    const proxiedL2RewAaaveToken = await deployL2RewAaveToken(
+    const proxiedL2RewAaaveToken = await deployL2rewAAVE(
       l2deployer,
       "rewAAVE Token",
       "rewAAVE",
@@ -62,12 +62,12 @@ async function deployAll() {
       INCENTIVES_CONTROLLER
     );
 
-    console.log("Deploying ETHStaticATokens...");
+    console.log("Deploying static_a_tokens...");
     //deploy first ETHStaticAToken
-    deployETHStaticAToken(
+    deployStaticAToken(
       l2deployer,
-      "ETHStaticAUSD",
-      "ETHAUSD",
+      "staticAUSD",
+      "sAUSD",
       18n,
       { high: 0n, low: 0n },
       BigInt(l2deployer.starknetContract.address),

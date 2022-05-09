@@ -291,14 +291,23 @@ describe("TokenBridge", async function () {
   })
 
   it('initialize StaticATokenLM tokens', async () => {
-    const daiInitArgs = [pool.address, aDai.address, "Wrapped aDAI", "waaDAI", l1TokenBridgeProxy.address];
+    const daiInitArgs = [
+      pool.address,
+      aDai.address,
+      "Wrapped aDAI",
+      "waaDAI",
+      l1TokenBridgeProxy.address
+    ];
     l1StaticDai = await initStaticATokenProxy(l1StaticDaiImpl.address, l1StaticDaiProxy, daiInitArgs);
-    expect(await l1StaticDai.isImplementation()).to.be.false;
-    expect(await l1StaticDaiImpl.isImplementation()).to.be.true;
-    const usdcInitArgs = [pool.address, aUsdc.address, "Wrapped aUSDC", "waaUSDC", l1TokenBridgeProxy.address];
+
+    const usdcInitArgs = [
+      pool.address,
+      aUsdc.address,
+      "Wrapped aUSDC",
+      "waaUSDC",
+      l1TokenBridgeProxy.address
+    ];
     l1StaticUsdc = await initStaticATokenProxy(l1StaticUsdcImpl.address, l1StaticUsdcProxy, usdcInitArgs);
-    expect(await l1StaticUsdc.isImplementation()).to.be.false;
-    expect(await l1StaticUsdcImpl.isImplementation()).to.be.true;
 
     expect(await l1StaticDai.INCENTIVES_CONTROLLER()).to.eq(INCENTIVES_CONTROLLER);
     expect(await l1StaticDai.LENDING_POOL()).to.eq(LENDING_POOL);

@@ -10,32 +10,10 @@ import {
 } from "hardhat/types";
 
 import { TIMEOUT } from "./constants";
-import { initStaticATokenProxy } from "./helpers";
+import { expectAddressEquality, initStaticATokenProxy, uintFromParts } from "./utils";
+
 
 const MAX_UINT256 = hre.ethers.constants.MaxInt256;
-
-/**
- * Receives a hex address, converts it to bigint, converts it back to hex.
- * This is done to strip leading zeros.
- * @param address a hex string representation of an address
- * @returns an adapted hex string representation of the address
- */
-function adaptAddress(address: string) {
-  return "0x" + BigInt(address).toString(16);
-}
-
-/**
- * Expects address equality after adapting them.
- * @param actual
- * @param expected
- */
-function expectAddressEquality(actual: string, expected: string) {
-  expect(adaptAddress(actual)).to.equal(adaptAddress(expected));
-}
-
-function uintFromParts(low: string, high: string) : BigInt{
-  return BigInt(high) *(2n ** 128n) + BigInt(low);
-}
 
 const LENDING_POOL = '0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9';
 const INCENTIVES_CONTROLLER = '0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5';

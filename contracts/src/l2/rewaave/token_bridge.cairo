@@ -13,9 +13,15 @@ from starkware.cairo.common.uint256 import (
 )
 from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address
-from rewaave.math.wad_ray_math import wad_to_ray, ray_mul_no_rounding, ray_to_wad_no_rounding
-
-from rewaave.math.wad_ray_math import Ray
+from rewaave.math.wad_ray_math import (
+    Ray,
+    Wad,
+    ray_sub,
+    wad_to_ray,
+    ray_mul_no_rounding,
+    ray_le,
+    ray_to_wad_no_rounding,
+)
 from rewaave.tokens.IERC20 import IERC20
 from rewaave.tokens.IETHstaticAToken import IETHstaticAToken
 
@@ -59,7 +65,7 @@ func deposit_handled(
     l1_sender : felt,
     account : felt,
     amount : Uint256,
-    block_number : felt,
+    block_number : Uint256,
     l1_rewards_index : Uint256,
 ):
 end
@@ -223,11 +229,13 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     assert message_payload[3] = l1_recipient
     assert message_payload[4] = amount.low
     assert message_payload[5] = amount.high
-    assert message_payload[6] = current_rewards_index.low
-    assert message_payload[7] = current_rewards_index.high
+    assert message_payload[6] = current_rewards_index.ray.low
+    assert message_payload[7] = current_rewards_index.ray.high
 
     send_message_to_l1(to_address=to_address, payload_size=8, payload=message_payload)
-    withdraw_initiated.emit(l2_token, l1_recipient, amount, caller_address, current_rewards_index)
+    withdraw_initiated.emit(
+        l2_token, l1_recipient, amount, caller_address, current_rewards_index.ray
+    )
     return ()
 end
 
@@ -274,16 +282,20 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     alloc_locals
     only_l1_handler(from_address_=from_address)
 
-    let amount = Uint256(low=amount_low, high=amount_high)
-    let l1_rewards_index = Uint256(low=l1_rewards_index_low, high=l1_rewards_index_high)
+    let amount_ = Uint256(low=amount_low, high=amount_high)
+    local amount : Wad = Wad(amount_)
+
+    let l1_rewards_index_ = Uint256(low=l1_rewards_index_low, high=l1_rewards_index_high)
+    local l1_rewards_index : Ray = Ray(l1_rewards_index_)
+
     let block_number = Uint256(low=block_number_low, high=block_number_high)
 
     with_attr error_message("High or low overflows 128 bit bound {amount}"):
-        uint256_check(amount)
+        uint256_check(amount_)
     end
 
     with_attr error_message("High or low overflows 128 bit bound {l1_rewards_index}"):
-        uint256_check(l1_rewards_index)
+        uint256_check(l1_rewards_index_)
     end
 
     with_attr error_message("High or low overflows 128 bit bound {block_number}"):
@@ -292,24 +304,35 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 
     assert_not_zero(l2_token)
 
+    let (reward_token) = rewAAVE.read()
+
     # handle the difference of the index at send and recieve
     let (current_index) = IETHstaticAToken.get_acc_rewards_per_token()
-    let (le) = uint256_le(current_index, l1_rewards_index)
+    let (le) = ray_le(current_index, l1_rewards_index)
     if le == 1:
-        IETHstaticAToken.push_acc_rewards_per_token(
-            contract_address=l2_token, block=block_number, acc_rewards_per_token=l1_rewards_index
-        )
+        IETHstaticAToken.push_acc_ = rewards_per_token(
+            contract_address=l2_token,
+            block_number=block_number,
+            acc_rewards_per_token=l1_rewards_index
+            )
     else:
         let (amount_ray) = wad_to_ray(amount)
-        let (reward_diff) = uint256_sub(l1_rewards_index, current_index)
+        let (reward_diff) = ray_sub(l1_rewards_index, current_index)
         let (reward_outstanding_ray) = ray_mul_no_rounding(reward_dif, amount_ray)
         let (reward_outstanding) = ray_to_wad_no_rounding(reward_outstanding_ray)
-        IERCH20.mint(reward_token, l2_recipient, reward_outstanding)
+        IERCH20.mint(reward_token, l2_recipient, reward_outstanding.wad)
     end
 
     # Call mint on l2_token contract.
-    IERC20.mint(contract_address=l2_token, recipient=l2_recipient, amount=amount)
-    deposit_handled.emit(l2_token, l1_sender, l2_recipient, amount, block_number, l1_rewards_index)
+    IERC20.mint(l2_token, l2_recipient, amount.wad)
+    deposit_handled.emit(
+        l2_token,
+        l1_sender,
+        l2_recipient,
+        amount,
+        block_number,
+        l1_rewards_index.ray_to_wad_no_rounding,
+    )
     return ()
 end
 

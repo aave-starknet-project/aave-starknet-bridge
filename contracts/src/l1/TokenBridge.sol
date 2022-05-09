@@ -206,9 +206,7 @@ contract TokenBridge is
         onlyValidL2Address(l2Recipient)
         external
     {
-        (bool success, bytes memory result) = l1Token_.call(abi.encodeWithSignature("_getCurrentRewardsIndex()"));
-        if (!success) { revert("Cannot get current reward index"); }
-        uint256 rewardsIndex = abi.decode(result, (uint256));
+        uint256 rewardsIndex = l1Token.getCurrentRewardsIndex();
 
         l1Token.safeTransferFrom(msg.sender, address(this), amount);
         sendMessage(l1Token, msg.sender, l2Recipient, amount, block.number, rewardsIndex);
@@ -225,9 +223,7 @@ contract TokenBridge is
         onlyValidL2Address(l2Recipient)
         external
     {
-        (bool success, bytes memory result) = l1Token_.call(abi.encodeWithSignature("_getCurrentRewardsIndex()"));
-        if (!success) { revert("Cannot get current reward index"); }
-        uint256 rewardsIndex = abi.decode(result, (uint256));
+        uint256 rewardsIndex = l1Token.getCurrentRewardsIndex();
 
         if (fromAsset) {
           l1Token.ASSET().safeTransferFrom(msg.sender, address(this), amount);

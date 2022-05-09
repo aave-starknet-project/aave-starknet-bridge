@@ -30,6 +30,7 @@
 
 
 
+
 ## Overview
 
 For Aave, one of the main current and future goals is growth of liquidity and user base. As seen on side-chains with low transaction cost like Polygon or Avalanche, there is high demand to use the Aave protocol with small amounts to earn high yield. That's why we brought to you an initial phase of the Aave <> Starknet integration allowing deposit/withdrawal on Aave Ethereum by exclusively transacting on Starknet.
@@ -39,7 +40,7 @@ The bridge allows users to deposit and withdraw their [aTokens]( https://docs.aa
 The bridge is also shaped for liquidity providers who are able to assume Ethereum cost of deposit/withdrawal, as they transact large amounts. They will deposit on Aave Ethereum, bridge the staticATokens to Starknet and make them available for users there to buy and hold, accruing this way yield from L1. 
 
 ## Architecture
-![aave_bridge_v2](https://user-images.githubusercontent.com/37840702/167132315-70923006-e5ef-42a8-a431-37bdb6c252c8.png)
+![aave_bridge](https://user-images.githubusercontent.com/37840702/167398308-3b7145f0-20e3-4f35-8b0b-17d52285595a.png)
 
 
 ## Contracts

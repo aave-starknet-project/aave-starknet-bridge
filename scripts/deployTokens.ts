@@ -28,7 +28,7 @@ export async function deployStaticAToken(
   let staticATokenImpl: StarknetContract;
   let staticAToken: StarknetContract;
 
-  const staticATokenFactory = await starknet.getContractFactory("static_a_tokens");
+  const staticATokenFactory = await starknet.getContractFactory("static_a_token");
   proxyFactory = await starknet.getContractFactory("proxy");
 
   staticATokenProxy = await proxyFactory.deploy({

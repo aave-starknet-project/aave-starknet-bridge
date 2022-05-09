@@ -212,9 +212,7 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
         assert_not_zero(l1_token)
     end
 
-    let (current_rewards_index) = IETHstaticAToken.get_acc_rewards_per_token(
-        contract_address=l2_token
-    )
+    let (current_rewards_index) = IETHstaticAToken.get_rewards_index(contract_address=l2_token)
 
     # Call burn on l2_token contract.
     let (caller_address) = get_caller_address()
@@ -307,13 +305,11 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     let (reward_token) = rewAAVE.read()
 
     # handle the difference of the index at send and recieve
-    let (current_index) = IETHstaticAToken.get_acc_rewards_per_token(l2_token)
+    let (current_index) = IETHstaticAToken.get_rewards_index(l2_token)
     let (le) = ray_le(current_index, l1_rewards_index)
     if le == 1:
-        IETHstaticAToken.push_acc_rewards_per_token(
-            contract_address=l2_token,
-            block_number=block_number,
-            acc_rewards_per_token=l1_rewards_index,
+        IETHstaticAToken.push_rewards_index(
+            contract_address=l2_token, block_number=block_number, rewards_index=l1_rewards_index
         )
     else:
         let (amount_ray) = wad_to_ray(amount)

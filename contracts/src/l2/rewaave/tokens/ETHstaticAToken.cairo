@@ -219,10 +219,10 @@ end
 
 @external
 func get_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-    rewards_index : Uint256
+    rewards_index : Ray
 ):
     let (res) = claimable_get_rewards_index()
-    return (res.ray)
+    return (res)
 end
 
 @external

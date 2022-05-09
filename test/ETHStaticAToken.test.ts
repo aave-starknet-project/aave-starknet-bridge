@@ -166,8 +166,10 @@ describe("ETHStaticAToken", function () {
     );
 
     expect(rewards_index).to.deep.equal({
-      high: 0n,
-      low: BigInt(decimalToWad(2)),
+      ray: {
+        high: 0n,
+        low: BigInt(decimalToWad(2)),
+      }
     });
   });
 

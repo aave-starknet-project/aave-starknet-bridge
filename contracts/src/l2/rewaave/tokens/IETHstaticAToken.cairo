@@ -50,7 +50,7 @@ namespace IETHstaticAToken:
     func burn(account : felt, amount : Uint256):
     end
 
-    func push_acc_rewards_per_token(block_number : Uint256, acc_rewards_per_token : Ray):
+    func push_rewards_index(block_number : Uint256, rewards_index : Ray):
     end
 
     func initialize_ETHstaticAToken(
@@ -63,6 +63,6 @@ namespace IETHstaticAToken:
     ):
     end
 
-    func get_acc_rewards_per_token() -> (rewards_index : Ray):
+    func get_rewards_index() -> (rewards_index : Ray):
     end
 end

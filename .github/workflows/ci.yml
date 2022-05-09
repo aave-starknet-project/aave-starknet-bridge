@@ -53,10 +53,6 @@ jobs:
           source .venv/bin/activate
           make
 
-      - name: Lint
-        run: |
-          yarn lint
-
       - name: Start the l2 & l1 test networks
         run: |
           yarn testnet:l2 &

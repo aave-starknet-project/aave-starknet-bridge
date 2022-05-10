@@ -24,17 +24,17 @@ from openzeppelin.token.erc20.library import (
 
 from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner
 
-from contracts.l2.tokens.claimable import (
-    claimable_claim_rewards,
-    claimable_push_rewards_index,
-    claimable_before_token_transfer,
-    claimable_get_rewards_index,
-    claimable_get_user_rewards_index,
-    claimable_get_last_update,
-    claimable_set_l2_bridge,
-    claimable_get_l2_bridge,
-    claimable_only_bridge,
-    claimable_get_claimable_rewards,
+from contracts.l2.tokens.incentivized_erc20 import (
+    incentivized_erc20_claim_rewards,
+    incentivized_erc20_push_rewards_index,
+    incentivized_erc20_before_token_transfer,
+    incentivized_erc20_get_rewards_index,
+    incentivized_erc20_get_user_rewards_index,
+    incentivized_erc20_get_last_update,
+    incentivized_erc20_set_l2_bridge,
+    incentivized_erc20_get_l2_bridge,
+    incentivized_erc20_only_bridge,
+    incentivized_erc20_get_claimable_rewards,
 )
 from contracts.l2.lib.wad_ray_math import Ray
 
@@ -49,7 +49,7 @@ func set_l2_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     l2_bridge : felt
 ):
     Ownable_only_owner()
-    claimable_set_l2_bridge(l2_bridge)
+    incentivized_erc20_set_l2_bridge(l2_bridge)
     return ()
 end
 
@@ -61,7 +61,7 @@ end
 func get_last_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     block_number : Uint256
 ):
-    return claimable_get_last_update()
+    return incentivized_erc20_get_last_update()
 end
 
 @view
@@ -129,7 +129,7 @@ func initialize_static_a_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*,
     ERC20_initializer(name, symbol, decimals)
     ERC20_mint(recipient, initial_supply)
     Ownable_initializer(owner)
-    claimable_set_l2_bridge(l2_bridge)
+    incentivized_erc20_set_l2_bridge(l2_bridge)
     return ()
 end
 
@@ -138,7 +138,7 @@ func transfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
     recipient : felt, amount : Uint256
 ) -> (success : felt):
     let (from_) = get_caller_address()
-    claimable_before_token_transfer(from_, recipient)
+    incentivized_erc20_before_token_transfer(from_, recipient)
     ERC20_transfer(recipient, amount)
     return (TRUE)
 end
@@ -147,7 +147,7 @@ end
 func transferFrom{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     sender : felt, recipient : felt, amount : Uint256
 ) -> (success : felt):
-    claimable_before_token_transfer(sender, recipient)
+    incentivized_erc20_before_token_transfer(sender, recipient)
     ERC20_transferFrom(sender, recipient, amount)
     return (TRUE)
 end
@@ -180,8 +180,8 @@ end
 func mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     recipient : felt, amount : Uint256
 ):
-    claimable_only_bridge()
-    claimable_before_token_transfer(0, recipient)
+    incentivized_erc20_only_bridge()
+    incentivized_erc20_before_token_transfer(0, recipient)
     ERC20_mint(recipient, amount)
     return ()
 end
@@ -190,8 +190,8 @@ end
 func burn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     account : felt, amount : Uint256
 ):
-    claimable_only_bridge()
-    claimable_before_token_transfer(account, 0)
+    incentivized_erc20_only_bridge()
+    incentivized_erc20_before_token_transfer(account, 0)
     ERC20_burn(account=account, amount=amount)
     return ()
 end
@@ -202,8 +202,8 @@ func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
 ):
     alloc_locals
     let (caller) = get_caller_address()
-    let (rewards) = claimable_claim_rewards(caller)
-    let (l2_bridge) = claimable_get_l2_bridge()
+    let (rewards) = incentivized_erc20_claim_rewards(caller)
+    let (l2_bridge) = incentivized_erc20_get_l2_bridge()
     IBridge.mint_rewards(l2_bridge, recipient, rewards.wad)
     return ()
 end
@@ -212,7 +212,7 @@ end
 func push_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     block_number : Uint256, rewards_index : Ray
 ):
-    claimable_push_rewards_index(block_number, rewards_index)
+    incentivized_erc20_push_rewards_index(block_number, rewards_index)
     return ()
 end
 
@@ -220,7 +220,7 @@ end
 func get_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     rewards_index : Ray
 ):
-    let (res) = claimable_get_rewards_index()
+    let (res) = incentivized_erc20_get_rewards_index()
     return (res)
 end
 
@@ -228,15 +228,15 @@ end
 func get_user_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     user : felt
 ) -> (user_rewards_index : Uint256):
-    let (res) = claimable_get_user_rewards_index(user)
+    let (res) = incentivized_erc20_get_user_rewards_index(user)
     return (res.ray)
 end
 
 @view
 func get_user_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     user : felt
-) -> (user_claimable_rewards : Uint256):
+) -> (user_incentivized_erc20_rewards : Uint256):
     alloc_locals
-    let (res) = claimable_get_claimable_rewards(user)
+    let (res) = incentivized_erc20_get_claimable_rewards(user)
     return (res.wad)
 end

@@ -66,7 +66,7 @@ way yield from L1.
 `L2`
   * `static_a_token` - exchange-rate-increasing wrapper of `aTokens` on
     Starknet
-  * `claimable` - tracks users' claimable rewards and current reward index for
+  * `incentivized_erc20` - tracks users' claimable rewards and current reward index for
     each `static_a_token`
   * `rewAAVE` - ERC20 representing the rewards on L2
   * `bridge` - bridge responsible for:

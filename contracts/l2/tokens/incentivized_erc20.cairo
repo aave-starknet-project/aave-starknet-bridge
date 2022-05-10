@@ -51,8 +51,8 @@ func update_user{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     if balance.high + balance.low == 0:
         update_user_snapshot_rewards_index(user)
     else:
-        let (pending) = claimable_get_pending_rewards(user)
-        let (unclaimed) = claimable_get_user_unclaimed_rewards(user)
+        let (pending) = incentivized_erc20_get_pending_rewards(user)
+        let (unclaimed) = incentivized_erc20_get_user_unclaimed_rewards(user)
         let (unclaimed, overflow) = ray_add(unclaimed, pending)
         assert overflow = 0
         unclaimed_rewards.write(user, unclaimed)
@@ -61,7 +61,7 @@ func update_user{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     return ()
 end
 
-func claimable_before_token_transfer{
+func incentivized_erc20_before_token_transfer{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(from_ : felt, to : felt):
     alloc_locals
@@ -84,7 +84,7 @@ func claimable_before_token_transfer{
     return ()
 end
 
-func claimable_get_pending_rewards{
+func incentivized_erc20_get_pending_rewards{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt) -> (pending_rewards : Ray):
     alloc_locals
@@ -102,23 +102,23 @@ func claimable_get_pending_rewards{
     return (pending_rewards)
 end
 
-func claimable_get_claimable_rewards{
+func incentivized_erc20_get_claimable_rewards{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
-}(user : felt) -> (claimable_rewards : Wad):
+}(user : felt) -> (incentivized_erc20_rewards : Wad):
     alloc_locals
     let (unclaimed_rewards_) = unclaimed_rewards.read(user)
-    let (pending) = claimable_get_pending_rewards(user)
-    let (claimable_rewards, overflow) = ray_add(unclaimed_rewards_, pending)
+    let (pending) = incentivized_erc20_get_pending_rewards(user)
+    let (incentivized_erc20_rewards, overflow) = ray_add(unclaimed_rewards_, pending)
     assert overflow = 0
-    let (claimable_rewards_) = ray_to_wad_no_rounding(claimable_rewards)
-    return (claimable_rewards_)
+    let (incentivized_erc20_rewards_) = ray_to_wad_no_rounding(incentivized_erc20_rewards)
+    return (incentivized_erc20_rewards_)
 end
 
-func claimable_claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    user : felt
-) -> (rewards : Wad):
+func incentivized_erc20_claim_rewards{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(user : felt) -> (rewards : Wad):
     alloc_locals
-    let (rewards) = claimable_get_claimable_rewards(user)
+    let (rewards) = incentivized_erc20_get_claimable_rewards(user)
 
     unclaimed_rewards.write(user, Ray(Uint256(0, 0)))
 
@@ -130,11 +130,11 @@ func claimable_claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, r
     end
 end
 
-func claimable_push_rewards_index{
+func incentivized_erc20_push_rewards_index{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(block_number : Uint256, new_rewards_index : Ray):
     alloc_locals
-    claimable_only_bridge()
+    incentivized_erc20_only_bridge()
     let (last_block_number) = last_update.read()
     # This is le because the rewards may update in a block
     let (le) = uint256_le(last_block_number, block_number)
@@ -153,41 +153,46 @@ func claimable_push_rewards_index{
     end
 end
 
-func claimable_get_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    ) -> (res : Ray):
+func incentivized_erc20_get_rewards_index{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}() -> (res : Ray):
     return rewards_index.read()
 end
 
-func claimable_get_user_rewards_index{
+func incentivized_erc20_get_user_rewards_index{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt) -> (res : Ray):
     return user_snapshot_rewards_index.read(user)
 end
 
-func claimable_get_user_unclaimed_rewards{
+func incentivized_erc20_get_user_unclaimed_rewards{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt) -> (res : Ray):
     return unclaimed_rewards.read(user)
 end
 
-func claimable_get_last_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    ) -> (block_number : Uint256):
+func incentivized_erc20_get_last_update{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}() -> (block_number : Uint256):
     return last_update.read()
 end
 
-func claimable_set_l2_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    l2_bridge_ : felt
-):
+func incentivized_erc20_set_l2_bridge{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(l2_bridge_ : felt):
     l2_bridge.write(l2_bridge_)
     return ()
 end
 
-func claimable_get_l2_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    ) -> (l2_bridge_ : felt):
+func incentivized_erc20_get_l2_bridge{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}() -> (l2_bridge_ : felt):
     return l2_bridge.read()
 end
 
-func claimable_only_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+func incentivized_erc20_only_bridge{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}():
     let (caller_address) = get_caller_address()
     let (l2_bridge_) = l2_bridge.read()
     with_attr error_message("Caller address should be bridge: {l2_bridge_}"):

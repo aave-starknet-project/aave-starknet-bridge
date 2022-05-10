@@ -292,7 +292,7 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
         uint256_check(amount_)
     end
 
-    with_attr error_message("High or low overflows 128 bit bound {l1_rewards_index}_"):
+    with_attr error_message("High or low overflows 128 bit bound {l1_rewards_index_}"):
         uint256_check(l1_rewards_index_)
     end
 
@@ -313,7 +313,7 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
         )
     else:
         let (amount_ray) = wad_to_ray(amount)
-        let (reward_diff) = ray_sub(l1_rewards_index, current_index)
+        let (reward_diff) = ray_sub(current_index, l1_rewards_index)
         let (reward_outstanding_ray) = ray_mul_no_rounding(reward_diff, amount_ray)
         let (reward_outstanding) = ray_to_wad_no_rounding(reward_outstanding_ray)
         IERC20.mint(reward_token, l2_recipient, reward_outstanding.wad)

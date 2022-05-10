@@ -7,7 +7,7 @@ import {
 import fs from "fs";
 
 /**
- * deploys and initializes ETHStaticAToken on L2
+ * deploys and initializes static_a_token on L2
  * @param deployer the deployer starknet account
  * @param name token's name
  * @param symbol token's symbol
@@ -52,7 +52,7 @@ export async function deployStaticAToken(
 
   staticAToken = staticATokenFactory.getContractAt(staticATokenProxy.address);
 
-  await deployer.invoke(staticAToken, "initialize_ETHstaticAToken", {
+  await deployer.invoke(staticAToken, "initialize_static_a_token", {
     name: stringToBigInt(name),
     symbol: stringToBigInt(symbol),
     decimals: decimals,

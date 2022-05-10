@@ -216,7 +216,7 @@ describe("TokenBridge", async function () {
     }
   });
 
-  it('initialize L2 ETHStaticATokens', async () => {
+  it('initialize L2 static_a_tokens', async () => {
     await l2user.invoke(l2StaticADai, 'initialize_static_a_token', {
           name: 1234n,
           symbol: 123n,

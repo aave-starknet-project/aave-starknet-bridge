@@ -714,10 +714,10 @@
   dependencies:
     antlr4ts "^0.5.0-alpha.4"
 
-"@swp0x0/protocol-v2@^1.0.4":
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/@swp0x0/protocol-v2/-/protocol-v2-1.0.4.tgz#786f093878f8e02ed342339aca757c130e01977e"
-  integrity sha512-Wz5/UDnZLpAHTmCS5nxmpZGiMt1UUjkmnYE/JlhWLNL3qlFlBeMwKmNFaogiZIhf3pdBuImQ2TtwmiMVbOafRQ==
+"@swp0x0/protocol-v2@^1.0.5":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@swp0x0/protocol-v2/-/protocol-v2-1.0.5.tgz#6cf5d1869eb98e431177607561b6c39bbc63fad1"
+  integrity sha512-VypQXFep1LFBpdfAa5kxT1eKCJ9pVXBJRU/3D1ixZBuzAzjy6FRz1q0jXRhhp9wupNWOAMhEgp+M0TDU643DZA==
   dependencies:
     axios-curlirize "^1.3.7"
     tmp-promise "^3.0.2"

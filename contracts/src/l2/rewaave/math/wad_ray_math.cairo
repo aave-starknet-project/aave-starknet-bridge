@@ -249,3 +249,10 @@ func ray_sub{range_check_ptr}(a : Ray, b : Ray) -> (res : Ray):
     let (diff) = uint256_sub(a.ray, b.ray)
     return (Ray(diff))
 end
+
+func ray_le{range_check_ptr}(a : Ray, b : Ray) -> (res : felt):
+    let a_ray = a.ray
+    let b_ray = b.ray
+    let (res) = uint256_le(a_ray, b_ray)
+    return (res)
+end

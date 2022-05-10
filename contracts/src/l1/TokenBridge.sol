@@ -10,6 +10,9 @@ import "../../test/IStarknetMessaging.sol";
 import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IStaticATokenLM} from "@swp0x0/protocol-v2/contracts/interfaces/IStaticATokenLM.sol";
+import {WadRayMath} from "@swp0x0/protocol-v2/contracts/protocol/libraries/math/WadRayMath.sol";
+import {RayMathNoRounding} from "@swp0x0/protocol-v2/contracts/protocol/libraries/math/RayMathNoRounding.sol";
+import {SafeMath} from "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 
 contract TokenBridge is
     GenericGovernance,
@@ -19,10 +22,15 @@ contract TokenBridge is
     using SafeERC20 for IERC20;
     using SafeERC20 for IStaticATokenLM;
 
-    event LogDeposit(address sender, IStaticATokenLM token, uint256 amount, uint256 l2Recipient);
+    using WadRayMath for uint256;
+    using RayMathNoRounding for uint256;
+    using SafeMath for uint256;
+
+    event LogDeposit(address sender, IStaticATokenLM token, uint256 amount, uint256 l2Recipient, uint256 blockNumber, uint256 rewardsIndex);
     event LogWithdrawal(IStaticATokenLM token, uint256 l2sender, address recipient, uint256 amount);
     event LogBridgeReward(uint256 l2sender, address recipient, uint256 amount);
     event LogBridgeAdded(IStaticATokenLM l1Token, uint256 l2Token);
+
 
     mapping(IStaticATokenLM => uint256) public l1TokentoL2Token;
     IStarknetMessaging public messagingContract;
@@ -124,20 +132,30 @@ contract TokenBridge is
         (approvedL1Tokens[idx2], approvedL1Tokens[idx1]);
     }
 
-    function sendMessage(IStaticATokenLM l1Token, address from, uint256 l2Recipient, uint256 amount)
+    function sendMessage(
+        IStaticATokenLM l1Token,
+        address from,
+        uint256 l2Recipient,
+        uint256 amount,
+        uint256 blockNumber,
+        uint256 currentRewardsIndex
+    )
         internal
         onlyApprovedToken(l1Token)
         onlyValidL2Address(l2Recipient)
     {
-        emit LogDeposit(from, l1Token, amount, l2Recipient);
+        emit LogDeposit(from, l1Token, amount, l2Recipient, blockNumber,
+                        currentRewardsIndex);
 
         uint256 l2TokenAddress = l1TokentoL2Token[l1Token];
 
-        uint256[] memory payload = new uint256[](5);
+        uint256[] memory payload = new uint256[](9);
         payload[0] = uint256(from);
         payload[1] = l2Recipient;
         payload[2] = l2TokenAddress;
         (payload[3], payload[4]) = toSplitUint(amount);
+        (payload[5], payload[6]) = toSplitUint(blockNumber);
+        (payload[7], payload[8]) = toSplitUint(currentRewardsIndex);
 
         messagingContract.sendMessageToL2(l2TokenBridge, DEPOSIT_HANDLER, payload);
     }
@@ -161,16 +179,18 @@ contract TokenBridge is
         IStaticATokenLM l1Token,
         uint256 l2sender,
         address recipient,
-        uint256 amount
+        uint256 amount,
+        uint256 l2RewardsIndex
     ) internal {
         emit LogWithdrawal(l1Token, l2sender, recipient, amount);
 
-        uint256[] memory payload = new uint256[](6);
+        uint256[] memory payload = new uint256[](8);
         payload[0] = TRANSFER_FROM_STARKNET;
         payload[1] = uint256(address(l1Token));
         payload[2] = l2sender;
         payload[3] = uint256(recipient);
         (payload[4], payload[5]) = toSplitUint(amount);
+        (payload[6], payload[7]) = toSplitUint(l2RewardsIndex);
 
         // Consume the message from the StarkNet core contract.
         // This will revert the (Ethereum) transaction if the message does not exist.
@@ -186,8 +206,10 @@ contract TokenBridge is
         onlyValidL2Address(l2Recipient)
         external
     {
+        uint256 rewardsIndex = l1Token.getCurrentRewardsIndex();
+
         l1Token.safeTransferFrom(msg.sender, address(this), amount);
-        sendMessage(l1Token, msg.sender, l2Recipient, amount);
+        sendMessage(l1Token, msg.sender, l2Recipient, amount, block.number, rewardsIndex);
     }
 
     function depositUnderlying(
@@ -201,13 +223,16 @@ contract TokenBridge is
         onlyValidL2Address(l2Recipient)
         external
     {
+        uint256 rewardsIndex = l1Token.getCurrentRewardsIndex();
+
         if (fromAsset) {
           l1Token.ASSET().safeTransferFrom(msg.sender, address(this), amount);
         } else {
           l1Token.ATOKEN().safeTransferFrom(msg.sender, address(this), amount);
         }
+
         amount = l1Token.deposit(address(this), amount, refferalCode, fromAsset);
-        sendMessage(l1Token, msg.sender, l2Recipient, amount);
+        sendMessage(l1Token, msg.sender, l2Recipient, amount, block.number, rewardsIndex);
     }
 
     function withdrawUnderlying(
@@ -215,38 +240,57 @@ contract TokenBridge is
         uint256 l2sender,
         address recipient,
         uint256 amount,
+        uint256 l2RewardsIndex,
         bool toAsset
     ) 
         onlyApprovedToken(l1Token)
         onlyValidL2Address(l2sender)
         external
     {
-        consumeMessage(l1Token, l2sender, recipient, amount);
+        consumeMessage(l1Token, l2sender, recipient, amount, l2RewardsIndex);
+
         require(recipient != address(0x0), "INVALID_RECIPIENT");
         require(
             l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender),
             "WITHDRAW UNDERFLOW"
         );
+
+        uint256 rewardsAmount = computeRewardsDiff(l1Token, amount, l2RewardsIndex);
+
         l1Token.withdraw(recipient, amount, toAsset);
+        transferRewards(recipient, rewardsAmount);
     }
 
     function withdraw(
         IStaticATokenLM l1Token,
         uint256 l2sender,
         address recipient,
-        uint256 amount
+        uint256 amount,
+        uint256 l2RewardsIndex
     )
         onlyApprovedToken(l1Token)
         onlyValidL2Address(l2sender)
         external
     {
-        consumeMessage(l1Token, l2sender, recipient, amount);
+        consumeMessage(l1Token, l2sender, recipient, amount, l2RewardsIndex);
+
         require(recipient != address(0x0), "INVALID_RECIPIENT");
         require(
             l1Token.balanceOf(msg.sender) - amount <= l1Token.balanceOf(msg.sender),
             "WITHDRAW UNDERFLOW"
         );
+
+        uint256 rewardsAmount = computeRewardsDiff(l1Token, amount, l2RewardsIndex);
+
         l1Token.safeTransfer(recipient, amount);
+        transferRewards(recipient, rewardsAmount);
+    }
+
+    function computeRewardsDiff(IStaticATokenLM l1Token, uint256 amount, uint256 l2RewardsIndex) internal returns (uint256) {
+        uint256 rewardsIndex = l1Token.getCurrentRewardsIndex();
+
+        uint256 rayAmount = amount.wadToRay();
+        return (rayAmount.rayMulNoRounding(rewardsIndex.sub(l2RewardsIndex))).rayToWad();
     }
 
      function consumeBridgeRewardMessage(uint256 l2sender, address recipient, uint256 amount) internal {
@@ -256,8 +300,7 @@ contract TokenBridge is
         payload[0] = BRIDGE_REWARD_MESSAGE;
         payload[1] = l2sender;
         payload[2] = uint256(recipient);
-        payload[3] = amount & (UINT256_PART_SIZE - 1);
-        payload[4] = amount >> UINT256_PART_SIZE_BITS;
+        (payload[3], payload[4]) = toSplitUint(amount);
 
         messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
     }
@@ -265,13 +308,16 @@ contract TokenBridge is
     function receiveRewards(uint256 l2sender, address recipient, uint256 amount) onlyValidL2Address(l2sender) external {
         consumeBridgeRewardMessage(l2sender, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
+        transferRewards(recipient, amount);
+    }
 
+    function transferRewards(address recipient, uint256 rewardsAmount) internal {
         address self = address(this);
 
         uint256 rewardBalance = rewardToken.balanceOf(self);
 
-        if (rewardBalance >= amount) {
-          rewardToken.safeTransfer(recipient, amount);
+        if (rewardBalance >= rewardsAmount) {
+          rewardToken.safeTransfer(recipient, rewardsAmount);
           return;
         }
 
@@ -280,8 +326,8 @@ contract TokenBridge is
 
             rewardBalance = rewardToken.balanceOf(self);
 
-            if (rewardBalance >= amount) {
-              rewardToken.safeTransfer(recipient, amount);
+            if (rewardBalance >= rewardsAmount) {
+              rewardToken.safeTransfer(recipient, rewardsAmount);
               return;
             }
         }

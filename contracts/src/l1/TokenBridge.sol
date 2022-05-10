@@ -114,11 +114,8 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         (
             uint256 l2TokenBridge_,
             IStarknetMessaging messagingContract_,
-            IAaveIncentivesController incentivesController_
-        ) = abi.decode(
-                data,
-                (uint256, IStarknetMessaging, IAaveIncentivesController)
-            );
+            IERC20 rewardToken_
+        ) = abi.decode(data, (uint256, IStarknetMessaging, IERC20));
 
         require(
             (l2TokenBridge_ != 0) &&
@@ -126,13 +123,13 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
             "L2_ADDRESS_OUT_OF_RANGE"
         );
         require(
-            address(incentivesController_) != address(0x0),
-            "INVALID ADDRESS FOR INCENTIVE CONTROLLER"
+            address(rewardToken_) != address(0x0),
+            "INVALID ADDRESS FOR REWARD TOKEN"
         );
 
         messagingContract = messagingContract_;
         l2TokenBridge = l2TokenBridge_;
-        incentivesController = incentivesController_;
+        rewardToken = rewardToken_;
     }
 
     function approveBridge(address l1AToken, uint256 l2Token)

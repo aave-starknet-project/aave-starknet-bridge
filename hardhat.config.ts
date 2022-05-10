@@ -66,10 +66,10 @@ const config: HardhatUserConfig = {
     l1_testnet: {
       url: "http://localhost:8545",
     },
-    mainnet: {
-      url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,
-      accounts: [MNEMONIC],
-    },
+    // mainnet: {
+    //   url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,
+    //   accounts: [MNEMONIC],
+    // },
   },
 };
 

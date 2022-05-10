@@ -342,33 +342,3 @@ func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
 
     return ()
 end
-
-@l1_handler
-func handle_rewards_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    from_address : felt,
-    block_number_low : felt,
-    block_number_high : felt,
-    l2_token : felt,
-    rewards_low : felt,
-    rewards_high : felt,
-):
-    alloc_locals
-    only_l1_handler(from_address_=from_address)
-
-    let rewards = Uint256(low=rewards_low, high=rewards_high)
-    let block_number = Uint256(low=block_number_low, high=block_number_high)
-
-    with_attr error_message("High or low overflows 128 bit bound {rewards}"):
-        uint256_check(rewards)
-    end
-    with_attr error_message("High or low overflows 128 bit bound {block_number}"):
-        uint256_check(block_number)
-    end
-
-    # push rewards
-    IETHstaticAToken.push_rewards_index(
-        contract_address=l2_token, block_number=block_number, rewards_index=Ray(rewards)
-    )
-
-    return ()
-end

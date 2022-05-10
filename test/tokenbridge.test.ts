@@ -10,7 +10,7 @@ import {
 } from "hardhat/types";
 
 import { TIMEOUT } from "./constants";
-import { expectAddressEquality } from "./utils";
+import { expectAddressEquality, uintFromParts } from "./utils";
 
 
 const MAX_UINT256 = hre.ethers.constants.MaxInt256;
@@ -419,11 +419,13 @@ describe("TokenBridge", async function () {
     const flushL2Messages = flushL2Response.consumed_messages.from_l2;
     expect(flushL2Response.consumed_messages.from_l1).to.be.empty;
     expect(flushL2Messages).to.have.a.lengthOf(2);
+    const l2RewardsIndexDai = uintFromParts(flushL2Messages[0].payload[6], flushL2Messages[0].payload[7]);
+    const l2RewardsIndexUsdc = uintFromParts(flushL2Messages[1].payload[6], flushL2Messages[1].payload[7]);
 
     // actually withdraw tokens
-    txDai = await l1TokenBridge.connect(l1user).withdraw(aDai.address, l2user.starknetContract.address, l1user.address, 28, false);
+    txDai = await l1TokenBridge.connect(l1user).withdraw(aDai.address, l2user.starknetContract.address, l1user.address, 28, l2RewardsIndexDai, false);
     blockNumberDai = txDai.blockNumber;
-    txUsdc = await l1TokenBridge.connect(l1user).withdraw(aUsdc.address, l2user.starknetContract.address, l1user.address, 37, false);
+    txUsdc = await l1TokenBridge.connect(l1user).withdraw(aUsdc.address, l2user.starknetContract.address, l1user.address, 37, l2RewardsIndexUsdc, false);
     blockNumberUsdc = txUsdc.blockNumber;
 
     // check that tokens have been transfered to l1user
@@ -438,12 +440,13 @@ describe("TokenBridge", async function () {
     expect(flushL1Response.consumed_messages.from_l2).to.be.empty;
     expect(flushL1Messages).to.have.a.lengthOf(0);
 
+    // // check last update of L2 tokens
+    // expect(await l2StaticADai.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0n, low: BigInt(blockNumberDai) }});
+    // expect(await l2StaticAUsdc.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0n, low: BigInt(blockNumberUsdc) }});
+
     // check balance of L2 tokens
     expect(await l2StaticADai.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  28n } });
     expect(await l2StaticAUsdc.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  37n } });
-    // TODO enable these when the updated 
-    // expect(await l2StaticADai.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0, low: BigInt(blockNumberDai)}});
-    // expect(await l2StaticAUsdc.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0, low: BigInt(blockNumberUsdc)}});
   })
 
 
@@ -461,11 +464,13 @@ describe("TokenBridge", async function () {
     const flushL2Messages = flushL2Response.consumed_messages.from_l2;
     expect(flushL2Response.consumed_messages.from_l1).to.be.empty;
     expect(flushL2Messages).to.have.a.lengthOf(2);
+    const l2RewardsIndexDai = uintFromParts(flushL2Messages[0].payload[6], flushL2Messages[0].payload[7]);
+    const l2RewardsIndexUsdc = uintFromParts(flushL2Messages[1].payload[6], flushL2Messages[1].payload[7]);
 
     // actually withdraw tokens
-    txDai = await l1TokenBridge.connect(l1user).withdraw(aDai.address, l2user.starknetContract.address, l1user.address, 28, true);
+    txDai = await l1TokenBridge.connect(l1user).withdraw(aDai.address, l2user.starknetContract.address, l1user.address, 28, l2RewardsIndexDai, true);
     blockNumberDai = txDai.blockNumber;
-    txUsdc = await l1TokenBridge.connect(l1user).withdraw(aUsdc.address, l2user.starknetContract.address, l1user.address, 37, true);
+    txUsdc = await l1TokenBridge.connect(l1user).withdraw(aUsdc.address, l2user.starknetContract.address, l1user.address, 37, l2RewardsIndexUsdc, true);
     blockNumberUsdc = txUsdc.blockNumber;
 
     // check that tokens have been transfered to l1user
@@ -480,12 +485,13 @@ describe("TokenBridge", async function () {
     expect(flushL1Response.consumed_messages.from_l2).to.be.empty;
     expect(flushL1Messages).to.have.a.lengthOf(0);
 
+    // // check last update of L2 tokens
+    // expect(await l2StaticADai.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0n, low: BigInt(blockNumberDai) }});
+    // expect(await l2StaticAUsdc.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0n, low: BigInt(blockNumberUsdc) }});
+
     // check balance of L2 tokens
     expect(await l2StaticADai.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  0n } });
     expect(await l2StaticAUsdc.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  0n } });
-    // TODO enable these when the updated 
-    // expect(await l2StaticADai.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0, low: BigInt(blockNumberDai)}});
-    // expect(await l2StaticAUsdc.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0, low: BigInt(blockNumberUsdc)}});
   })
 
   it('L2 user sends back reward accrued to L1 user', async () => {

@@ -10,14 +10,19 @@ import "../../test/IStarknetMessaging.sol";
 import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {WadRayMath} from "@swp0x0/protocol-v2/contracts/protocol/libraries/math/WadRayMath.sol";
+import {RayMathNoRounding} from "@swp0x0/protocol-v2/contracts/protocol/libraries/math/RayMathNoRounding.sol";
+import {SafeMath} from "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {ILendingPool} from "@swp0x0/protocol-v2/contracts/interfaces/ILendingPool.sol";
 import {IAaveIncentivesController} from "@swp0x0/protocol-v2/contracts/interfaces/IAaveIncentivesController.sol";
+import {IScaledBalanceToken} from "@swp0x0/protocol-v2/contracts/interfaces/IScaledBalanceToken.sol";
 
 import {IATokenWithPool} from "./IATokenWithPool.sol";
 
 contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
     using SafeERC20 for IERC20;
     using WadRayMath for uint256;
+    using RayMathNoRounding for uint256;
+    using SafeMath for uint256;
 
     struct ATokenData {
         uint256 l2TokenAddress;
@@ -29,7 +34,9 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         address sender,
         address token,
         uint256 amount,
-        uint256 l2Recipient
+        uint256 l2Recipient,
+        uint256 blockNumber,
+        uint256 rewardsIndex
     );
     event LogWithdrawal(
         address token,
@@ -50,9 +57,6 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
     // The selector of the "handle_deposit" l1_handler on L2.
     uint256 constant DEPOSIT_HANDLER =
         1285101517810983806491589552491143496277809242732141897358598292095611420389;
-    // The selector of the "handle_rewards_update" l1_handler on L2.
-    uint256 constant REWARDS_UPDATE_HANDLER =
-        1491809297313944980469767785261053487269663932577403898216430815040935905233;
 
     uint256 constant TRANSFER_FROM_STARKNET = 0;
     uint256 constant BRIDGE_REWARD_MESSAGE = 1;
@@ -170,9 +174,18 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         address l1Token,
         address from,
         uint256 l2Recipient,
-        uint256 amount
+        uint256 amount,
+        uint256 blockNumber,
+        uint256 currentRewardsIndex
     ) internal onlyValidL2Address(l2Recipient) {
-        emit LogDeposit(from, l1Token, amount, l2Recipient);
+        emit LogDeposit(
+            from,
+            l1Token,
+            amount,
+            l2Recipient,
+            blockNumber,
+            currentRewardsIndex
+        );
 
         uint256[] memory payload = new uint256[](9);
         payload[0] = uint256(from);
@@ -187,25 +200,6 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
             DEPOSIT_HANDLER,
             payload
         );
-    }
-
-    // TODO: shouldn't it be view?
-    // TODO: why decorator not used here?
-    function sendMessageStaticAToken(uint256 rewardsIndex) external {
-        uint256 l2Token = aTokenData[msg.sender].l2TokenAddress;
-
-        if (isValidL2Address(l2Token)) {
-            uint256[] memory payload = new uint256[](5);
-            (payload[0], payload[1]) = toSplitUint(block.number);
-            payload[2] = l2Token;
-            (payload[3], payload[4]) = toSplitUint(rewardsIndex);
-
-            messagingContract.sendMessageToL2(
-                l2TokenBridge,
-                REWARDS_UPDATE_HANDLER,
-                payload
-            );
-        }
     }
 
     function consumeMessage(
@@ -246,6 +240,40 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         return amount.rayMul(lendingPool.getReserveNormalizedIncome(asset));
     }
 
+    function getCurrentRewardsIndex(address l1AToken)
+        internal
+        view
+        returns (uint256)
+    {
+        (
+            uint256 index,
+            uint256 emissionPerSecond,
+            uint256 lastUpdateTimestamp
+        ) = incentivesController.getAssetData(l1AToken);
+        uint256 distributionEnd = incentivesController.DISTRIBUTION_END();
+        uint256 totalSupply = IScaledBalanceToken(l1AToken).scaledTotalSupply();
+
+        if (
+            emissionPerSecond == 0 ||
+            totalSupply == 0 ||
+            lastUpdateTimestamp == block.timestamp ||
+            lastUpdateTimestamp >= distributionEnd
+        ) {
+            return index;
+        }
+
+        uint256 currentTimestamp = block.timestamp > distributionEnd
+            ? distributionEnd
+            : block.timestamp;
+        uint256 timeDelta = currentTimestamp.sub(lastUpdateTimestamp);
+        return
+            emissionPerSecond
+                .mul(timeDelta)
+                .mul(10**uint256(18))
+                .div(totalSupply)
+                .add(index); // 18- precision, should be loaded
+    }
+
     function deposit(
         address l1AToken,
         uint256 l2Recipient,
@@ -260,6 +288,8 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
                 (lendingPool != ILendingPool(0x0)),
             "This aToken has not been approved yet."
         );
+
+        uint256 rewardsIndex = getCurrentRewardsIndex(l1AToken);
 
         if (fromAsset) {
             underlyingAsset.safeTransferFrom(msg.sender, address(this), amount);
@@ -284,7 +314,9 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
                 amount,
                 address(underlyingAsset),
                 lendingPool
-            )
+            ),
+            block.number,
+            rewardsIndex
         );
     }
 
@@ -293,9 +325,16 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         uint256 l2sender,
         address recipient,
         uint256 staticAmount,
+        uint256 l2RewardsIndex,
         bool toAsset
     ) external onlyValidL2Address(l2sender) {
-        consumeMessage(l1AToken, l2sender, recipient, staticAmount);
+        consumeMessage(
+            l1AToken,
+            l2sender,
+            recipient,
+            staticAmount,
+            l2RewardsIndex
+        );
         require(recipient != address(0x0), "INVALID_RECIPIENT");
 
         address underlyingAsset = address(aTokenData[l1AToken].underlyingAsset);
@@ -311,6 +350,25 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         } else {
             IERC20(l1AToken).safeTransfer(recipient, amount);
         }
+
+        uint256 rewardsAmount = computeRewardsDiff(
+            l1AToken,
+            staticAmount,
+            l2RewardsIndex
+        );
+        transferRewards(recipient, rewardsAmount);
+    }
+
+    function computeRewardsDiff(
+        address l1AToken,
+        uint256 amount,
+        uint256 l2RewardsIndex
+    ) internal returns (uint256) {
+        uint256 rewardsIndex = getCurrentRewardsIndex(l1AToken);
+        uint256 rayAmount = amount.wadToRay();
+        return
+            (rayAmount.rayMulNoRounding(rewardsIndex.sub(l2RewardsIndex)))
+                .rayToWad();
     }
 
     function consumeBridgeRewardMessage(
@@ -346,16 +404,16 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
 
         uint256 rewardBalance = rewardToken.balanceOf(self);
 
-        if (rewardBalance < amount) {
+        if (rewardBalance < rewardsAmount) {
             rewardBalance += incentivesController.claimRewards(
                 approvedL1Tokens,
-                amount - rewardBalance,
+                rewardsAmount - rewardBalance,
                 self
             );
         }
 
-        if (rewardBalance >= amount) {
-            rewardToken.transfer(recipient, amount);
+        if (rewardBalance >= rewardsAmount) {
+            rewardToken.transfer(recipient, rewardsAmount);
             return;
         }
         revert("NOT ENOUGH REWARDS");

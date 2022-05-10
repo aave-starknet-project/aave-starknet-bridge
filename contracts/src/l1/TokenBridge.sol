@@ -97,15 +97,6 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         _;
     }
 
-    // TODO: most probably this modifier should be removed/replaced with different logic to optimize gas usage
-    modifier onlyApprovedToken(address token) {
-        require(
-            isValidL2Address(aTokenData[token].l2TokenAddress),
-            "L2_TOKEN_HAS_NOT_BEEN_APPROVED"
-        );
-        _;
-    }
-
     /*
       Gets the addresses of bridgedToken & messagingContract from the ProxySupport initialize(),
       and sets the storage slot accordingly.
@@ -120,11 +111,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
                 (uint256, IStarknetMessaging, IAaveIncentivesController)
             );
 
-        require(
-            (l2TokenBridge_ != 0) &&
-                (l2TokenBridge_ < CairoConstants.FIELD_PRIME),
-            "L2_ADDRESS_OUT_OF_RANGE"
-        );
+        require(isValidL2Address(l2TokenBridge_), "L2_ADDRESS_OUT_OF_RANGE");
         require(
             address(incentivesController_) != address(0x0),
             "INVALID ADDRESS FOR INCENTIVE CONTROLLER"
@@ -133,6 +120,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         messagingContract = messagingContract_;
         l2TokenBridge = l2TokenBridge_;
         incentivesController = incentivesController_;
+        rewardToken = IERC20(incentivesController.REWARD_TOKEN());
     }
 
     function approveBridge(address l1AToken, uint256 l2Token)
@@ -159,13 +147,13 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         ILendingPool lendingPool = IATokenWithPool(l1AToken).POOL();
         underlyingAsset.safeApprove(address(lendingPool), type(uint256).max);
 
-        emit LogBridgeAdded(l1AToken, l2Token); // TODO: any reason to emit the event before assigning data?
         aTokenData[l1AToken] = ATokenData(
             l2Token,
             underlyingAsset,
             lendingPool
         );
         approvedL1Tokens.push(l1AToken);
+        emit LogBridgeAdded(l1AToken, l2Token);
     }
 
     function claimOrderSwap(uint256 idx1, uint256 idx2) external {
@@ -184,7 +172,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         address from,
         uint256 l2Recipient,
         uint256 amount
-    ) internal onlyApprovedToken(l1Token) onlyValidL2Address(l2Recipient) {
+    ) internal onlyValidL2Address(l2Recipient) {
         emit LogDeposit(from, l1Token, amount, l2Recipient);
 
         uint256[] memory payload = new uint256[](5);
@@ -225,7 +213,6 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         address recipient,
         uint256 amount
     ) internal {
-        // TODO: shouldn't it be view?
         emit LogWithdrawal(l1Token, l2sender, recipient, amount);
 
         uint256[] memory payload = new uint256[](6);
@@ -262,9 +249,14 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         uint256 amount,
         uint16 referralCode,
         bool fromAsset
-    ) external onlyApprovedToken(l1AToken) onlyValidL2Address(l2Recipient) {
+    ) external onlyValidL2Address(l2Recipient) {
         IERC20 underlyingAsset = aTokenData[l1AToken].underlyingAsset;
         ILendingPool lendingPool = aTokenData[l1AToken].lendingPool;
+        require(
+            (underlyingAsset != IERC20(0x0)) &&
+                (lendingPool != ILendingPool(0x0)),
+            "This aToken has not been approved yet."
+        );
 
         if (fromAsset) {
             underlyingAsset.safeTransferFrom(msg.sender, address(this), amount);
@@ -281,7 +273,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
                 amount
             );
         }
-        sendMessage( //TODO: onlyApprovedToken check called twice, it boils down down to extra read from storage. In the same time sendMessage function used only here
+        sendMessage(
             l1AToken,
             msg.sender,
             l2Recipient,
@@ -299,7 +291,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         address recipient,
         uint256 staticAmount,
         bool toAsset
-    ) external onlyApprovedToken(l1AToken) onlyValidL2Address(l2sender) {
+    ) external onlyValidL2Address(l2sender) {
         consumeMessage(l1AToken, l2sender, recipient, staticAmount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
 

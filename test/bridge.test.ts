@@ -108,7 +108,7 @@ describe("Bridge", async function () {
     l2owner = await starknet.deployAccount("OpenZeppelin");
     l2user = await starknet.deployAccount("OpenZeppelin");
 
-    l2BridgeFactory = await starknet.getContractFactory('rewaave/bridge');
+    l2BridgeFactory = await starknet.getContractFactory('bridge');
     l2BridgeImpl = await l2BridgeFactory.deploy();
 
     l2ProxyFactory = await starknet.getContractFactory('rewaave/proxy');

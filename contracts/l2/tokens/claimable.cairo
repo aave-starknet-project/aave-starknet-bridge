@@ -2,7 +2,9 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.uint256 import Uint256, uint256_add, uint256_sub, uint256_le
-from rewaave.lib.wad_ray_math import (
+from starkware.starknet.common.syscalls import get_caller_address
+
+from contracts.l2.lib.wad_ray_math import (
     Wad,
     Ray,
     wad_to_ray,
@@ -11,7 +13,6 @@ from rewaave.lib.wad_ray_math import (
     ray_mul_no_rounding,
     ray_to_wad_no_rounding,
 )
-from starkware.starknet.common.syscalls import get_caller_address
 from openzeppelin.token.erc20.library import ERC20_balanceOf
 
 @storage_var

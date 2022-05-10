@@ -24,7 +24,7 @@ from openzeppelin.token.erc20.library import (
 
 from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner
 
-from rewaave.tokens.claimable import (
+from contracts.l2.tokens.claimable import (
     claimable_claim_rewards,
     claimable_push_rewards_index,
     claimable_before_token_transfer,
@@ -36,7 +36,7 @@ from rewaave.tokens.claimable import (
     claimable_only_bridge,
     claimable_get_claimable_rewards,
 )
-from rewaave.lib.wad_ray_math import Ray
+from contracts.l2.lib.wad_ray_math import Ray
 
 @contract_interface
 namespace IBridge:

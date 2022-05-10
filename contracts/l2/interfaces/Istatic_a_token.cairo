@@ -1,7 +1,7 @@
 %lang starknet
 
 from starkware.cairo.common.uint256 import Uint256
-from rewaave.lib.wad_ray_math import Ray
+from contracts.l2.lib.wad_ray_math import Ray
 
 @contract_interface
 namespace Istatic_a_token:

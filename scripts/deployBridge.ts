@@ -9,7 +9,7 @@ import { Contract, ContractFactory } from "ethers";
 import { starknet, ethers } from "hardhat";
 
 /**
- * deploys and initializes ETHStaticAToken on L2
+ * deploys and initializes static_a_token on L2
  * @param deployer the deployer starknet account
  * @param proxy_admin address of the proxy owner
  */
@@ -19,7 +19,7 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
   let proxyFactoryL2: StarknetContractFactory;
   let proxyBridge: StarknetContract;
 
-  const L2BridgeFactory = await starknet.getContractFactory("token_bridge");
+  const L2BridgeFactory = await starknet.getContractFactory("bridge");
   proxyFactoryL2 = await starknet.getContractFactory("proxy");
 
   console.log("deploying L2 proxy bridge...");
@@ -43,7 +43,7 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
   proxiedBridge = L2BridgeFactory.getContractAt(proxyBridge.address);
 
   console.log("initializing L2 bridge...");
-  await deployer.invoke(proxiedBridge, "initialize_token_bridge", {
+  await deployer.invoke(proxiedBridge, "initialize_bridge", {
     governor_address: proxy_admin,
   });
 
@@ -51,7 +51,7 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
 }
 
 /**
- * deploys and initializes ETHStaticAToken on L2
+ * deploys and initializes static_a_token on L2
  * @param signer the deployer starknet account
  * @param  l2BridgeAddress address of the proxy bridge on L2
  * @param starknetMessagingAddress
@@ -70,7 +70,7 @@ export async function deployL1Bridge(
 
   try {
     const abiCoder = new ethers.utils.AbiCoder();
-    bridgeFactory = await ethers.getContractFactory("TokenBridge", signer);
+    bridgeFactory = await ethers.getContractFactory("Bridge", signer);
     bridgeImpl = await bridgeFactory.deploy();
     await bridgeImpl.deployed();
 
@@ -99,7 +99,7 @@ export async function deployL1Bridge(
     );
 
     bridge = await ethers.getContractAt(
-      "TokenBridge",
+      "Bridge",
       bridgeProxy.address,
       signer
     );

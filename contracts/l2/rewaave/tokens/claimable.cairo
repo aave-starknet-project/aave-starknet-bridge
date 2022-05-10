@@ -15,7 +15,7 @@ from starkware.starknet.common.syscalls import get_caller_address
 from openzeppelin.token.erc20.library import ERC20_balanceOf
 
 @storage_var
-func l2_token_bridge() -> (address : felt):
+func l2_bridge() -> (address : felt):
 end
 
 @storage_var
@@ -133,7 +133,7 @@ func claimable_push_rewards_index{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(block_number : Uint256, new_rewards_index : Ray):
     alloc_locals
-    claimable_only_token_bridge()
+    claimable_only_bridge()
     let (last_block_number) = last_update.read()
     # This is le because the rewards may update in a block
     let (le) = uint256_le(last_block_number, block_number)
@@ -174,25 +174,23 @@ func claimable_get_last_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*,
     return last_update.read()
 end
 
-func claimable_set_l2_token_bridge{
-    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
-}(l2_token_bridge_ : felt):
-    l2_token_bridge.write(l2_token_bridge_)
+func claimable_set_l2_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    l2_bridge_ : felt
+):
+    l2_bridge.write(l2_bridge_)
     return ()
 end
 
-func claimable_get_l2_token_bridge{
-    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
-}() -> (l2_token_bridge_ : felt):
-    return l2_token_bridge.read()
+func claimable_get_l2_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    ) -> (l2_bridge_ : felt):
+    return l2_bridge.read()
 end
 
-func claimable_only_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    ):
+func claimable_only_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (caller_address) = get_caller_address()
-    let (l2_token_bridge_) = l2_token_bridge.read()
-    with_attr error_message("Caller address should be token_bridge: {l2_token_bridge_}"):
-        assert caller_address = l2_token_bridge_
+    let (l2_bridge_) = l2_bridge.read()
+    with_attr error_message("Caller address should be bridge: {l2_bridge_}"):
+        assert caller_address = l2_bridge_
     end
     return ()
 end

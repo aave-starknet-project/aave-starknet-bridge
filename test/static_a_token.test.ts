@@ -28,7 +28,7 @@ describe("ETHStaticAToken", function () {
   it("Deploy token and reward token", async () => {
     const tokenFactory = await starknet.getContractFactory("static_a_token");
     const rewAAVEFactory = await starknet.getContractFactory("rewAAVE");
-    const l2TokenBridgeFactory = await starknet.getContractFactory("token_bridge");
+    const l2TokenBridgeFactory = await starknet.getContractFactory("bridge");
 
     token = await tokenFactory.deploy();
     rewAAVE = await rewAAVEFactory.deploy();
@@ -41,7 +41,7 @@ describe("ETHStaticAToken", function () {
       initial_supply: { high: 0n, low: 0n },
       recipient: BigInt(owner.starknetContract.address),
       owner: BigInt(owner.starknetContract.address),
-      l2_token_bridge: BigInt(bridge.starknetContract.address),
+      l2_bridge: BigInt(bridge.starknetContract.address),
     });
     await owner.invoke(rewAAVE, "initialize_rewAAVE", {
       name: 444,
@@ -51,7 +51,7 @@ describe("ETHStaticAToken", function () {
       recipient: BigInt(user1.starknetContract.address),
       owner: BigInt(tokenBridge.address),
     });
-    await owner.invoke(tokenBridge, "initialize_token_bridge", {
+    await owner.invoke(tokenBridge, "initialize_bridge", {
       governor_address: BigInt(owner.starknetContract.address)
     });
 
@@ -68,15 +68,15 @@ describe("ETHStaticAToken", function () {
   });
 
   it("allows owner to set l2 token bridge", async () => {
-    await owner.invoke(token, "set_l2_token_bridge", {
-      l2_token_bridge: BigInt(bridge.starknetContract.address),
+    await owner.invoke(token, "set_l2_bridge", {
+      l2_bridge: BigInt(bridge.starknetContract.address),
     });
   });
 
   it("disallows non-owner to set l2 token bridge", async () => {
     try {
-      await user1.invoke(token, "set_l2_token_bridge", {
-        l2_token_bridge: BigInt(bridge.starknetContract.address),
+      await user1.invoke(token, "set_l2_bridge", {
+        l2_bridge: BigInt(bridge.starknetContract.address),
       });
     } catch (err: any) {
       expect(err.message).to.contain("Ownable: caller is not the owner");
@@ -129,7 +129,7 @@ describe("ETHStaticAToken", function () {
         },
       });
     } catch (err: any) {
-      expect(err.message).to.contain("Caller address should be token_bridge");
+      expect(err.message).to.contain("Caller address should be bridge");
     }
   });
 
@@ -143,7 +143,7 @@ describe("ETHStaticAToken", function () {
         },
       });
     } catch (err: any) {
-      expect(err.message).to.contain("Caller address should be token_bridge");
+      expect(err.message).to.contain("Caller address should be bridge");
     }
   });
 
@@ -188,7 +188,7 @@ describe("ETHStaticAToken", function () {
         },
       });
     } catch (err: any) {
-      expect(err.message).to.contain("Caller address should be token_bridge");
+      expect(err.message).to.contain("Caller address should be bridge");
     }
   });
 
@@ -248,8 +248,8 @@ describe("ETHStaticAToken", function () {
   it("claims rewards and mints correct amount of rewards tokens to self", async () => {
     // We need to use a real bridge implementation now to see the
     // reward minting in action
-    await owner.invoke(token, "set_l2_token_bridge", {
-      l2_token_bridge: BigInt(tokenBridge.address),
+    await owner.invoke(token, "set_l2_bridge", {
+      l2_bridge: BigInt(tokenBridge.address),
     });
 
     const user1ClaimableRewards = await token.call(
@@ -317,8 +317,8 @@ describe("ETHStaticAToken", function () {
     });
 
     // Switch to the bridge user in order to push fake updates
-    await owner.invoke(token, "set_l2_token_bridge", {
-      l2_token_bridge: BigInt(bridge.starknetContract.address),
+    await owner.invoke(token, "set_l2_bridge", {
+      l2_bridge: BigInt(bridge.starknetContract.address),
     });
 
     //Update the acc rewards per token first
@@ -336,8 +336,8 @@ describe("ETHStaticAToken", function () {
     });
 
     // Switch back to the bridge in order to enable reward claims
-    await owner.invoke(token, "set_l2_token_bridge", {
-      l2_token_bridge: BigInt(tokenBridge.address),
+    await owner.invoke(token, "set_l2_bridge", {
+      l2_bridge: BigInt(tokenBridge.address),
     });
 
     const user1ClaimableRewards = await token.call(
@@ -366,8 +366,8 @@ describe("ETHStaticAToken", function () {
 
   it("Rewards of user are not lost if L2 tokens are burnt before claiming", async () => {
     // Switch to the bridge user in order to push fake updates
-    await owner.invoke(token, "set_l2_token_bridge", {
-      l2_token_bridge: BigInt(bridge.starknetContract.address),
+    await owner.invoke(token, "set_l2_bridge", {
+      l2_bridge: BigInt(bridge.starknetContract.address),
     });
 
     //To have a non null rewards amount, we update the rewards index

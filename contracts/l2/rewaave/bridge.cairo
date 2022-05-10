@@ -37,7 +37,7 @@ func governor() -> (res : felt):
 end
 
 @storage_var
-func l1_token_bridge() -> (res : felt):
+func l1_bridge() -> (res : felt):
 end
 
 @storage_var
@@ -90,10 +90,10 @@ func get_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
 end
 
 @view
-func get_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+func get_l1_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     res : felt
 ):
-    let (res) = l1_token_bridge.read()
+    let (res) = l1_bridge.read()
     return (res)
 end
 
@@ -121,8 +121,8 @@ end
 func only_l1_handler{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     from_address_ : felt
 ):
-    let (expected_from_address) = get_l1_token_bridge()
-    with_attr error_message("Expected deposit from l1_token_bridge: {expected_from_address}"):
+    let (expected_from_address) = get_l1_bridge()
+    with_attr error_message("Expected deposit from l1_bridge: {expected_from_address}"):
         assert from_address_ = expected_from_address
     end
     return ()
@@ -131,7 +131,7 @@ end
 # Externals
 
 @external
-func initialize_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func initialize_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     governor_address : felt
 ):
     let (governor_) = governor.read()
@@ -144,13 +144,13 @@ func initialize_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, r
 end
 
 @external
-func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func set_l1_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l1_bridge_address : felt
 ):
     only_governor()
 
     # Check l1_bridge isn't already set.
-    let (l1_bridge_) = get_l1_token_bridge()
+    let (l1_bridge_) = get_l1_bridge()
     assert l1_bridge_ = 0
 
     # Check new address is valid.
@@ -158,7 +158,7 @@ func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
     assert_not_zero(l1_bridge_address)
 
     # Set new value.
-    l1_token_bridge.write(value=l1_bridge_address)
+    l1_bridge.write(value=l1_bridge_address)
     return ()
 end
 
@@ -201,7 +201,7 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
 ):
     assert_not_zero(l2_token)
 
-    let (to_address) = get_l1_token_bridge()
+    let (to_address) = get_l1_bridge()
 
     # check l1 address is valid.
     assert_lt_felt(l1_recipient, ETH_ADDRESS_BOUND)
@@ -243,7 +243,7 @@ end
 func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l1_recipient : felt, amount : Uint256
 ):
-    let (to_address) = get_l1_token_bridge()
+    let (to_address) = get_l1_bridge()
 
     let (token_owner) = get_caller_address()
 

@@ -18,7 +18,7 @@ import {IScaledBalanceToken} from "@swp0x0/protocol-v2/contracts/interfaces/ISca
 
 import {IATokenWithPool} from "./interfaces/IATokenWithPool.sol";
 
-contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
+contract Bridge is GenericGovernance, ContractInitializer, ProxySupport {
     using SafeERC20 for IERC20;
     using WadRayMath for uint256;
     using RayMathNoRounding for uint256;
@@ -49,7 +49,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
 
     mapping(address => ATokenData) public aTokenData;
     IStarknetMessaging public messagingContract;
-    uint256 public l2TokenBridge;
+    uint256 public l2Bridge;
     address[] public approvedL1Tokens;
     IERC20 public rewardToken;
     IAaveIncentivesController public incentivesController;
@@ -110,7 +110,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
     */
     function initializeContractState(bytes calldata data) internal override {
         (
-            uint256 l2TokenBridge_,
+            uint256 l2Bridge_,
             IStarknetMessaging messagingContract_,
             IAaveIncentivesController incentivesController_
         ) = abi.decode(
@@ -118,14 +118,14 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
                 (uint256, IStarknetMessaging, IAaveIncentivesController)
             );
 
-        require(isValidL2Address(l2TokenBridge_), "L2_ADDRESS_OUT_OF_RANGE");
+        require(isValidL2Address(l2Bridge_), "L2_ADDRESS_OUT_OF_RANGE");
         require(
             address(incentivesController_) != address(0x0),
             "INVALID ADDRESS FOR INCENTIVE CONTROLLER"
         );
 
         messagingContract = messagingContract_;
-        l2TokenBridge = l2TokenBridge_;
+        l2Bridge = l2Bridge_;
         incentivesController = incentivesController_;
         rewardToken = IERC20(incentivesController.REWARD_TOKEN());
     }
@@ -180,7 +180,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         (payload[7], payload[8]) = toSplitUint(currentRewardsIndex);
 
         messagingContract.sendMessageToL2(
-            l2TokenBridge,
+            l2Bridge,
             DEPOSIT_HANDLER,
             payload
         );
@@ -233,7 +233,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
 
         // Consume the message from the StarkNet core contract.
         // This will revert the (Ethereum) transaction if the message does not exist.
-        messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
+        messagingContract.consumeMessageFromL2(l2Bridge, payload);
     }
 
     function _dynamicToStaticAmount(
@@ -432,7 +432,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         payload[2] = uint256(recipient);
         (payload[3], payload[4]) = toSplitUint(amount);
 
-        messagingContract.consumeMessageFromL2(l2TokenBridge, payload);
+        messagingContract.consumeMessageFromL2(l2Bridge, payload);
     }
 
     function receiveRewards(

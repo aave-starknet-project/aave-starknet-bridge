@@ -58,7 +58,7 @@ way yield from L1.
 ## Contracts
 
 `L1`
-  *  `TokenBridge` -  handles rewards update, deposit & withdrawal of
+  *  `Bridge` -  handles rewards update, deposit & withdrawal of
      `static_a_tokens`, their corresponding `aTokens` and their underlying
      assets
   *  `Proxy` - A proxy implementation
@@ -69,7 +69,7 @@ way yield from L1.
   * `claimable` - tracks users' claimable rewards and current reward index for
     each `static_a_token`
   * `rewAAVE` - ERC20 representing the rewards on L2
-  * `token_bridge` - bridge responsible for:
+  * `bridge` - bridge responsible for:
     * minting and burning `static_a_tokens` on message from L1
     * bridging `rewAAVE` tokens back to L1
     * updating `rewards_index` for each `static_a_token` on message from L1
@@ -169,8 +169,8 @@ delegates the calls to the available implementation of these contracts.
 
 ## Governance
 
-* `static_a_token`s are controlled by the `token_bridge`
-* `rewAAVE` token is owned by the `token_bridge`
+* `static_a_token`s are controlled by the `bridge`
+* `rewAAVE` token is owned by the `bridge`
 
 ## [Development](Development) Setup
 

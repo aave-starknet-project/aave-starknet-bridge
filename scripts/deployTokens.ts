@@ -21,7 +21,7 @@ export async function deployStaticAToken(
   decimals: bigint,
   initial_supply: { low: bigint; high: bigint },
   owner: bigint,
-  l2_token_bridge: bigint
+  l2_bridge: bigint
 ) {
   let proxyFactory: StarknetContractFactory;
   let staticATokenProxy: StarknetContract;
@@ -59,7 +59,7 @@ export async function deployStaticAToken(
     initial_supply: initial_supply,
     recipient: BigInt(deployer.starknetContract.address),
     owner: owner,
-    l2_token_bridge: l2_token_bridge,
+    l2_bridge: l2_bridge,
   });
 }
 

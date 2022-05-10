@@ -31,25 +31,25 @@ from rewaave.tokens.claimable import (
     claimable_get_rewards_index,
     claimable_get_user_rewards_index,
     claimable_get_last_update,
-    claimable_set_l2_token_bridge,
-    claimable_get_l2_token_bridge,
-    claimable_only_token_bridge,
+    claimable_set_l2_bridge,
+    claimable_get_l2_bridge,
+    claimable_only_bridge,
     claimable_get_claimable_rewards,
 )
 from rewaave.lib.wad_ray_math import Ray
 
 @contract_interface
-namespace ITokenBridge:
+namespace IBridge:
     func mint_rewards(recipient : felt, amount : Uint256):
     end
 end
 
 @external
-func set_l2_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    l2_token_bridge : felt
+func set_l2_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    l2_bridge : felt
 ):
     Ownable_only_owner()
-    claimable_set_l2_token_bridge(l2_token_bridge)
+    claimable_set_l2_bridge(l2_bridge)
     return ()
 end
 
@@ -114,7 +114,7 @@ func initialize_static_a_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*,
     initial_supply : Uint256,
     recipient : felt,
     owner : felt,
-    l2_token_bridge : felt,
+    l2_bridge : felt,
 ):
     let (name_) = ERC20_name()
     let (symbol_) = ERC20_symbol()
@@ -129,7 +129,7 @@ func initialize_static_a_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*,
     ERC20_initializer(name, symbol, decimals)
     ERC20_mint(recipient, initial_supply)
     Ownable_initializer(owner)
-    claimable_set_l2_token_bridge(l2_token_bridge)
+    claimable_set_l2_bridge(l2_bridge)
     return ()
 end
 
@@ -180,7 +180,7 @@ end
 func mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     recipient : felt, amount : Uint256
 ):
-    claimable_only_token_bridge()
+    claimable_only_bridge()
     claimable_before_token_transfer(0, recipient)
     ERC20_mint(recipient, amount)
     return ()
@@ -190,7 +190,7 @@ end
 func burn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     account : felt, amount : Uint256
 ):
-    claimable_only_token_bridge()
+    claimable_only_bridge()
     claimable_before_token_transfer(account, 0)
     ERC20_burn(account=account, amount=amount)
     return ()
@@ -203,8 +203,8 @@ func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     alloc_locals
     let (caller) = get_caller_address()
     let (rewards) = claimable_claim_rewards(caller)
-    let (l2_token_bridge) = claimable_get_l2_token_bridge()
-    ITokenBridge.mint_rewards(l2_token_bridge, recipient, rewards.wad)
+    let (l2_bridge) = claimable_get_l2_bridge()
+    IBridge.mint_rewards(l2_bridge, recipient, rewards.wad)
     return ()
 end
 

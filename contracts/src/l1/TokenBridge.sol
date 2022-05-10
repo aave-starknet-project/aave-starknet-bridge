@@ -166,7 +166,6 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         );
     }
 
-    // TODO: shouldn't be view?
     function sendMessage(
         address l1Token,
         address from,

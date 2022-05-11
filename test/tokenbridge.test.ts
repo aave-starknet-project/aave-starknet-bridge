@@ -283,8 +283,8 @@ describe("TokenBridge", async function () {
 
   it("initialize the bridge on L1 and L2", async () => {
     // map L2 tokens to L1 tokens on L1 bridge
-    await l1TokenBridge.approveBridge(aDai.address, l2StaticADai.address);
-    await l1TokenBridge.approveBridge(aUsdc.address, l2StaticAUsdc.address);
+    await l1TokenBridge.approveToken(aDai.address, l2StaticADai.address);
+    await l1TokenBridge.approveToken(aUsdc.address, l2StaticAUsdc.address);
 
     // set L1 token bridge from L2 bridge
     await l2user.invoke(l2TokenBridge, 'initialize_token_bridge', { governor_address: BigInt(l2user.starknetContract.address) });
@@ -327,9 +327,8 @@ describe("TokenBridge", async function () {
     // check balance and last update of L2 tokens
     expect(await l2StaticADai.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  28n } });
     expect(await l2StaticAUsdc.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  37n } });
-    // TODO enable these when the updated 
-    // expect(await l2StaticADai.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0, low: BigInt(blockNumberDai)}});
-    // expect(await l2StaticAUsdc.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0, low: BigInt(blockNumberUsdc)}});
+    expect(await l2StaticADai.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0, low: BigInt(blockNumberDai)}});
+    expect(await l2StaticAUsdc.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0, low: BigInt(blockNumberUsdc)}});
   });
 
   it('Deposit dai and usdc', async () => {
@@ -365,9 +364,8 @@ describe("TokenBridge", async function () {
     // check balance and last update of L2 tokens
     expect(await l2StaticADai.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  56n } });
     expect(await l2StaticAUsdc.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  74n } });
-    // TODO enable these when the updated 
-    // expect(await l2StaticADai.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0, low: BigInt(blockNumberDai)}});
-    // expect(await l2StaticAUsdc.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0, low: BigInt(blockNumberUsdc)}});
+    expect(await l2StaticADai.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0, low: BigInt(blockNumberDai)}});
+    expect(await l2StaticAUsdc.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0, low: BigInt(blockNumberUsdc)}});
   });
 
   it('Updates rewards on transfer', async () => {
@@ -438,11 +436,11 @@ describe("TokenBridge", async function () {
     const flushL1Response = await starknet.devnet.flush();
     const flushL1Messages = flushL1Response.consumed_messages.from_l1;
     expect(flushL1Response.consumed_messages.from_l2).to.be.empty;
-    expect(flushL1Messages).to.have.a.lengthOf(0);
+    expect(flushL1Messages).to.have.a.lengthOf(2);
 
-    // // check last update of L2 tokens
-    // expect(await l2StaticADai.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0n, low: BigInt(blockNumberDai) }});
-    // expect(await l2StaticAUsdc.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0n, low: BigInt(blockNumberUsdc) }});
+    // check last update of L2 tokens
+    expect(await l2StaticADai.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0n, low: BigInt(blockNumberDai) }});
+    expect(await l2StaticAUsdc.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0n, low: BigInt(blockNumberUsdc) }});
 
     // check balance of L2 tokens
     expect(await l2StaticADai.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  28n } });
@@ -483,11 +481,11 @@ describe("TokenBridge", async function () {
     const flushL1Response = await starknet.devnet.flush();
     const flushL1Messages = flushL1Response.consumed_messages.from_l1;
     expect(flushL1Response.consumed_messages.from_l2).to.be.empty;
-    expect(flushL1Messages).to.have.a.lengthOf(0);
+    expect(flushL1Messages).to.have.a.lengthOf(2);
 
-    // // check last update of L2 tokens
-    // expect(await l2StaticADai.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0n, low: BigInt(blockNumberDai) }});
-    // expect(await l2StaticAUsdc.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0n, low: BigInt(blockNumberUsdc) }});
+    // check last update of L2 tokens
+    expect(await l2StaticADai.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0n, low: BigInt(blockNumberDai) }});
+    expect(await l2StaticAUsdc.call('get_last_update', {})).to.deep.equal({ block_number: {high: 0n, low: BigInt(blockNumberUsdc) }});
 
     // check balance of L2 tokens
     expect(await l2StaticADai.call('balanceOf', { account: BigInt(l2user.starknetContract.address) })).to.deep.equal({ balance: { high: 0n, low:  0n } });

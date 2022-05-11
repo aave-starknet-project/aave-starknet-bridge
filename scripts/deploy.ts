@@ -13,7 +13,7 @@ async function deployAll() {
     let l1deployer: SignerWithAddress;
 
     if (!STARKNET_MESSAGING_CONTRACT || !INCENTIVES_CONTROLLER) {
-      throw new Error("Please initialize your .env file correctly");
+      throw new Error("Please initialize your .env file correctly, see .env.sample for details, see .env.sample for details.");
     }
 
     [l1deployer] = await ethers.getSigners();

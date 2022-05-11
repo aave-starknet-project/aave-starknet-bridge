@@ -45,12 +45,12 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         uint256 amount
     );
     event LogBridgeReward(uint256 l2sender, address recipient, uint256 amount);
-    event LogBridgeAdded(address l1Token, uint256 l2Token);
+    event LogTokenAdded(address l1Token, uint256 l2Token);
 
     mapping(address => ATokenData) public aTokenData;
     IStarknetMessaging public messagingContract;
-    uint256 l2TokenBridge;
-    address[] approvedL1Tokens;
+    uint256 public l2TokenBridge;
+    address[] public approvedL1Tokens;
     IERC20 public rewardToken;
     IAaveIncentivesController public incentivesController;
 
@@ -130,7 +130,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         rewardToken = IERC20(incentivesController.REWARD_TOKEN());
     }
 
-    function approveBridge(address l1AToken, uint256 l2Token)
+    function approveToken(address l1AToken, uint256 l2Token)
         external
         onlyGovernance
         onlyValidL2Address(l2Token)
@@ -145,7 +145,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         require(
             IATokenWithPool(l1AToken).getIncentivesController() ==
                 incentivesController,
-            "L1 TOKEN CONFIGURED WITH WRONG INCENTIVES CONTROLLER"
+            "L1 TOKEN CONFIGURED WITH DIFFERENT INCENTIVES CONTROLLER THAN BRIDGE'S"
         );
 
         IERC20 underlyingAsset = IERC20(
@@ -160,17 +160,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
             lendingPool
         );
         approvedL1Tokens.push(l1AToken);
-        emit LogBridgeAdded(l1AToken, l2Token);
-    }
-
-    function claimOrderSwap(uint256 idx1, uint256 idx2) external {
-        require(idx1 < approvedL1Tokens.length, "INDEX OUT OF RANGE");
-        require(idx2 < approvedL1Tokens.length, "INDEX OUT OF RANGE");
-
-        (approvedL1Tokens[idx1], approvedL1Tokens[idx2]) = (
-            approvedL1Tokens[idx2],
-            approvedL1Tokens[idx1]
-        );
+        emit LogTokenAdded(l1AToken, l2Token);
     }
 
     function sendMessageDeposit(
@@ -301,7 +291,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         uint256 l2Recipient,
         uint256 amount,
         uint16 referralCode,
-        bool fromAsset
+        bool fromUnderlyingAsset
     ) external onlyValidL2Address(l2Recipient) {
         IERC20 underlyingAsset = aTokenData[l1AToken].underlyingAsset;
         ILendingPool lendingPool = aTokenData[l1AToken].lendingPool;
@@ -313,7 +303,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
 
         // deposit aToken or underlying asset
 
-        if (fromAsset) {
+        if (fromUnderlyingAsset) {
             underlyingAsset.safeTransferFrom(msg.sender, address(this), amount);
             lendingPool.deposit(
                 address(underlyingAsset),
@@ -353,7 +343,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         address recipient,
         uint256 staticAmount,
         uint256 l2RewardsIndex,
-        bool toAsset
+        bool toUnderlyingAsset
     ) external onlyValidL2Address(l2sender) {
         // check that the function call is valid and emit withdraw event
 
@@ -376,7 +366,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
             lendingPool
         );
 
-        if (toAsset) {
+        if (toUnderlyingAsset) {
             lendingPool.withdraw(underlyingAsset, amount, recipient);
         } else {
             IERC20(l1AToken).safeTransfer(recipient, amount);
@@ -434,7 +424,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         uint256 l2sender,
         address recipient,
         uint256 amount
-    ) external onlyValidL2Address(l2sender) {
+    ) external {
         consumeBridgeRewardMessage(l2sender, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
         transferRewards(recipient, amount);

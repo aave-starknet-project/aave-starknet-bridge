@@ -374,7 +374,7 @@ func handle_index_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
 
     assert_not_zero(l2_token)
 
-    IETHstaticAToken.push_rewards_index(
+    Istatic_a_token.push_rewards_index(
         contract_address=l2_token, block_number=block_number, rewards_index=l1_rewards_index
     )
 

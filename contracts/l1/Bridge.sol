@@ -208,7 +208,7 @@ contract Bridge is GenericGovernance, ContractInitializer, ProxySupport {
         (payload[4], payload[5]) = toSplitUint(currentRewardsIndex);
 
         messagingContract.sendMessageToL2(
-            l2TokenBridge,
+            l2Bridge,
             INDEX_UPDATE_HANDLER,
             payload
         );

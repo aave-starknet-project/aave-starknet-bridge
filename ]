@@ -91,10 +91,17 @@ increasing `aTokens` amounts locked in the bridge contract on Ethereum.
 ### Transfer L1->L2: <a name="transfer-l1--l2-"></a>
 
 
-Users can either bridge their `aToken` (let's say aDai) or deposit the
-underlying asset (i.e Dai). Users will have to approve the bridge to spend the
-underlying `asset` tokens or `aTokens`, depending on the provided value for
-`fromUnderlyingAsset` argument when depositing.
+<<<<<<< HEAD
+Users can either bridge their `aToken` (let's say aDai) or deposit the underlying asset (i.e Dai). Users
+will have to approve the bridge to spend the underlying `asset` tokens or
+`aTokens`, depending on the provided value for `fromUnderlyingAsset` argument
+when depositing.
+=======
+Users can either bridge their `aToken` (let's say aDai) to L2, or deposit the underlying asset (i.e Dai). 
+Users wil have to approve the bridge to spend the underlying `asset` tokens or
+`aTokens`, depending on the provided value for `fromAsset` argument when
+depositing.
+>>>>>>> f9aafc1 (address review)
 
 
 Calling `deposit` allows users deposit `aTokens` or their underlying `asset`: 

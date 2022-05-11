@@ -235,7 +235,7 @@ end
 @view
 func get_user_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     user : felt
-) -> (user_incentivized_erc20_rewards : Uint256):
+) -> (user_claimable_rewards : Uint256):
     alloc_locals
     let (res) = incentivized_erc20_get_claimable_rewards(user)
     return (res.wad)

@@ -369,38 +369,9 @@ describe("Bridge", async function () {
   });
 
   it('Updates rewards on transfer', async () => {
-    //////////////// Needs to be implemented once bridge is updated
-    // await network.provider.send("evm_increaseTime", [1296000])
-    // await network.provider.send("evm_mine")
-
-    // let rewardsBalance = await l2rewAAVE.call("balanceOf", { account: BigInt(l2user.starknetContract.address) });
-    // console.log("Rewards before", rewardsBalance)
-
-    // l1StaticDai.connect(l1user).transfer(l1user.address, 10);
-    // {
-    // const flushL1Response = await starknet.devnet.flush();
-    // const flushL1Messages = flushL1Response.consumed_messages.from_l1;
-    // expect(flushL1Response.consumed_messages.from_l2).to.be.empty;
-    // console.log(flushL1Messages)
-    // expect(flushL1Messages).to.have.a.lengthOf(1);
-    // }
-
-    // await starknet.devnet.flush();
-    // {
-    // const flushL1Response = await starknet.devnet.flush();
-    // const flushL1Messages = flushL1Response.consumed_messages.from_l1;
-    // expect(flushL1Response.consumed_messages.from_l2).to.be.empty;
-    // // expect(flushL1Messages).to.have.a.lengthOf(4);
-    // }
-
-    // // Initiate bridge back rewards from L2
-    // await l2user.invoke(l2StaticADai, "claim_rewards", { recipient: BigInt(l2user.starknetContract.address) });
-    // rewardsBalance = await l2rewAAVE.call("balanceOf", { account: BigInt(l2user.starknetContract.address) });
-    // console.log("Rewards after dai", rewardsBalance)
-    // await l2user.invoke(l2StaticAUsdc, "claim_rewards", { recipient: BigInt(l2user.starknetContract.address) });
-    // rewardsBalance = await l2rewAAVE.call("balanceOf", { account: BigInt(l2user.starknetContract.address) });
-    // console.log("Rewards", rewardsBalance)
-    // await l2user.invoke(l2Bridge, 'bridge_rewards', { l1_recipient: BigInt(l1user.address), amount: {high: 0, low: 30} });
+    // Needs to be implemented once bridge is updated
+    await network.provider.send("evm_increaseTime", [1296000])
+    await network.provider.send("evm_mine")
   });
 
   it('Withdraws aDai and aUsdc to L1 user', async () => {
@@ -493,17 +464,29 @@ describe("Bridge", async function () {
   })
 
   it('L2 user sends back reward accrued to L1 user', async () => {
-    ////// Needs to be implemented when token bridge is updated
-   // // flush L2 messages to be consumed by L1
-   //  const flushL2Response = await starknet.devnet.flush();
-   //  const flushL2Messages = flushL2Response.consumed_messages.from_l2;
-   //  expect(flushL2Response.consumed_messages.from_l1).to.be.empty;
-   //  expect(flushL2Messages).to.have.a.lengthOf(1);
+    const claimableADai = await l2StaticADai.call('get_user_claimable_rewards', {user: BigInt(l2user.starknetContract.address)});
+    const claimableAUsdc = await l2StaticAUsdc.call('get_user_claimable_rewards', {user: BigInt(l2user.starknetContract.address)});
+    console.log(claimableADai)
+    console.log(claimableAUsdc)
 
-   //  // call recieveRewards on L1 to consume messages from L2
-   //  await l1Bridge.connect(l1user).receiveRewards(l1StaticDai.address, l1user.address, 30);
+//     await l2user.invoke(l2StaticADai, "claim_rewards", { recipient: BigInt(l2user.starknetContract.address) });
+//     let claimed = await l2rewAAVE.call("balanceOf", { account: BigInt(l2user.starknetContract.address) });
+//     expect(claimed).to.deep.equal({balance: {high: 0n, low: BigInt(claimableADai)}});
+//     await l2user.invoke(l2StaticADai, "claim_rewards", { recipient: BigInt(l2user.starknetContract.address) });
 
-   //  // check that the l1 user received reward tokens
-   //  expect(await l1AAVE.balanceOf(l1user.address)).to.be.equal(30);
+//     l2rewAAVE.call("balanceOf", { account: BigInt(l2user.starknetContract.address) });
+
+//     // Needs to be implemented when token bridge is updated
+//     // flush L2 messages to be consumed by L1
+//     const flushL2Response = await starknet.devnet.flush();
+//     const flushL2Messages = flushL2Response.consumed_messages.from_l2;
+//     expect(flushL2Response.consumed_messages.from_l1).to.be.empty;
+//     expect(flushL2Messages).to.have.a.lengthOf(1);
+
+//     // call recieveRewards on L1 to consume messages from L2
+//     await l1Bridge.connect(l1user).receiveRewards(l1StaticDai.address, l1user.address, 30);
+
+//     // check that the l1 user received reward tokens
+//     expect(await l1AAVE.balanceOf(l1user.address)).to.be.equal(30);
   })
 });

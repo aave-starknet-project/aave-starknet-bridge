@@ -111,12 +111,12 @@ describe("Bridge", async function () {
     l2BridgeFactory = await starknet.getContractFactory('bridge');
     l2BridgeImpl = await l2BridgeFactory.deploy();
 
-    l2ProxyFactory = await starknet.getContractFactory('rewaave/proxy');
+    l2ProxyFactory = await starknet.getContractFactory('l2/lib/proxy');
     l2BridgeProxy = await l2ProxyFactory.deploy({proxy_admin: BigInt(l2user.starknetContract.address)});
     l2StaticADaiProxy = await l2ProxyFactory.deploy({proxy_admin: BigInt(l2user.starknetContract.address)});
     l2StaticAUsdcProxy = await l2ProxyFactory.deploy({proxy_admin: BigInt(l2user.starknetContract.address)});
 
-    const rewAaveContractFactory = await starknet.getContractFactory('rewaave/tokens/rewAAVE');
+    const rewAaveContractFactory = await starknet.getContractFactory('l2/tokens/rewAAVE');
     l2rewAAVEImpl = await rewAaveContractFactory.deploy();
     l2rewAAVEProxy = await l2ProxyFactory.deploy({
       proxy_admin: BigInt(l2owner.starknetContract.address),

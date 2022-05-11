@@ -57,6 +57,9 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
     // The selector of the "handle_deposit" l1_handler on L2.
     uint256 constant DEPOSIT_HANDLER =
         1285101517810983806491589552491143496277809242732141897358598292095611420389;
+    // The selector of the "handle_withdraw" l1_handler on L2.
+    uint256 constant WITHDRAW_HANDLER =
+        179268159851568349468998593935093187023270143679855315708244680446567170938;
 
     uint256 constant TRANSFER_FROM_STARKNET = 0;
     uint256 constant BRIDGE_REWARD_MESSAGE = 1;
@@ -170,23 +173,14 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         );
     }
 
-    function sendMessage(
+    function sendMessageDeposit(
         address l1Token,
         address from,
         uint256 l2Recipient,
         uint256 amount,
         uint256 blockNumber,
         uint256 currentRewardsIndex
-    ) internal onlyValidL2Address(l2Recipient) {
-        emit LogDeposit(
-            from,
-            l1Token,
-            amount,
-            l2Recipient,
-            blockNumber,
-            currentRewardsIndex
-        );
-
+    ) internal {
         uint256[] memory payload = new uint256[](9);
         payload[0] = uint256(from);
         payload[1] = l2Recipient;
@@ -198,6 +192,34 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         messagingContract.sendMessageToL2(
             l2TokenBridge,
             DEPOSIT_HANDLER,
+            payload
+        );
+
+        emit LogDeposit(
+            from,
+            l1Token,
+            amount,
+            l2Recipient,
+            blockNumber,
+            currentRewardsIndex
+        );
+    }
+
+    function sendMessageWithdraw(
+        address l1Token,
+        address from,
+        uint256 blockNumber,
+        uint256 currentRewardsIndex
+    ) internal {
+        uint256[] memory payload = new uint256[](6);
+        payload[0] = uint256(from);
+        payload[1] = aTokenData[l1Token].l2TokenAddress;
+        (payload[2], payload[3]) = toSplitUint(blockNumber);
+        (payload[4], payload[5]) = toSplitUint(currentRewardsIndex);
+
+        messagingContract.sendMessageToL2(
+            l2TokenBridge,
+            WITHDRAW_HANDLER,
             payload
         );
     }
@@ -289,7 +311,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
             "This aToken has not been approved yet."
         );
 
-        uint256 rewardsIndex = getCurrentRewardsIndex(l1AToken);
+        // deposit aToken or underlying asset
 
         if (fromAsset) {
             underlyingAsset.safeTransferFrom(msg.sender, address(this), amount);
@@ -306,7 +328,12 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
                 amount
             );
         }
-        sendMessage(
+
+        // update L2 state and emit deposit event
+
+        uint256 rewardsIndex = getCurrentRewardsIndex(l1AToken);
+
+        sendMessageDeposit(
             l1AToken,
             msg.sender,
             l2Recipient,
@@ -328,6 +355,8 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         uint256 l2RewardsIndex,
         bool toAsset
     ) external onlyValidL2Address(l2sender) {
+        // check that the function call is valid and emit withdraw event
+
         consumeMessage(
             l1AToken,
             l2sender,
@@ -336,6 +365,8 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
             l2RewardsIndex
         );
         require(recipient != address(0x0), "INVALID_RECIPIENT");
+
+        // withdraw tokens
 
         address underlyingAsset = address(aTokenData[l1AToken].underlyingAsset);
         ILendingPool lendingPool = aTokenData[l1AToken].lendingPool;
@@ -351,23 +382,35 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
             IERC20(l1AToken).safeTransfer(recipient, amount);
         }
 
-        uint256 rewardsAmount = computeRewardsDiff(
+        // update L2 state
+
+        uint256 l1CurrentRewardsIndex = getCurrentRewardsIndex(l1AToken);
+
+        sendMessageWithdraw(
             l1AToken,
+            msg.sender,
+            block.number,
+            l1CurrentRewardsIndex
+        );
+
+        // transfer rewards
+
+        uint256 rewardsAmount = computeRewardsDiff(
             staticAmount,
-            l2RewardsIndex
+            l2RewardsIndex,
+            l1CurrentRewardsIndex
         );
         transferRewards(recipient, rewardsAmount);
     }
 
     function computeRewardsDiff(
-        address l1AToken,
         uint256 amount,
-        uint256 l2RewardsIndex
-    ) internal returns (uint256) {
-        uint256 rewardsIndex = getCurrentRewardsIndex(l1AToken);
+        uint256 l2RewardsIndex,
+        uint256 l1RewardsIndex
+    ) internal pure returns (uint256) {
         uint256 rayAmount = amount.wadToRay();
         return
-            (rayAmount.rayMulNoRounding(rewardsIndex.sub(l2RewardsIndex)))
+            (rayAmount.rayMulNoRounding(l1RewardsIndex.sub(l2RewardsIndex)))
                 .rayToWad();
     }
 

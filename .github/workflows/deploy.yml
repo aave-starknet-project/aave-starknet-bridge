@@ -8,7 +8,7 @@ on:
 
 env:
   ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
-  MNEMONIC: ${{ secrets.MNEMONIC }}
+  PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
   BLOCK_NUMBER: "14633843"
   DAI_WHALE: "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0"
   USDC_WHALE: "0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503"

@@ -5,14 +5,14 @@ import { deployL1Bridge, deployL2Bridge } from "./deployBridge";
 import { starknet, ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-const { AaveIncentivesController, starknetMessagingContract } = process.env;
+const { INCENTIVES_CONTROLLER, STARKNET_MESSAGING_CONTRACT } = process.env;
 
 async function deployAll() {
   try {
     let l2deployer: Account;
     let l1deployer: SignerWithAddress;
 
-    if (!starknetMessagingContract || !AaveIncentivesController) {
+    if (!STARKNET_MESSAGING_CONTRACT || !INCENTIVES_CONTROLLER) {
       throw new Error("Please initialize your .env file correctly");
     }
 
@@ -58,8 +58,8 @@ async function deployAll() {
     await deployL1Bridge(
       l1deployer,
       L2ProxyBridge.address,
-      starknetMessagingContract,
-      AaveIncentivesController
+      STARKNET_MESSAGING_CONTRACT,
+      INCENTIVES_CONTROLLER
     );
 
     console.log("Deploying ETHStaticATokens...");

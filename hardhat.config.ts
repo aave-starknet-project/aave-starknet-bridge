@@ -10,10 +10,10 @@ dotenvConfig({ path: resolve(__dirname, "./.env") });
 
 chai.use(solidity);
 
-const { MNEMONIC, ALCHEMY_KEY } = process.env;
+const { PRIVATE_KEY, ALCHEMY_KEY } = process.env;
 
-if (!MNEMONIC) {
-  throw new Error("Please set your MNEMONIC in your .env file");
+if (!PRIVATE_KEY) {
+  throw new Error("Please set your PRIVATE_KEY in your .env file");
 }
 
 /* if (!ALCHEMY_KEY) {
@@ -66,10 +66,10 @@ const config: HardhatUserConfig = {
     l1_testnet: {
       url: "http://localhost:8545",
     },
-    // mainnet: {
-    //   url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,
-    //   accounts: [MNEMONIC],
-    // },
+    mainnet: {
+      url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,
+      accounts: [PRIVATE_KEY],
+    },
   },
 };
 

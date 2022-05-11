@@ -329,7 +329,7 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 end
 
 @l1_handler
-func handle_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func handle_index_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     from_address : felt,
     l1_sender : felt,
     l2_token : felt,

@@ -57,9 +57,9 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
     // The selector of the "handle_deposit" l1_handler on L2.
     uint256 constant DEPOSIT_HANDLER =
         1285101517810983806491589552491143496277809242732141897358598292095611420389;
-    // The selector of the "handle_withdraw" l1_handler on L2.
-    uint256 constant WITHDRAW_HANDLER =
-        179268159851568349468998593935093187023270143679855315708244680446567170938;
+    // The selector of the "handle_index_update" l1_handler on L2.
+    uint256 constant INDEX_UPDATE_HANDLER =
+        309177621854413231845513563663819170511421561802461396722380275428414897390;
 
     uint256 constant TRANSFER_FROM_STARKNET = 0;
     uint256 constant BRIDGE_REWARD_MESSAGE = 1;
@@ -163,7 +163,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         emit LogTokenAdded(l1AToken, l2Token);
     }
 
-    function sendMessageDeposit(
+    function sendDepositMessage(
         address l1Token,
         address from,
         uint256 l2Recipient,
@@ -195,7 +195,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         );
     }
 
-    function sendMessageWithdraw(
+    function sendIndexUpdateMessage(
         address l1Token,
         address from,
         uint256 blockNumber,
@@ -209,7 +209,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
 
         messagingContract.sendMessageToL2(
             l2TokenBridge,
-            WITHDRAW_HANDLER,
+            INDEX_UPDATE_HANDLER,
             payload
         );
     }
@@ -286,13 +286,24 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
                 .add(index); // 18- precision, should be loaded
     }
 
+    function updateL2State(address l1AToken) external onlyGovernance {
+        uint256 rewardsIndex = getCurrentRewardsIndex(l1AToken);
+
+        sendIndexUpdateMessage(
+            l1AToken,
+            msg.sender,
+            block.number,
+            rewardsIndex
+        );
+    }
+
     function deposit(
         address l1AToken,
         uint256 l2Recipient,
         uint256 amount,
         uint16 referralCode,
         bool fromUnderlyingAsset
-    ) external onlyValidL2Address(l2Recipient) {
+    ) external onlyValidL2Address(l2Recipient) returns (uint256) {
         IERC20 underlyingAsset = aTokenData[l1AToken].underlyingAsset;
         ILendingPool lendingPool = aTokenData[l1AToken].lendingPool;
         require(
@@ -323,18 +334,22 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
 
         uint256 rewardsIndex = getCurrentRewardsIndex(l1AToken);
 
-        sendMessageDeposit(
+        uint256 staticAmount = _dynamicToStaticAmount(
+            amount,
+            address(underlyingAsset),
+            lendingPool
+        );
+
+        sendDepositMessage(
             l1AToken,
             msg.sender,
             l2Recipient,
-            _dynamicToStaticAmount(
-                amount,
-                address(underlyingAsset),
-                lendingPool
-            ),
+            staticAmount,
             block.number,
             rewardsIndex
         );
+
+        return staticAmount;
     }
 
     function withdraw(
@@ -344,7 +359,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
         uint256 staticAmount,
         uint256 l2RewardsIndex,
         bool toUnderlyingAsset
-    ) external onlyValidL2Address(l2sender) {
+    ) external {
         // check that the function call is valid and emit withdraw event
 
         consumeMessage(
@@ -376,7 +391,7 @@ contract TokenBridge is GenericGovernance, ContractInitializer, ProxySupport {
 
         uint256 l1CurrentRewardsIndex = getCurrentRewardsIndex(l1AToken);
 
-        sendMessageWithdraw(
+        sendIndexUpdateMessage(
             l1AToken,
             msg.sender,
             block.number,

@@ -5,12 +5,16 @@ import { deployL1Bridge, deployL2Bridge } from "./deployBridge";
 import { starknet, ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-const starknetMessagingContract = "0xae0Ee0A63A2cE6BaeEFFE56e7714FB4EFE48D419";
+const { INCENTIVES_CONTROLLER, STARKNET_MESSAGING_CONTRACT } = process.env;
 
 async function deployAll() {
   try {
     let l2deployer: Account;
     let l1deployer: SignerWithAddress;
+
+    if (!STARKNET_MESSAGING_CONTRACT || !INCENTIVES_CONTROLLER) {
+      throw new Error("Please initialize your .env file correctly, see .env.sample for details.");
+    }
 
     [l1deployer] = await ethers.getSigners();
     l2deployer = await starknet.deployAccount("OpenZeppelin");
@@ -54,7 +58,8 @@ async function deployAll() {
     await deployL1Bridge(
       l1deployer,
       L2ProxyBridge.address,
-      starknetMessagingContract
+      STARKNET_MESSAGING_CONTRACT,
+      INCENTIVES_CONTROLLER
     );
 
     console.log("Deploying ETHStaticATokens...");
@@ -66,7 +71,7 @@ async function deployAll() {
       18n,
       { high: 0n, low: 0n },
       BigInt(l2deployer.starknetContract.address),
-      BigInt(L2ProxyBridge.address),
+      BigInt(L2ProxyBridge.address)
     );
     console.log("deployed successfully");
   } catch (error) {

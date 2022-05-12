@@ -71,7 +71,7 @@ staticATokens are an implementation of the wrapped aTokens that will continuousl
 
 
 Users can either bridge their aToken (let's say aDai) to L2 by calling `deposit()` on `TokenBridge`, or deposit the underlying asset (i.e Dai).
-Users wil have to approve the bridge to spend the underlying `asset` tokens or `aTokens`, depending on the provided value for `fromAsset` argument when depositing.
+Users wil have to approve the bridge to spend the underlying `asset` tokens or `aTokens`, depending on the provided value for `fromUnderlyingAsset` argument when depositing.
 
 
 Calling `deposit` allows users deposit `aToken` or their underlying `asset`: 

@@ -342,36 +342,42 @@ func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
     # mints rewAAVE for user
     IERC20.mint(reward_token, recipient, amount)
     minted_rewards.emit(reward_token, recipient, amount)
-
     return ()
 end
 
 @l1_handler
-func handle_rewards_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func handle_index_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     from_address : felt,
+    l1_sender : felt,
+    l2_token : felt,
     block_number_low : felt,
     block_number_high : felt,
-    l2_token : felt,
-    rewards_low : felt,
-    rewards_high : felt,
+    l1_rewards_index_low : felt,
+    l1_rewards_index_high : felt,
 ):
     alloc_locals
     only_l1_handler(from_address_=from_address)
 
-    let rewards = Uint256(low=rewards_low, high=rewards_high)
+    let l1_rewards_index_ = Uint256(low=l1_rewards_index_low, high=l1_rewards_index_high)
+    local l1_rewards_index : Ray = Ray(l1_rewards_index_)
+
     let block_number = Uint256(low=block_number_low, high=block_number_high)
 
-    with_attr error_message("High or low overflows 128 bit bound {rewards}"):
-        uint256_check(rewards)
+    with_attr error_message("High or low overflows 128 bit bound {l1_rewards_index_}"):
+        uint256_check(l1_rewards_index_)
     end
+
     with_attr error_message("High or low overflows 128 bit bound {block_number}"):
         uint256_check(block_number)
     end
 
-    # push rewards
+    assert_not_zero(l2_token)
+
     IETHstaticAToken.push_rewards_index(
-        contract_address=l2_token, block_number=block_number, rewards_index=Ray(rewards)
+        contract_address=l2_token, block_number=block_number, rewards_index=l1_rewards_index
     )
 
     return ()
 end
+
+

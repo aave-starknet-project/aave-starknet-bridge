@@ -21,7 +21,7 @@ export async function deployETHStaticAToken(
   decimals: bigint,
   initial_supply: { low: bigint; high: bigint },
   owner: bigint,
-  l2_token_bridge: bigint,
+  l2_token_bridge: bigint
 ) {
   let proxiedETHStaticAToken: StarknetContract;
   let tokenImplementation: StarknetContract;

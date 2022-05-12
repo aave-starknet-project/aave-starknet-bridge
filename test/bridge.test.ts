@@ -400,7 +400,7 @@ describe("Bridge", async function () {
     // check that tokens have been transfered to l1user
     // +1 to account for adai accrued since the deposit
     expect(await aDai.balanceOf(l1user.address)).to.equal(l1InitialADaiBalance + 1);
-    expect(await aUsdc.balanceOf(l1user.address)).to.equal(l1InitialAUsdcBalance);
+    expect(await aUsdc.balanceOf(l1user.address)).to.equal(l1InitialAUsdcBalance + 1);
     expect(await aDai.balanceOf(l1Bridge.address)).to.equal(30);
     expect(await aUsdc.balanceOf(l1Bridge.address)).to.equal(40);
 

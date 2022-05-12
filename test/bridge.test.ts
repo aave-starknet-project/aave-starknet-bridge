@@ -343,14 +343,14 @@ describe("Bridge", async function () {
 
     // l1user deposits 30 dai and 40 usdc on L1 for l2user on L2
     l1InitialDaiBalance = await dai.balanceOf(l1user.address);
-    txDai = await l1Bridge.connect(l1user).deposit(aDai.address, BigInt(l2user.starknetContract.address), 30 * WAD, 0, true);
+    txDai = await l1Bridge.connect(l1user).deposit(aDai.address, BigInt(l2user.starknetContract.address), WAD.multipliedBy(30), 0, true);
     blockNumberDai = txDai.blockNumber;
-    expect(await dai.balanceOf(l1user.address)).to.equal(l1InitialDaiBalance - 30 * WAD);
+    expect(await dai.balanceOf(l1user.address)).to.equal(l1InitialDaiBalance.sub(WAD.multipliedBy(30) as unknown as BigNumberish));
 
     l1InitialUsdcBalance = await usdc.balanceOf(l1user.address);
-    txUsdc = await l1Bridge.connect(l1user).deposit(aUsdc.address, BigInt(l2user.starknetContract.address), 40 * WAD, 0, true);
+    txUsdc = await l1Bridge.connect(l1user).deposit(aUsdc.address, BigInt(l2user.starknetContract.address), WAD.multipliedBy(40), 0, true);
     blockNumberUsdc = txUsdc.blockNumber;
-    expect(await usdc.balanceOf(l1user.address)).to.equal(l1InitialUsdcBalance - 40 * WAD);
+    expect(await usdc.balanceOf(l1user.address)).to.equal(l1InitialUsdcBalance.sub(WAD.multipliedBy(40) as unknown as BigNumberish));
 
     expect(await dai.balanceOf(l1Bridge.address)).to.equal(0);
     expect(await usdc.balanceOf(l1Bridge.address)).to.equal(0);

@@ -302,12 +302,12 @@ describe("Bridge", async function () {
     await aUsdc.connect(l1user).approve(l1Bridge.address, MAX_UINT256);
 
     // l1user deposits 30 aDai and 40 aUsdc on L1 for l2user on L2
-    l1InitialADaiBalance = await aDai.balanceOf(l1user.address);
+    l1InitialADaiBalance = parseInt(await aDai.balanceOf(l1user.address));
     txDai = await l1Bridge.connect(l1user).deposit(aDai.address, BigInt(l2user.starknetContract.address), 30, 0, false);
     blockNumberDai = txDai.blockNumber;
     expect(await aDai.balanceOf(l1user.address)).to.equal(l1InitialADaiBalance-30);
 
-    l1InitialAUsdcBalance = await aUsdc.balanceOf(l1user.address);
+    l1InitialAUsdcBalance = parseInt(await aUsdc.balanceOf(l1user.address));
     txUsdc = await l1Bridge.connect(l1user).deposit(aUsdc.address, BigInt(l2user.starknetContract.address), 40, 0, false);
     blockNumberUsdc = txUsdc.blockNumber;
     /////// WARNING: there is an off by 1 here because the previous action updates the aToken rate
@@ -399,7 +399,7 @@ describe("Bridge", async function () {
 
     // check that tokens have been transfered to l1user
     // +1 to account for adai accrued since the deposit
-    expect(await aDai.balanceOf(l1user.address)).to.equal(l1InitialADaiBalance + 1);
+    expect(await aDai.balanceOf(l1user.address)).to.equal(l1InitialADaiBalance);
     expect(await aUsdc.balanceOf(l1user.address)).to.equal(l1InitialAUsdcBalance);
     expect(await aDai.balanceOf(l1Bridge.address)).to.equal(30);
     expect(await aUsdc.balanceOf(l1Bridge.address)).to.equal(40);

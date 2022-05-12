@@ -88,14 +88,6 @@ func get_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
     return (res)
 end
 
-func is_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(l2_token : felt):
-    let (l1_token) = l2_token_to_l1_token.read(l2_token)
-    with_attr error_message("No l1 token found for {l2_token}"):
-        assert_not_zero(l1_token)
-    end
-    return ()
-end
-
 @view
 func get_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     res : felt
@@ -104,7 +96,17 @@ func get_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
     return (res)
 end
 
-# Internals.
+# Internals
+
+func is_valid_l1_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    l2_token : felt
+):
+    let (l1_token) = l2_token_to_l1_token.read(l2_token)
+    with_attr error_message("No l1 token found for {l2_token}"):
+        assert_not_zero(l1_token)
+    end
+    return ()
+end
 
 func only_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (caller_address) = get_caller_address()
@@ -125,9 +127,8 @@ func only_l1_handler{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
     return ()
 end
 
-# Externals.
+# Externals
 
-# To finish the init you have to initialize the L2 token contract and the L1 bridge contract.
 @external
 func initialize_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     governor_address : felt
@@ -145,7 +146,6 @@ end
 func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l1_bridge_address : felt
 ):
-    # The call is restricted to the governor.
     only_governor()
 
     # Check l1_bridge isn't already set.
@@ -166,7 +166,7 @@ func set_reward_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
     reward_token : felt
 ):
     alloc_locals
-    # The call is restricted to the governor.
+
     only_governor()
 
     rewAAVE.write(reward_token)
@@ -177,18 +177,19 @@ end
 func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l1_token : felt, l2_token : felt
 ):
-    # The call is restricted to the governor.
+    # the call is restricted to the governor.
     only_governor()
+
+    # verify that the l2 token address was provided
+    assert_not_zero(l2_token)
 
     let (l1_token_) = l2_token_to_l1_token.read(l2_token)
     with_attr error_message("L2 to L1 Bridge already setup"):
         assert l1_token_ = 0
     end
 
-    assert_not_zero(l2_token)
     assert_not_zero(l1_token)
     assert_lt_felt(l1_token, ETH_ADDRESS_BOUND)
-
     l2_token_to_l1_token.write(l2_token, l1_token)
     return ()
 end
@@ -197,14 +198,11 @@ end
 func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l2_token : felt, l1_recipient : felt, amount : Uint256
 ):
-    # The amount is validated (i.e. amount.low, amount.high < 2**128) by an inner call to
-    # IMintableToken burn function.
-
     assert_not_zero(l2_token)
 
     let (to_address) = get_l1_token_bridge()
 
-    # Check address is valid.
+    # check l1 address is valid.
     assert_lt_felt(l1_recipient, ETH_ADDRESS_BOUND)
 
     let (l1_token) = l2_token_to_l1_token.read(l2_token)
@@ -214,12 +212,10 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
 
     let (current_rewards_index) = IETHstaticAToken.get_rewards_index(contract_address=l2_token)
 
-    # Call burn on l2_token contract.
+    # call burn on l2_token contract.
     let (caller_address) = get_caller_address()
 
-    IERC20.burn(contract_address=l2_token, account=caller_address, amount=amount)
-
-    # Send the message.
+    # prepare l1 message
     let (message_payload : felt*) = alloc()
     assert message_payload[0] = WITHDRAW_MESSAGE
     assert message_payload[1] = l1_token
@@ -230,7 +226,12 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     assert message_payload[6] = current_rewards_index.ray.low
     assert message_payload[7] = current_rewards_index.ray.high
 
+    # burn static_a_tokens
+    IERC20.burn(contract_address=l2_token, account=caller_address, amount=amount)
+
+    # send witdraw message to l1
     send_message_to_l1(to_address=to_address, payload_size=8, payload=message_payload)
+
     withdraw_initiated.emit(
         l2_token, l1_recipient, amount, caller_address, current_rewards_index.ray
     )
@@ -247,10 +248,7 @@ func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 
     let (reward_token) = rewAAVE.read()
 
-    # BURN REWARD TOKEN
-    IERC20.burn(contract_address=reward_token, account=token_owner, amount=amount)
-
-    # Send message for bridging tokens
+    # prepare l1 message for bridging tokens
     let (message_payload : felt*) = alloc()
     assert message_payload[0] = BRIDGE_REWARD_MESSAGE
     assert message_payload[1] = token_owner
@@ -258,7 +256,12 @@ func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     assert message_payload[3] = amount.low
     assert message_payload[4] = amount.high
 
+    # burn rewards
+    IERC20.burn(contract_address=reward_token, account=token_owner, amount=amount)
+
+    # send message to l1
     send_message_to_l1(to_address=to_address, payload_size=5, payload=message_payload)
+
     bridged_rewards.emit(token_owner, l1_recipient, amount)
 
     return ()
@@ -333,8 +336,8 @@ func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
 ):
     # get the address of the ETHStaticAToken
     let (l2_token) = get_caller_address()
-    # Verify that it's a valid token by checking for its counterpart on l1
-    is_token(l2_token)
+    # check if l1 token exists
+    is_valid_l1_token(l2_token)
     let (reward_token) = rewAAVE.read()
     # mints rewAAVE for user
     IERC20.mint(reward_token, recipient, amount)

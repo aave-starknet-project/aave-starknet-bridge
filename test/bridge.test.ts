@@ -444,7 +444,7 @@ describe("Bridge", async function () {
     blockNumberUsdc = txUsdc.blockNumber;
 
     // check that tokens have been transfered to l1user
-    expect(await dai.balanceOf(l1user.address)).to.equal(l1InitialDaiBalance);
+    expect(await dai.balanceOf(l1user.address)).to.equal(l1InitialDaiBalance + 1);
     expect(await usdc.balanceOf(l1user.address)).to.equal(l1InitialUsdcBalance);
     expect(await aDai.balanceOf(l1Bridge.address)).to.equal(0);
     expect(await aUsdc.balanceOf(l1Bridge.address)).to.equal(0);

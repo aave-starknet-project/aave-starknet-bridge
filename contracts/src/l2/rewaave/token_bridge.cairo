@@ -379,5 +379,3 @@ func handle_index_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
 
     return ()
 end
-
-

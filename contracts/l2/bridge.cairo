@@ -13,7 +13,8 @@ from starkware.cairo.common.uint256 import (
 )
 from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address
-from rewaave.math.wad_ray_math import (
+
+from contracts.l2.lib.wad_ray_math import (
     Ray,
     Wad,
     ray_sub,
@@ -22,8 +23,8 @@ from rewaave.math.wad_ray_math import (
     ray_le,
     ray_to_wad_no_rounding,
 )
-from rewaave.tokens.IERC20 import IERC20
-from rewaave.tokens.IETHstaticAToken import IETHstaticAToken
+from contracts.l2.interfaces.IERC20 import IERC20
+from contracts.l2.interfaces.Istatic_a_token import Istatic_a_token
 
 const WITHDRAW_MESSAGE = 0
 const BRIDGE_REWARD_MESSAGE = 1
@@ -36,7 +37,7 @@ func governor() -> (res : felt):
 end
 
 @storage_var
-func l1_token_bridge() -> (res : felt):
+func l1_bridge() -> (res : felt):
 end
 
 @storage_var
@@ -89,10 +90,10 @@ func get_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
 end
 
 @view
-func get_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+func get_l1_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     res : felt
 ):
-    let (res) = l1_token_bridge.read()
+    let (res) = l1_bridge.read()
     return (res)
 end
 
@@ -120,8 +121,8 @@ end
 func only_l1_handler{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     from_address_ : felt
 ):
-    let (expected_from_address) = get_l1_token_bridge()
-    with_attr error_message("Expected deposit from l1_token_bridge: {expected_from_address}"):
+    let (expected_from_address) = get_l1_bridge()
+    with_attr error_message("Expected deposit from l1_bridge: {expected_from_address}"):
         assert from_address_ = expected_from_address
     end
     return ()
@@ -130,7 +131,7 @@ end
 # Externals
 
 @external
-func initialize_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func initialize_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     governor_address : felt
 ):
     let (governor_) = governor.read()
@@ -143,13 +144,13 @@ func initialize_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, r
 end
 
 @external
-func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func set_l1_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l1_bridge_address : felt
 ):
     only_governor()
 
     # Check l1_bridge isn't already set.
-    let (l1_bridge_) = get_l1_token_bridge()
+    let (l1_bridge_) = get_l1_bridge()
     assert l1_bridge_ = 0
 
     # Check new address is valid.
@@ -157,7 +158,7 @@ func set_l1_token_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
     assert_not_zero(l1_bridge_address)
 
     # Set new value.
-    l1_token_bridge.write(value=l1_bridge_address)
+    l1_bridge.write(value=l1_bridge_address)
     return ()
 end
 
@@ -200,7 +201,7 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
 ):
     assert_not_zero(l2_token)
 
-    let (to_address) = get_l1_token_bridge()
+    let (to_address) = get_l1_bridge()
 
     # check l1 address is valid.
     assert_lt_felt(l1_recipient, ETH_ADDRESS_BOUND)
@@ -210,7 +211,7 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
         assert_not_zero(l1_token)
     end
 
-    let (current_rewards_index) = IETHstaticAToken.get_rewards_index(contract_address=l2_token)
+    let (current_rewards_index) = Istatic_a_token.get_rewards_index(contract_address=l2_token)
 
     # call burn on l2_token contract.
     let (caller_address) = get_caller_address()
@@ -242,7 +243,7 @@ end
 func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l1_recipient : felt, amount : Uint256
 ):
-    let (to_address) = get_l1_token_bridge()
+    let (to_address) = get_l1_bridge()
 
     let (token_owner) = get_caller_address()
 
@@ -308,10 +309,10 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     let (reward_token) = rewAAVE.read()
 
     # handle the difference of the index at send and recieve
-    let (current_index) = IETHstaticAToken.get_rewards_index(l2_token)
+    let (current_index) = Istatic_a_token.get_rewards_index(l2_token)
     let (le) = ray_le(current_index, l1_rewards_index)
     if le == 1:
-        IETHstaticAToken.push_rewards_index(
+        Istatic_a_token.push_rewards_index(
             contract_address=l2_token, block_number=block_number, rewards_index=l1_rewards_index
         )
     else:
@@ -373,7 +374,7 @@ func handle_index_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
 
     assert_not_zero(l2_token)
 
-    IETHstaticAToken.push_rewards_index(
+    Istatic_a_token.push_rewards_index(
         contract_address=l2_token, block_number=block_number, rewards_index=l1_rewards_index
     )
 

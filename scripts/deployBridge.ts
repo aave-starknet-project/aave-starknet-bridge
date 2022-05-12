@@ -6,10 +6,10 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import fs from "fs";
 import { Contract, ContractFactory } from "ethers";
-import hre, { starknet, network, ethers } from "hardhat";
+import { starknet, ethers } from "hardhat";
 
 /**
- * deploys and initializes ETHStaticAToken on L2
+ * deploys and initializes static_a_token on L2
  * @param deployer the deployer starknet account
  * @param proxy_admin address of the proxy owner
  */
@@ -19,7 +19,7 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
   let proxyFactoryL2: StarknetContractFactory;
   let proxyBridge: StarknetContract;
 
-  const L2BridgeFactory = await starknet.getContractFactory("token_bridge");
+  const L2BridgeFactory = await starknet.getContractFactory("bridge");
   proxyFactoryL2 = await starknet.getContractFactory("proxy");
 
   console.log("deploying L2 proxy bridge...");
@@ -43,7 +43,7 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
   proxiedBridge = L2BridgeFactory.getContractAt(proxyBridge.address);
 
   console.log("initializing L2 bridge...");
-  await deployer.invoke(proxiedBridge, "initialize_token_bridge", {
+  await deployer.invoke(proxiedBridge, "initialize_bridge", {
     governor_address: proxy_admin,
   });
 
@@ -51,68 +51,70 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
 }
 
 /**
- * deploys and initializes ETHStaticAToken on L2
+ * deploys and initializes static_a_token on L2
  * @param signer the deployer starknet account
- * @param  proxyTokenBridgeL2 address of the proxy bridge on L2
+ * @param  l2BridgeAddress address of the proxy bridge on L2
  * @param starknetMessagingAddress
  */
 export async function deployL1Bridge(
   signer: SignerWithAddress,
-  proxyTokenBridgeL2: string,
+  l2BridgeAddress: string,
   starknetMessagingAddress: string,
   incentivesController: string
 ) {
-  let tokenBridgeL1: ContractFactory;
-  let tokenBridgeL1Implementation: Contract;
-  let tokenBridgeL1Proxy: Contract;
-  let proxyBridgeFactory: ContractFactory;
-  let proxiedBridge: Contract;
+  let bridgeFactory: ContractFactory;
+  let bridgeImpl: Contract;
+  let bridgeProxy: Contract;
+  let proxyFactory: ContractFactory;
+  let bridge: Contract;
 
   try {
     const abiCoder = new ethers.utils.AbiCoder();
-    tokenBridgeL1 = await ethers.getContractFactory("TokenBridge", signer);
-    tokenBridgeL1Implementation = await tokenBridgeL1.deploy();
-    await tokenBridgeL1Implementation.deployed();
+    bridgeFactory = await ethers.getContractFactory("Bridge", signer);
+    bridgeImpl = await bridgeFactory.deploy();
+    await bridgeImpl.deployed();
 
-    proxyBridgeFactory = await ethers.getContractFactory("ProxyBridge", signer);
-    tokenBridgeL1Proxy = await proxyBridgeFactory.deploy();
-    await tokenBridgeL1Proxy.deployed();
+    proxyFactory = await ethers.getContractFactory("ProxyBridge", signer);
+    bridgeProxy = await proxyFactory.deploy();
+    await bridgeProxy.deployed();
 
     const initData = abiCoder.encode(
       ["address", "uint256", "address", "address"],
       [
         "0x0000000000000000000000000000000000000000",
-        proxyTokenBridgeL2,
+        l2BridgeAddress,
         starknetMessagingAddress,
         incentivesController,
       ]
     );
-    await tokenBridgeL1Proxy.addImplementation(
-      tokenBridgeL1Implementation.address,
+    await bridgeProxy.addImplementation(
+      bridgeImpl.address,
       initData,
       false
     );
-    await tokenBridgeL1Proxy.upgradeTo(
-      tokenBridgeL1Implementation.address,
+    await bridgeProxy.upgradeTo(
+      bridgeImpl.address,
       initData,
       false
     );
 
-    proxiedBridge = await ethers.getContractAt(
-      "TokenBridge",
-      tokenBridgeL1Proxy.address,
+    bridge = await ethers.getContractAt(
+      "Bridge",
+      bridgeProxy.address,
       signer
     );
 
     fs.writeFileSync(
       "deployment/L1Bridge.json",
       JSON.stringify({
-        implementation: tokenBridgeL1Implementation.address,
-        proxy: tokenBridgeL1Proxy.address,
+        implementation: bridgeImpl.address,
+        proxy: bridgeProxy.address,
         starknetMessagingAddress: starknetMessagingAddress,
-        proxyTokenBridgeL2: proxyTokenBridgeL2,
+        l2Bridge: l2BridgeAddress,
       })
     );
+
+    return bridge;
   } catch (error) {
     console.log(error);
   }

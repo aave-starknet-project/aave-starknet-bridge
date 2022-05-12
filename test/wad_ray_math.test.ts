@@ -9,7 +9,7 @@ describe('wad_ray_math', function () {
   let wadRayTestContract: StarknetContract;
 
   before(async () => {
-    wadRayTestContract = await (await starknet.getContractFactory('WadRayTests')).deploy();
+    wadRayTestContract = await (await starknet.getContractFactory('wad_ray_tests')).deploy();
   });
 
   it('multiplies wads', async () => {

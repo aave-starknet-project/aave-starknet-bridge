@@ -20,9 +20,9 @@ jobs:
     strategy:
       matrix:
         tests: [
-          "ETHStaticAToken.test.ts",
+          "static_a_token.test.ts",
           "proxy.test.ts",
-          "tokenbridge.test.ts",
+          "bridge.test.ts",
           "wad_ray_math.test.ts"
         ]
         python-version: ["3.7"] # Cairo was tested with this version

@@ -1,13 +1,10 @@
-import {
-  StarknetContract,
-  Account,
-} from "hardhat/types";
+import { StarknetContract, Account } from "hardhat/types";
 import { starknet } from "hardhat";
 import { TIMEOUT, L1_TEST_ADDRESS } from "./constants";
 import { expect } from "chai";
 import { wadToRay, decimalToWad } from "../helpers/rayMath";
 
-describe("ETHStaticAToken", function () {
+describe("static_a_token", function () {
   this.timeout(TIMEOUT);
 
   let token: StarknetContract;
@@ -32,7 +29,7 @@ describe("ETHStaticAToken", function () {
 
     token = await tokenFactory.deploy();
     rewAAVE = await rewAAVEFactory.deploy();
-    tokenBridge = await l2TokenBridgeFactory.deploy()
+    tokenBridge = await l2TokenBridgeFactory.deploy();
 
     await owner.invoke(token, "initialize_static_a_token", {
       name: 1234n,
@@ -52,7 +49,7 @@ describe("ETHStaticAToken", function () {
       owner: BigInt(tokenBridge.address),
     });
     await owner.invoke(tokenBridge, "initialize_bridge", {
-      governor_address: BigInt(owner.starknetContract.address)
+      governor_address: BigInt(owner.starknetContract.address),
     });
 
     //set rewAave address on l2 token bridge
@@ -161,19 +158,17 @@ describe("ETHStaticAToken", function () {
       },
     });
 
-    const { rewards_index } = await token.call(
-      "get_rewards_index"
-    );
+    const { rewards_index } = await token.call("get_rewards_index");
 
     expect(rewards_index).to.deep.equal({
       ray: {
         high: 0n,
         low: BigInt(decimalToWad(2)),
-      }
+      },
     });
   });
 
-  it("disallows rando from updating rewards index", async () => {
+  it("disallows random account from updating rewards index", async () => {
     try {
       await user1.invoke(token, "push_rewards_index", {
         block_number: {
@@ -245,9 +240,35 @@ describe("ETHStaticAToken", function () {
     });
   });
 
-  it("claims rewards and mints correct amount of rewards tokens to self", async () => {
-    // We need to use a real bridge implementation now to see the
-    // reward minting in action
+  it("mints no rewards tokens if caller has no claimable rewards", async () => {
+    //user 2 has no l2 tokens so far
+    const user2ClaimableRewards = await token.call(
+      "get_user_claimable_rewards",
+      {
+        user: BigInt(user2.starknetContract.address),
+      }
+    );
+    expect(user2ClaimableRewards.user_claimable_rewards).to.deep.equal({
+      high: 0n,
+      low: 0n,
+    });
+
+    await owner.invoke(token, "set_l2_bridge", {
+      l2_bridge: BigInt(tokenBridge.address),
+    });
+    //user 2 tries to claim rewards
+    await user2.invoke(token, "claim_rewards", {
+      recipient: BigInt(user2.starknetContract.address),
+    });
+
+    const user2RewardsBalance = await rewAAVE.call("balanceOf", {
+      account: BigInt(user1.starknetContract.address),
+    });
+
+    expect(user2RewardsBalance.balance).to.deep.equal({ high: 0n, low: 0n });
+  });
+
+  it("claims rewards and mints correct amount of rewards tokens to caller", async () => {
     await owner.invoke(token, "set_l2_bridge", {
       l2_bridge: BigInt(tokenBridge.address),
     });
@@ -272,7 +293,7 @@ describe("ETHStaticAToken", function () {
     );
   });
 
-  it("returns correct user pending rewards after claim", async () => {
+  it("returns correct pending rewards after claim", async () => {
     const userClaimableRewards = await token.call(
       "get_user_claimable_rewards",
       {
@@ -286,29 +307,36 @@ describe("ETHStaticAToken", function () {
     });
   });
 
-  it("updates user accumulated rewards per token after claim", async () => {
-    const usersRewardsIndex = await token.call(
-      "get_user_rewards_index",
-      {
-        user: BigInt(user1.starknetContract.address),
-      }
-    );
+  it("keeps track of each user rewards index correctly", async () => {
+    //after claim user1 should have the latest rewards index
 
-    expect(usersRewardsIndex.user_rewards_index).to.deep.equal(
-      {
-        high: 0n,
-        low: BigInt(decimalToWad(2)),
-      }
+    const user1RewardsIndex = await token.call("get_user_rewards_index", {
+      user: BigInt(user1.starknetContract.address),
+    });
+
+    expect(user1RewardsIndex.user_rewards_index).to.deep.equal({
+      high: 0n,
+      low: BigInt(decimalToWad(2)),
+    });
+
+    // user2 rewards index shouldn't be updated
+    const user2RewardsIndex = await token.call("get_user_rewards_index", {
+      user: BigInt(user2.starknetContract.address),
+    });
+
+    expect(user1RewardsIndex.user_rewards_index).to.not.equal(
+      user2RewardsIndex.user_rewards_index
     );
+    expect(user2RewardsIndex.user_rewards_index).to.deep.equal({
+      high: 0n,
+      low: 0n,
+    });
   });
 
   it("mints rewards correctly to different user", async () => {
-    const user2RewAaveBalanceBeforeClaim = await rewAAVE.call(
-      "balanceOf",
-      {
-        account: BigInt(user2.starknetContract.address),
-      }
-    );
+    const user2RewAaveBalanceBeforeClaim = await rewAAVE.call("balanceOf", {
+      account: BigInt(user2.starknetContract.address),
+    });
 
     //check that balance is indeed zero
     expect(user2RewAaveBalanceBeforeClaim.balance).to.deep.equal({
@@ -352,12 +380,9 @@ describe("ETHStaticAToken", function () {
       recipient: BigInt(user2.starknetContract.address),
     });
 
-    const user2RewAaveBalanceAfterClaim = await rewAAVE.call(
-      "balanceOf",
-      {
-        account: BigInt(user2.starknetContract.address),
-      }
-    );
+    const user2RewAaveBalanceAfterClaim = await rewAAVE.call("balanceOf", {
+      account: BigInt(user2.starknetContract.address),
+    });
 
     expect(user2RewAaveBalanceAfterClaim.balance).to.deep.equal(
       user1ClaimableRewards.user_claimable_rewards
@@ -380,11 +405,11 @@ describe("ETHStaticAToken", function () {
         ray: {
           high: 0,
           low: BigInt(decimalToWad(4)),
-        }
+        },
       },
     });
 
-    //burn all ETHStaticAToken of user on L2==>this is the same as calling init_withdraw on bridge
+    //burn all static_a_token of user on L2==>this is the same as calling init_withdraw on bridge
     await bridge.invoke(token, "burn", {
       account: BigInt(user1.starknetContract.address),
       amount: {

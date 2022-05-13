@@ -1,6 +1,6 @@
 %lang starknet
 
-from starkware.cairo.common.cairo_builtins import HashBuiltin
+from starkware.cairo.common.cairo_builtins import HashBuiltin, BitwiseBuiltin
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.uint256 import Uint256
 from starkware.cairo.common.bool import TRUE
@@ -38,11 +38,23 @@ from contracts.l2.tokens.incentivized_erc20 import (
 )
 from contracts.l2.lib.wad_ray_math import Ray
 
+from contracts.l2.fossil import (
+    get_asset_data,
+    fossil,
+    asset_data_slot,
+    StorageSlot,
+    incentives_controller,
+)
+
 @contract_interface
 namespace IBridge:
     func mint_rewards(recipient : felt, amount : Uint256):
     end
 end
+
+#
+# Setters
+#
 
 @external
 func set_l2_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -50,6 +62,31 @@ func set_l2_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
 ):
     Ownable_only_owner()
     incentivized_erc20_set_l2_bridge(l2_bridge)
+    return ()
+end
+
+@external
+func set_slot{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    slot : StorageSlot
+):
+    Ownable_only_owner()
+    asset_data_slot.write(slot)
+    return ()
+end
+
+@external
+func set_fossil{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(fossil_ : felt):
+    Ownable_only_owner()
+    fossil.write(fossil_)
+    return ()
+end
+
+@external
+func set_incentives_controller{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    controller : felt
+):
+    Ownable_only_owner()
+    incentives_controller.write(controller)
     return ()
 end
 
@@ -62,6 +99,26 @@ func get_last_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
     block_number : Uint256
 ):
     return incentivized_erc20_get_last_update()
+end
+
+@view
+func get_fossil{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    fossil : felt
+):
+    return fossil.read()
+end
+
+@view
+func get_slot{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    slot : StorageSlot
+):
+    return asset_data_slot.read()
+end
+
+@view
+func get_incentives_controller{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    ) -> (controller : felt):
+    return incentives_controller.read()
 end
 
 @view
@@ -100,6 +157,15 @@ func allowance{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
     owner : felt, spender : felt
 ) -> (remaining : Uint256):
     return ERC20_allowance(owner, spender)
+end
+
+@view
+func get_user_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    user : felt
+) -> (user_claimable_rewards : Uint256):
+    alloc_locals
+    let (res) = incentivized_erc20_get_claimable_rewards(user)
+    return (res.wad)
 end
 
 #
@@ -209,16 +275,37 @@ func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
 end
 
 @external
-func prove_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-):
-
-end
-
-@external
 func push_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     block_number : Uint256, rewards_index : Ray
 ):
     incentivized_erc20_push_rewards_index(block_number, rewards_index)
+    return ()
+end
+
+@external
+func prove_rewards_index{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*
+}(
+    block : Uint256,
+    proof_sizes_bytes_len : felt,
+    proof_sizes_bytes : felt*,
+    proof_sizes_words_len : felt,
+    proof_sizes_words : felt*,
+    proofs_concat_len : felt,
+    proofs_concat : felt*,
+) -> ():
+    alloc_locals
+    let (index) = get_asset_data(
+        block,
+        proof_sizes_bytes_len,
+        proof_sizes_bytes,
+        proof_sizes_words_len,
+        proof_sizes_words,
+        proofs_concat_len,
+        proofs_concat,
+    )
+
+    incentivized_erc20_push_rewards_index(block, Ray(index))
     return ()
 end
 
@@ -236,13 +323,4 @@ func get_user_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ra
 ) -> (user_rewards_index : Uint256):
     let (res) = incentivized_erc20_get_user_rewards_index(user)
     return (res.ray)
-end
-
-@view
-func get_user_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    user : felt
-) -> (user_claimable_rewards : Uint256):
-    alloc_locals
-    let (res) = incentivized_erc20_get_claimable_rewards(user)
-    return (res.wad)
 end

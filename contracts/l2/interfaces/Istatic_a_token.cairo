@@ -2,6 +2,7 @@
 
 from starkware.cairo.common.uint256 import Uint256
 from contracts.l2.lib.wad_ray_math import Ray
+from contracts.l2.fossil import StorageSlot
 
 @contract_interface
 namespace Istatic_a_token:
@@ -64,5 +65,26 @@ namespace Istatic_a_token:
     end
 
     func get_rewards_index() -> (rewards_index : Ray):
+    end
+
+    func get_fossil() -> (fossil : felt):
+    end
+
+    func get_slot() -> (slot : StorageSlot):
+    end
+
+    func get_incentives_controller() -> (controller : felt):
+    end
+
+    func set_l2_bridge(l2_bridge : felt):
+    end
+
+    func set_slot(slot : StorageSlot):
+    end
+
+    func set_fossil(fossil_ : felt):
+    end
+
+    func set_incentives_controller(controller : felt):
     end
 end

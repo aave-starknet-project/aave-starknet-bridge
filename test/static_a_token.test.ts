@@ -288,8 +288,6 @@ describe("static_a_token", function () {
       account: BigInt(user1.starknetContract.address),
     });
 
-    console.log(user1RewardsBalance, "user1RewardsBalance");
-
     expect(user1RewardsBalance.balance).to.deep.equal(
       user1ClaimableRewards.user_claimable_rewards
     );

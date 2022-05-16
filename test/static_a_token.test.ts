@@ -288,6 +288,8 @@ describe("static_a_token", function () {
       account: BigInt(user1.starknetContract.address),
     });
 
+    console.log(user1RewardsBalance, "user1RewardsBalance");
+
     expect(user1RewardsBalance.balance).to.deep.equal(
       user1ClaimableRewards.user_claimable_rewards
     );
@@ -416,6 +418,14 @@ describe("static_a_token", function () {
         high: 0n,
         low: BigInt(decimalToWad(50)),
       },
+    });
+    /// check that the rewards index of the user gets updated when calling incentivized_erc20_before_token_transfer at the moment of the burn
+    const userRewardsIndex = await token.call("get_user_rewards_index", {
+      user: BigInt(user1.starknetContract.address),
+    });
+    expect(userRewardsIndex.user_rewards_index).to.deep.equal({
+      high: 0n,
+      low: BigInt(decimalToWad(4)),
     });
 
     const { balance } = await token.call("balanceOf", {

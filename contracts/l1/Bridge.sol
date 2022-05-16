@@ -2,8 +2,6 @@
 pragma solidity ^0.6.12;
 
 import "@joriksch/sg-contracts/src/starkware/contracts/components/GenericGovernance.sol";
-import "@joriksch/sg-contracts/src/starkware/contracts/interfaces/ContractInitializer.sol";
-import "@joriksch/sg-contracts/src/starkware/contracts/interfaces/ProxySupport.sol";
 import "@joriksch/sg-contracts/src/starkware/cairo/eth/CairoConstants.sol";
 import "./interfaces/IStarknetMessaging.sol";
 
@@ -17,8 +15,9 @@ import {IAaveIncentivesController} from "@swp0x0/protocol-v2/contracts/interface
 import {IScaledBalanceToken} from "@swp0x0/protocol-v2/contracts/interfaces/IScaledBalanceToken.sol";
 
 import {IATokenWithPool} from "./interfaces/IATokenWithPool.sol";
+import {VersionedInitializable} from "./libraries/VersionedInitializable.sol";
 
-contract Bridge is GenericGovernance, ContractInitializer, ProxySupport {
+contract Bridge is GenericGovernance, VersionedInitializable {
     using SafeERC20 for IERC20;
     using WadRayMath for uint256;
     using RayMathNoRounding for uint256;
@@ -65,6 +64,7 @@ contract Bridge is GenericGovernance, ContractInitializer, ProxySupport {
     uint256 constant BRIDGE_REWARD_MESSAGE = 1;
     uint256 constant UINT256_PART_SIZE_BITS = 128;
     uint256 constant UINT256_PART_SIZE = 2**UINT256_PART_SIZE_BITS;
+    uint256 public constant BRIDGE_REVISION = 0x1;
 
     constructor() public GenericGovernance("AAVE_BRIDGE_GOVERNANCE") {}
 
@@ -78,23 +78,6 @@ contract Bridge is GenericGovernance, ContractInitializer, ProxySupport {
         return (low, high);
     }
 
-    function isInitialized() internal view override returns (bool) {
-        return messagingContract != IStarknetMessaging(0);
-    }
-
-    function numOfSubContracts() internal pure override returns (uint256) {
-        return 0;
-    }
-
-    function validateInitData(bytes calldata data) internal pure override {
-        require(data.length == 96, "ILLEGAL_DATA_SIZE");
-    }
-
-    function processSubContractAddresses(bytes calldata subContractAddresses)
-        internal
-        override
-    {}
-
     function isValidL2Address(uint256 l2Address) internal pure returns (bool) {
         return (l2Address != 0) && (l2Address < CairoConstants.FIELD_PRIME);
     }
@@ -104,11 +87,11 @@ contract Bridge is GenericGovernance, ContractInitializer, ProxySupport {
         _;
     }
 
-    /*
-      Gets the addresses of bridgedToken & messagingContract from the ProxySupport initialize(),
-      and sets the storage slot accordingly.
-    */
-    function initializeContractState(bytes calldata data) internal override {
+    function getRevision() internal pure virtual override returns (uint256) {
+        return BRIDGE_REVISION;
+    }
+
+    function initialize(bytes calldata data) external virtual initializer {
         (
             uint256 l2Bridge_,
             IStarknetMessaging messagingContract_,
@@ -179,11 +162,7 @@ contract Bridge is GenericGovernance, ContractInitializer, ProxySupport {
         (payload[5], payload[6]) = toSplitUint(blockNumber);
         (payload[7], payload[8]) = toSplitUint(currentRewardsIndex);
 
-        messagingContract.sendMessageToL2(
-            l2Bridge,
-            DEPOSIT_HANDLER,
-            payload
-        );
+        messagingContract.sendMessageToL2(l2Bridge, DEPOSIT_HANDLER, payload);
 
         emit LogDeposit(
             from,

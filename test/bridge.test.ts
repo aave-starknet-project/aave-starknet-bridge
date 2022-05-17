@@ -335,12 +335,17 @@ describe("Bridge", async function () {
       l1ProxyAdmin.address,
       encodedInitializedParams
     );
+<<<<<<< HEAD
 
     //check that admin & implementation were set correctly
     expect(await l1BridgeProxy.callStatic.implementation()).to.eq(
       l1BridgeImpl.address
     );
     expect(await l1BridgeProxy.callStatic.admin()).to.eq(l1ProxyAdmin.address);
+=======
+    // expect(await l1BridgeProxy.callStatic.implementation()).to.eq(l1BridgeImpl.address);
+    // expect(await l1BridgeProxy.callStatic.admin()).to.eq(l1ProxyAdmin.address);
+>>>>>>> d39ae1b (callStatic & proxy admin)
     l1Bridge = await ethers.getContractAt(
       "Bridge",
       l1BridgeProxy.address,

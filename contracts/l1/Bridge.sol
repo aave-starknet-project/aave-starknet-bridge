@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0.
 pragma solidity ^0.6.12;
 
-import "@joriksch/sg-contracts/src/starkware/contracts/components/GenericGovernance.sol";
 import "@joriksch/sg-contracts/src/starkware/cairo/eth/CairoConstants.sol";
 import "./interfaces/IStarknetMessaging.sol";
 
@@ -17,7 +16,7 @@ import {IScaledBalanceToken} from "@swp0x0/protocol-v2/contracts/interfaces/ISca
 import {IATokenWithPool} from "./interfaces/IATokenWithPool.sol";
 import {VersionedInitializable} from "./libraries/VersionedInitializable.sol";
 
-contract Bridge is GenericGovernance, VersionedInitializable {
+contract Bridge is VersionedInitializable {
     using SafeERC20 for IERC20;
     using WadRayMath for uint256;
     using RayMathNoRounding for uint256;
@@ -65,8 +64,9 @@ contract Bridge is GenericGovernance, VersionedInitializable {
     uint256 constant UINT256_PART_SIZE_BITS = 128;
     uint256 constant UINT256_PART_SIZE = 2**UINT256_PART_SIZE_BITS;
     uint256 public constant BRIDGE_REVISION = 0x1;
+    address internal admin;
 
-    constructor() public GenericGovernance("AAVE_BRIDGE_GOVERNANCE") {}
+    constructor() public {}
 
     function toSplitUint(uint256 value)
         internal
@@ -86,6 +86,10 @@ contract Bridge is GenericGovernance, VersionedInitializable {
         require(isValidL2Address(l2Address), "L2_ADDRESS_OUT_OF_RANGE");
         _;
     }
+    modifier onlyAdmin() {
+        require(msg.sender == admin);
+        _;
+    }
 
     function getRevision() internal pure virtual override returns (uint256) {
         return BRIDGE_REVISION;
@@ -95,10 +99,16 @@ contract Bridge is GenericGovernance, VersionedInitializable {
         (
             uint256 l2Bridge_,
             IStarknetMessaging messagingContract_,
-            IAaveIncentivesController incentivesController_
+            IAaveIncentivesController incentivesController_,
+            address admin_
         ) = abi.decode(
                 data,
-                (uint256, IStarknetMessaging, IAaveIncentivesController)
+                (
+                    uint256,
+                    IStarknetMessaging,
+                    IAaveIncentivesController,
+                    address
+                )
             );
 
         require(isValidL2Address(l2Bridge_), "L2_ADDRESS_OUT_OF_RANGE");
@@ -111,11 +121,12 @@ contract Bridge is GenericGovernance, VersionedInitializable {
         l2Bridge = l2Bridge_;
         incentivesController = incentivesController_;
         rewardToken = IERC20(incentivesController.REWARD_TOKEN());
+        admin = admin_;
     }
 
     function approveToken(address l1AToken, uint256 l2Token)
         external
-        onlyGovernance
+        onlyAdmin
         onlyValidL2Address(l2Token)
     {
         require(l1AToken != address(0x0), "l1Token address cannot be 0x0");
@@ -265,7 +276,7 @@ contract Bridge is GenericGovernance, VersionedInitializable {
                 .add(index); // 18- precision, should be loaded
     }
 
-    function updateL2State(address l1AToken) external onlyGovernance {
+    function updateL2State(address l1AToken) external onlyAdmin {
         uint256 rewardsIndex = getCurrentRewardsIndex(l1AToken);
 
         sendIndexUpdateMessage(

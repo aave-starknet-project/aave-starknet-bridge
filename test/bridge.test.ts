@@ -284,11 +284,12 @@ describe("Bridge", async function () {
     let ABI = ["function initialize(bytes calldata data)"];
     let iface = new ethers.utils.Interface(ABI);
     const initData = abiCoder.encode(
-      ["uint256", "address", "address"],
+      ["uint256", "address", "address", "address"],
       [
         l2BridgeProxy.address,
         mockStarknetMessagingAddress,
         INCENTIVES_CONTROLLER,
+        signer.address,
       ]
     );
 

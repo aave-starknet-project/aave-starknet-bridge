@@ -100,8 +100,7 @@ export async function deployL1Bridge(
     );
 
     // await bridgeProxy.upgradeTo(bridgeImpl.address, initData, false);
-    let [l1deployer, l3] = await ethers.getSigners();
-    bridge = await ethers.getContractAt("Bridge", bridgeProxy.address, l3);
+    bridge = await ethers.getContractAt("Bridge", bridgeProxy.address, signer);
 
     fs.writeFileSync(
       "deployment/L1Bridge.json",

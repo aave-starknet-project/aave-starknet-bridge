@@ -302,8 +302,12 @@ describe("Bridge", async function () {
       l1ProxyAdmin.address,
       encodedInitializedParams
     );
-    // expect(await l1BridgeProxy.callStatic.implementation()).to.eq(l1BridgeImpl.address);
-    // expect(await l1BridgeProxy.callStatic.admin()).to.eq(l1ProxyAdmin.address);
+
+    //check that admin & implementation were set correctly
+    expect(await l1BridgeProxy.callStatic.implementation()).to.eq(
+      l1BridgeImpl.address
+    );
+    expect(await l1BridgeProxy.callStatic.admin()).to.eq(l1ProxyAdmin.address);
     l1Bridge = await ethers.getContractAt(
       "Bridge",
       l1BridgeProxy.address,
@@ -313,6 +317,17 @@ describe("Bridge", async function () {
       mockStarknetMessagingAddress
     );
     expect(await l1Bridge.rewardToken()).to.eq(await incentives.REWARD_TOKEN());
+  });
+
+  it("disallows non admin to approve new token on l1 bridge", async () => {
+    const l1Bridge = await ethers.getContractAt(
+      "Bridge",
+      l1BridgeProxy.address,
+      l1user
+    );
+
+    expect(l1Bridge.approveToken(aDai.address, l2StaticADai.address)).to.be
+      .reverted;
   });
 
   it("l1user receives tokens and converts them to aTokens", async () => {

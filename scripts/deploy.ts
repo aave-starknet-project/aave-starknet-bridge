@@ -13,7 +13,9 @@ async function deployAll() {
     let l1deployer: SignerWithAddress;
 
     if (!STARKNET_MESSAGING_CONTRACT || !INCENTIVES_CONTROLLER) {
-      throw new Error("Please initialize your .env file correctly, see .env.sample for details.");
+      throw new Error(
+        "Please initialize your .env file correctly, see .env.sample for details."
+      );
     }
 
     [l1deployer] = await ethers.getSigners();
@@ -58,7 +60,9 @@ async function deployAll() {
       l1deployer,
       l2Bridge.address,
       STARKNET_MESSAGING_CONTRACT,
-      INCENTIVES_CONTROLLER
+      INCENTIVES_CONTROLLER,
+      l1deployer.address, // @TBD: bridge admin
+      l1deployer.address // @TBD: proxy admin
     );
 
     console.log("Deploying static_a_tokens...");
@@ -70,7 +74,7 @@ async function deployAll() {
       18n,
       { high: 0n, low: 0n },
       BigInt(l2deployer.starknetContract.address),
-      BigInt(l2Bridge.address),
+      BigInt(l2Bridge.address)
     );
     console.log("deployed successfully");
   } catch (error) {

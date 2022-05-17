@@ -31,6 +31,7 @@ describe("Bridge", async function () {
 
   // users
   let l1user: SignerWithAddress;
+  let l1ProxyAdmin: SignerWithAddress;
   let l2owner: Account;
   let l2user: Account;
   let signer: SignerWithAddress;
@@ -149,7 +150,7 @@ describe("Bridge", async function () {
 
     // L1 deployments
 
-    [signer, l1user] = await ethers.getSigners();
+    [signer, l1user, l1ProxyAdmin] = await ethers.getSigners();
 
     pool = await ethers.getContractAt("LendingPool", LENDING_POOL);
     incentives = await ethers.getContractAt(
@@ -195,7 +196,7 @@ describe("Bridge", async function () {
 
     l1ProxyBridgeFactory = await ethers.getContractFactory(
       "InitializableAdminUpgradeabilityProxy",
-      signer
+      l1ProxyAdmin
     );
     l1BridgeProxy = await l1ProxyBridgeFactory.deploy();
     await l1BridgeProxy.deployed();
@@ -297,10 +298,11 @@ describe("Bridge", async function () {
 
     await l1BridgeProxy["initialize(address,address,bytes)"](
       l1BridgeImpl.address,
-      signer.address,
+      l1ProxyAdmin.address,
       encodedInitializedParams
     );
-    expect(await l1BridgeProxy.implementation()).to.eq(l1BridgeImpl.address);
+    // expect(await l1BridgeProxy.callStatic.implementation()).to.eq(l1BridgeImpl.address);
+    // expect(await l1BridgeProxy.callStatic.admin()).to.eq(l1ProxyAdmin.address);
     l1Bridge = await ethers.getContractAt(
       "Bridge",
       l1BridgeProxy.address,

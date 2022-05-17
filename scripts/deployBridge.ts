@@ -55,12 +55,16 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
  * @param signer the deployer starknet account
  * @param  l2BridgeAddress address of the proxy bridge on L2
  * @param starknetMessagingAddress
+ * @param bridgeAdmin
+ * @param proxyAdmin
  */
 export async function deployL1Bridge(
   signer: SignerWithAddress,
   l2BridgeAddress: string,
   starknetMessagingAddress: string,
-  incentivesController: string
+  incentivesController: string,
+  bridgeAdmin: string,
+  proxyAdmin: string
 ) {
   let bridgeFactory: ContractFactory;
   let bridgeImpl: Contract;
@@ -85,8 +89,13 @@ export async function deployL1Bridge(
     let ABI = ["function initialize(bytes calldata data)"];
     let iface = new ethers.utils.Interface(ABI);
     const initData = abiCoder.encode(
-      ["uint256", "address", "address"],
-      [l2BridgeAddress, starknetMessagingAddress, incentivesController]
+      ["uint256", "address", "address", "address"],
+      [
+        l2BridgeAddress,
+        starknetMessagingAddress,
+        incentivesController,
+        bridgeAdmin,
+      ]
     );
 
     let encodedInitializedParams = iface.encodeFunctionData("initialize", [
@@ -95,11 +104,10 @@ export async function deployL1Bridge(
 
     await bridgeProxy["initialize(address,address,bytes)"](
       bridgeImpl.address,
-      signer.address,
+      proxyAdmin,
       encodedInitializedParams
     );
 
-    // await bridgeProxy.upgradeTo(bridgeImpl.address, initData, false);
     bridge = await ethers.getContractAt("Bridge", bridgeProxy.address, signer);
 
     fs.writeFileSync(

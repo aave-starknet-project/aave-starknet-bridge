@@ -194,7 +194,7 @@ describe("Bridge", async function () {
     await l1BridgeImpl.deployed();
 
     l1ProxyBridgeFactory = await ethers.getContractFactory(
-      "ProxyBridge",
+      "InitializableAdminUpgradeabilityProxy",
       signer
     );
     l1BridgeProxy = await l1ProxyBridgeFactory.deploy();

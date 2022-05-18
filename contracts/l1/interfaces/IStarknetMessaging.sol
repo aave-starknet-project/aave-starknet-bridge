@@ -18,9 +18,10 @@ interface IStarknetMessaging is IStarknetMessagingEvents {
       Consumes a message that was sent from an L2 contract.
       Returns the hash of the message.
     */
-    function consumeMessageFromL2(uint256 fromAddress, uint256[] calldata payload)
-        external
-        returns (bytes32);
+    function consumeMessageFromL2(
+        uint256 fromAddress,
+        uint256[] calldata payload
+    ) external returns (bytes32);
 
     /**
       Starts the cancellation of an L1 to L2 message.

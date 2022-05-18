@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0.
 pragma solidity ^0.6.12;
 
-import "@joriksch/sg-contracts/src/starkware/cairo/eth/CairoConstants.sol";
+import "./libraries/CairoConstants.sol";
 import "./interfaces/IStarknetMessaging.sol";
 
-import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {WadRayMath} from "@swp0x0/protocol-v2/contracts/protocol/libraries/math/WadRayMath.sol";
+import {WadRayMath} from "@aave/protocol-v2/contracts/protocol/libraries/math/WadRayMath.sol";
+import {SafeERC20} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {IERC20} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {SafeMath} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {RayMathNoRounding} from "@swp0x0/protocol-v2/contracts/protocol/libraries/math/RayMathNoRounding.sol";
-import {SafeMath} from "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
-import {ILendingPool} from "@swp0x0/protocol-v2/contracts/interfaces/ILendingPool.sol";
-import {IAaveIncentivesController} from "@swp0x0/protocol-v2/contracts/interfaces/IAaveIncentivesController.sol";
-import {IScaledBalanceToken} from "@swp0x0/protocol-v2/contracts/interfaces/IScaledBalanceToken.sol";
-
+import {ILendingPool} from "@aave/protocol-v2/contracts/interfaces/ILendingPool.sol";
+import {IAaveIncentivesController} from "@aave/protocol-v2/contracts/interfaces/IAaveIncentivesController.sol";
+import {IScaledBalanceToken} from "@aave/protocol-v2/contracts/interfaces/IScaledBalanceToken.sol";
+import {VersionedInitializable} from "@aave/protocol-v2/contracts/protocol/libraries/aave-upgradeability/VersionedInitializable.sol";
 import {IATokenWithPool} from "./interfaces/IATokenWithPool.sol";
-import {VersionedInitializable} from "./libraries/VersionedInitializable.sol";
 
 contract Bridge is VersionedInitializable {
     using SafeERC20 for IERC20;

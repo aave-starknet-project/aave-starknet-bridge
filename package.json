@@ -19,6 +19,7 @@
   "author": "AAVE",
   "license": "Apache-2.0",
   "dependencies": {
+    "@aave/core-v3": "^1.13.1",
     "@aave/protocol-v2": "^1.0.1",
     "@joriksch/oz-cairo": "^1.0.1",
     "@joriksch/sg-contracts": "^0.0.2",

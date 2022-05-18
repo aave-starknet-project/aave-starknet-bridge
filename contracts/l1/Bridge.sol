@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0.
 pragma solidity ^0.6.12;
 
-import "./libraries/CairoConstants.sol";
+import "./libraries/helpers/CairoConstants.sol";
 import "./interfaces/IStarknetMessaging.sol";
-
 import {WadRayMath} from "@aave/protocol-v2/contracts/protocol/libraries/math/WadRayMath.sol";
 import {SafeERC20} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IERC20} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeMath} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
-import {RayMathNoRounding} from "@swp0x0/protocol-v2/contracts/protocol/libraries/math/RayMathNoRounding.sol";
-import {ILendingPool} from "@aave/protocol-v2/contracts/interfaces/ILendingPool.sol";
-import {IAaveIncentivesController} from "@aave/protocol-v2/contracts/interfaces/IAaveIncentivesController.sol";
+import {RayMathNoRounding} from "./libraries/math/RayMathNoRounding.sol";
+import {ILendingPool} from "./interfaces/ILendingPool.sol";
+import {IAaveIncentivesController} from "./interfaces/IAaveIncentivesController.sol";
+import {IATokenWithPool} from "./interfaces/IATokenWithPool.sol";
 import {IScaledBalanceToken} from "@aave/protocol-v2/contracts/interfaces/IScaledBalanceToken.sol";
 import {VersionedInitializable} from "@aave/protocol-v2/contracts/protocol/libraries/aave-upgradeability/VersionedInitializable.sol";
-import {IATokenWithPool} from "./interfaces/IATokenWithPool.sol";
 
 contract Bridge is VersionedInitializable {
     using SafeERC20 for IERC20;

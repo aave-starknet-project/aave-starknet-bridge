@@ -8,7 +8,7 @@ import {SafeERC20} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/c
 import {IERC20} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeMath} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {RayMathNoRounding} from "./libraries/math/RayMathNoRounding.sol";
-import {ILendingPool} from "./interfaces/ILendingPool.sol";
+import {ILendingPool} from "@aave/protocol-v2/contracts/interfaces/ILendingPool.sol";
 import {IAaveIncentivesController} from "./interfaces/IAaveIncentivesController.sol";
 import {IATokenWithPool} from "./interfaces/IATokenWithPool.sol";
 import {IScaledBalanceToken} from "@aave/protocol-v2/contracts/interfaces/IScaledBalanceToken.sol";

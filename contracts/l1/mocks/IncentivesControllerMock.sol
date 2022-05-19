@@ -2,7 +2,7 @@
 pragma solidity 0.6.12;
 
 import {IAaveIncentivesController} from "@swp0x0/protocol-v2/contracts/interfaces/IAaveIncentivesController.sol";
-import {IERC20} from "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IERC20} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 
 contract IncentivesControllerMock is IAaveIncentivesController {
     address public override REWARD_TOKEN;

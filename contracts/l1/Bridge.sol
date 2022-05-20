@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0.
 pragma solidity ^0.6.12;
 
-import "./libraries/helpers/CairoConstants.sol";
+import "./libraries/helpers/Cairo.sol";
 import "./interfaces/IStarknetMessaging.sol";
 import {WadRayMath} from "@aave/protocol-v2/contracts/protocol/libraries/math/WadRayMath.sol";
 import {SafeERC20} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
@@ -15,15 +15,43 @@ import {IScaledBalanceToken} from "@aave/protocol-v2/contracts/interfaces/IScale
 import {VersionedInitializable} from "@aave/protocol-v2/contracts/protocol/libraries/aave-upgradeability/VersionedInitializable.sol";
 
 contract Bridge is VersionedInitializable {
-    using SafeERC20 for IERC20;
-    using WadRayMath for uint256;
-    using RayMathNoRounding for uint256;
-    using SafeMath for uint256;
+    mapping(address => ATokenData) public aTokenData;
+    IStarknetMessaging public messagingContract;
+    uint256 public l2Bridge;
+    address[] public approvedL1Tokens;
+    IERC20 public rewardToken;
+    IAaveIncentivesController public incentivesController;
+    // The selector of the "handle_deposit" l1_handler on L2.
+    uint256 constant DEPOSIT_HANDLER =
+        1285101517810983806491589552491143496277809242732141897358598292095611420389;
+    // The selector of the "handle_index_update" l1_handler on L2.
+    uint256 constant INDEX_UPDATE_HANDLER =
+        309177621854413231845513563663819170511421561802461396722380275428414897390;
+    uint256 constant TRANSFER_FROM_STARKNET = 0;
+    uint256 constant BRIDGE_REWARD_MESSAGE = 1;
+    uint256 constant UINT256_PART_SIZE_BITS = 128;
+    uint256 constant UINT256_PART_SIZE = 2**UINT256_PART_SIZE_BITS;
+    uint256 public constant BRIDGE_REVISION = 0x1;
+    address internal admin;
 
     struct ATokenData {
         uint256 l2TokenAddress;
         IERC20 underlyingAsset;
         ILendingPool lendingPool;
+    }
+
+    using SafeERC20 for IERC20;
+    using WadRayMath for uint256;
+    using RayMathNoRounding for uint256;
+    using SafeMath for uint256;
+
+    modifier onlyValidL2Address(uint256 l2Address) {
+        require(Cairo.isValidL2Address(l2Address), "L2_ADDRESS_OUT_OF_RANGE");
+        _;
+    }
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "ONLY ADMIN");
+        _;
     }
 
     event LogDeposit(
@@ -43,51 +71,7 @@ contract Bridge is VersionedInitializable {
     event LogBridgeReward(uint256 l2sender, address recipient, uint256 amount);
     event LogTokenAdded(address l1Token, uint256 l2Token);
 
-    mapping(address => ATokenData) public aTokenData;
-    IStarknetMessaging public messagingContract;
-    uint256 public l2Bridge;
-    address[] public approvedL1Tokens;
-    IERC20 public rewardToken;
-    IAaveIncentivesController public incentivesController;
-
-    // The selector of the "handle_deposit" l1_handler on L2.
-    uint256 constant DEPOSIT_HANDLER =
-        1285101517810983806491589552491143496277809242732141897358598292095611420389;
-    // The selector of the "handle_index_update" l1_handler on L2.
-    uint256 constant INDEX_UPDATE_HANDLER =
-        309177621854413231845513563663819170511421561802461396722380275428414897390;
-
-    uint256 constant TRANSFER_FROM_STARKNET = 0;
-    uint256 constant BRIDGE_REWARD_MESSAGE = 1;
-    uint256 constant UINT256_PART_SIZE_BITS = 128;
-    uint256 constant UINT256_PART_SIZE = 2**UINT256_PART_SIZE_BITS;
-    uint256 public constant BRIDGE_REVISION = 0x1;
-    address internal admin;
-
     constructor() public {}
-
-    function toSplitUint(uint256 value)
-        internal
-        pure
-        returns (uint256, uint256)
-    {
-        uint256 low = value & ((1 << 128) - 1);
-        uint256 high = value >> 128;
-        return (low, high);
-    }
-
-    function isValidL2Address(uint256 l2Address) internal pure returns (bool) {
-        return (l2Address != 0) && (l2Address < CairoConstants.FIELD_PRIME);
-    }
-
-    modifier onlyValidL2Address(uint256 l2Address) {
-        require(isValidL2Address(l2Address), "L2_ADDRESS_OUT_OF_RANGE");
-        _;
-    }
-    modifier onlyAdmin() {
-        require(msg.sender == admin);
-        _;
-    }
 
     function getRevision() internal pure virtual override returns (uint256) {
         return BRIDGE_REVISION;
@@ -109,7 +93,7 @@ contract Bridge is VersionedInitializable {
                 )
             );
 
-        require(isValidL2Address(l2Bridge_), "L2_ADDRESS_OUT_OF_RANGE");
+        require(Cairo.isValidL2Address(l2Bridge_), "L2_ADDRESS_OUT_OF_RANGE");
         require(
             address(incentivesController_) != address(0x0),
             "INVALID ADDRESS FOR INCENTIVE CONTROLLER"
@@ -167,9 +151,9 @@ contract Bridge is VersionedInitializable {
         payload[0] = uint256(from);
         payload[1] = l2Recipient;
         payload[2] = aTokenData[l1Token].l2TokenAddress;
-        (payload[3], payload[4]) = toSplitUint(amount);
-        (payload[5], payload[6]) = toSplitUint(blockNumber);
-        (payload[7], payload[8]) = toSplitUint(currentRewardsIndex);
+        (payload[3], payload[4]) = Cairo.toSplitUint(amount);
+        (payload[5], payload[6]) = Cairo.toSplitUint(blockNumber);
+        (payload[7], payload[8]) = Cairo.toSplitUint(currentRewardsIndex);
 
         messagingContract.sendMessageToL2(l2Bridge, DEPOSIT_HANDLER, payload);
 
@@ -192,8 +176,8 @@ contract Bridge is VersionedInitializable {
         uint256[] memory payload = new uint256[](6);
         payload[0] = uint256(from);
         payload[1] = aTokenData[l1Token].l2TokenAddress;
-        (payload[2], payload[3]) = toSplitUint(blockNumber);
-        (payload[4], payload[5]) = toSplitUint(currentRewardsIndex);
+        (payload[2], payload[3]) = Cairo.toSplitUint(blockNumber);
+        (payload[4], payload[5]) = Cairo.toSplitUint(currentRewardsIndex);
 
         messagingContract.sendMessageToL2(
             l2Bridge,
@@ -216,8 +200,8 @@ contract Bridge is VersionedInitializable {
         payload[1] = uint256(address(l1Token));
         payload[2] = l2sender;
         payload[3] = uint256(recipient);
-        (payload[4], payload[5]) = toSplitUint(amount);
-        (payload[6], payload[7]) = toSplitUint(l2RewardsIndex);
+        (payload[4], payload[5]) = Cairo.toSplitUint(amount);
+        (payload[6], payload[7]) = Cairo.toSplitUint(l2RewardsIndex);
 
         // Consume the message from the StarkNet core contract.
         // This will revert the (Ethereum) transaction if the message does not exist.
@@ -418,7 +402,7 @@ contract Bridge is VersionedInitializable {
         payload[0] = BRIDGE_REWARD_MESSAGE;
         payload[1] = l2sender;
         payload[2] = uint256(recipient);
-        (payload[3], payload[4]) = toSplitUint(amount);
+        (payload[3], payload[4]) = Cairo.toSplitUint(amount);
 
         messagingContract.consumeMessageFromL2(l2Bridge, payload);
     }

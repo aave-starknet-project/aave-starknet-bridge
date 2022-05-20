@@ -45,10 +45,17 @@ contract Bridge is VersionedInitializable {
     using RayMathNoRounding for uint256;
     using SafeMath for uint256;
 
+    /**
+     * @dev Only valid l2 token addresses will can be approved if the function is marked by this modifier.
+     **/
     modifier onlyValidL2Address(uint256 l2Address) {
         require(Cairo.isValidL2Address(l2Address), "L2_ADDRESS_OUT_OF_RANGE");
         _;
     }
+
+    /**
+     * @dev Only bridge admin can call functions marked by this modifier.
+     **/
     modifier onlyAdmin() {
         require(msg.sender == admin, "ONLY ADMIN");
         _;
@@ -77,6 +84,14 @@ contract Bridge is VersionedInitializable {
         return BRIDGE_REVISION;
     }
 
+    /**
+     * @notice Initializes the Bridge.
+     * @dev Function is invoked by the proxy contract when the bridge contract is added, takes the following byte encoded input arguments:
+     *  L2 bridge address
+     *  Starknet messaging contract address
+     *  Address of Aave IncentivesController
+     *  admin of the bridge
+     **/
     function initialize(bytes calldata data) external virtual initializer {
         (
             uint256 l2Bridge_,
@@ -106,6 +121,12 @@ contract Bridge is VersionedInitializable {
         admin = admin_;
     }
 
+    /**
+     * @notice Approves a new L1<->L2 token bridge.
+     * @dev Function is invoked only by bridge admin
+     * @param l1AToken token address
+     * @param l2Token token address
+     **/
     function approveToken(address l1AToken, uint256 l2Token)
         external
         onlyAdmin
@@ -224,6 +245,10 @@ contract Bridge is VersionedInitializable {
         return amount.rayMul(lendingPool.getReserveNormalizedIncome(asset));
     }
 
+    /**
+     * @notice gets the latest rewards index of the given aToken on L1.
+     **/
+
     function getCurrentRewardsIndex(address l1AToken)
         internal
         view
@@ -269,6 +294,14 @@ contract Bridge is VersionedInitializable {
         );
     }
 
+    /**
+     * @notice allows deposits of aTokens or their underlying assets on L2
+     * @param l1AToken aToken address
+     * @param l2Recipient recipient address
+     * @param amount to be minted on l2
+     * @param referralCode of asset
+     * @param fromUnderlyingAsset if set to true will accept deposit from underlying assets
+     **/
     function deposit(
         address l1AToken,
         uint256 l2Recipient,

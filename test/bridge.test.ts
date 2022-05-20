@@ -502,7 +502,6 @@ describe("Bridge", async function () {
     const flushL1Response = await starknet.devnet.flush();
     const flushL1Messages = flushL1Response.consumed_messages.from_l1;
     expect(flushL1Response.consumed_messages.from_l2).to.be.empty;
-    console.log(flushL1Messages);
     expect(flushL1Messages).to.have.a.lengthOf(2);
     expectAddressEquality(
       flushL1Messages[0].args.from_address,

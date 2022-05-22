@@ -2,3 +2,4 @@
 . "$(dirname "$0")/_/husky.sh"
 
 npx git-format-staged --formatter 'cairo-format -i  "{}"' '*.cairo'
+npx prettier --write 'contracts/**/*.sol'

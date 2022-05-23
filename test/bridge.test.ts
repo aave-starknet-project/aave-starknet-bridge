@@ -278,7 +278,7 @@ describe("Bridge", async function () {
     await l2user.invoke(l2StaticAUsdc, "initialize_static_a_token", {
       name: 4321n,
       symbol: 321n,
-      decimals: 18n,
+      decimals: BigInt(await aUsdc.decimals()),
       initial_supply: { high: 0n, low: 0n },
       recipient: BigInt(l2Bridge.address),
       owner: BigInt(l2owner.starknetContract.address),

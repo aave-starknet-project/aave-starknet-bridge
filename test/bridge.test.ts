@@ -275,25 +275,6 @@ describe("Bridge", async function () {
       expect(decimals).to.equal(18n);
     }
 
-    await l2user.invoke(l2StaticAUsdc, 'initialize_static_a_token', {
-          name: 4321n,
-          symbol: 321n,
-          decimals: BigInt(await aUsdc.decimals()),
-          initial_supply: {high:0n, low:0n},
-          recipient: BigInt(l2Bridge.address),
-          owner: BigInt(l2owner.starknetContract.address),
-          l2_bridge: BigInt(l2Bridge.address),
-    });
-
-    {
-      const { name } = await l2StaticADai.call("name");
-      expect(name).to.equal(1234n);
-      const { symbol } = await l2StaticADai.call("symbol");
-      expect(symbol).to.equal(123n);
-      const { decimals } = await l2StaticADai.call("decimals");
-      expect(decimals).to.equal(18n);
-    }
-
     await l2user.invoke(l2StaticAUsdc, "initialize_static_a_token", {
       name: 4321n,
       symbol: 321n,

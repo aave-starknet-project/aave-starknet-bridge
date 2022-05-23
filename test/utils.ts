@@ -1,6 +1,6 @@
-import {expect} from 'chai';
-import { Contract } from 'ethers';
-import { ethers } from 'hardhat';
+import { expect } from "chai";
+import { Contract } from "ethers";
+import { ethers } from "hardhat";
 
 /**
  * Receives a hex address, converts it to bigint, converts it back to hex.
@@ -21,6 +21,6 @@ export function expectAddressEquality(actual: string, expected: string) {
   expect(adaptAddress(actual)).to.equal(adaptAddress(expected));
 }
 
-export function uintFromParts(low: string, high: string) : BigInt{
-  return BigInt(high) *(2n ** 128n) + BigInt(low);
+export function uintFromParts(low: string, high: string): BigInt {
+  return BigInt(high) * 2n ** 128n + BigInt(low);
 }

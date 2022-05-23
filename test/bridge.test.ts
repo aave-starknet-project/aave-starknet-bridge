@@ -355,17 +355,6 @@ describe("Bridge", async function () {
       .reverted;
   });
 
-  it("disallows non admin to approve new token on l1 bridge", async () => {
-    const l1Bridge = await ethers.getContractAt(
-      "Bridge",
-      l1BridgeProxy.address,
-      l1user
-    );
-
-    expect(l1Bridge.approveToken(aDai.address, l2StaticADai.address)).to.be
-      .reverted;
-  });
-
   it("l1user receives tokens and converts them to aTokens", async () => {
     // l1user receives dai and usdc
     await dai.connect(daiWhale).transfer(l1user.address, 2n * daiAmount);

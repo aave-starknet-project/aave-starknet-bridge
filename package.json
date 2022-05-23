@@ -45,5 +45,9 @@
   },
   "husky": {
     "hooks": {}
+  },
+  "lint-staged": {
+    "*.{js,ts,sol}": "npx prettier --write .",
+    "*.cairo": "cairo-format -i  {} *.cairo"
   }
 }

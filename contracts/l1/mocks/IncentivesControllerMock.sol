@@ -16,8 +16,8 @@ contract IncentivesControllerMock is IAaveIncentivesController {
         view
         override
         returns (
-            uint128,
-            uint128,
+            uint256,
+            uint256,
             uint256
         )
     {
@@ -26,7 +26,8 @@ contract IncentivesControllerMock is IAaveIncentivesController {
 
     function assets(address)
         external
-        pure
+        view
+        override
         returns (
             uint128,
             uint128,

@@ -39,7 +39,7 @@ jobs:
 
       - name: Lint
         run: |
-          yarn lint
+          yarn lint:check
 
       - name: Start the l2 & l1 test networks
         run: |

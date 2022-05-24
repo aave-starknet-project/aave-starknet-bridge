@@ -19,12 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tests: [
-          "static_a_token.test.ts",
-          "proxy.test.ts",
-          "bridge.test.ts",
-          "wad_ray_math.test.ts"
-        ]
+        tests:
+          [
+            "static_a_token.test.ts",
+            "proxy.test.ts",
+            "bridge.test.ts",
+            "wad_ray_math.test.ts",
+          ]
         python-version: ["3.7"] # Cairo was tested with this version
         node-version: ["16"]
     steps:

@@ -2,7 +2,7 @@ import { StarknetContract, Account } from "hardhat/types";
 import { starknet } from "hardhat";
 import { TIMEOUT, L1_TEST_ADDRESS } from "./constants";
 import { expect } from "chai";
-import { wadToRay, decimalToWad } from "../helpers/rayMath";
+import { wadToRay, decimalToWad } from "./rayMath";
 
 describe("static_a_token", function () {
   this.timeout(TIMEOUT);

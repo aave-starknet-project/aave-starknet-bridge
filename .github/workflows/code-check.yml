@@ -47,4 +47,4 @@ jobs:
 
       - name: Lint
         run: |
-          yarn lint
+          yarn lint:check

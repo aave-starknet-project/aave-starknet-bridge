@@ -154,7 +154,7 @@ describe("Bridge", async function () {
       name: 444,
       symbol: 444,
       decimals: 18n,
-      initial_supply: {high: 0, low: 0},
+      initial_supply: { high: 0, low: 0 },
       recipient: BigInt(l2user.starknetContract.address),
       owner: BigInt(l2BridgeProxy.address),
     });
@@ -255,23 +255,23 @@ describe("Bridge", async function () {
     }
   });
 
-  it('initialize L2 static_a_tokens', async () => {
-    await l2user.invoke(l2StaticADai, 'initialize_static_a_token', {
-          name: 1234n,
-          symbol: 123n,
-          decimals: BigInt(await aDai.decimals()),
-          initial_supply: {high:0n, low:0n},
-          recipient: BigInt(l2Bridge.address),
-          owner: BigInt(l2owner.starknetContract.address),
-          l2_bridge: BigInt(l2Bridge.address),
-        });
+  it("initialize L2 static_a_tokens", async () => {
+    await l2user.invoke(l2StaticADai, "initialize_static_a_token", {
+      name: 1234n,
+      symbol: 123n,
+      decimals: BigInt(await aDai.decimals()),
+      initial_supply: { high: 0n, low: 0n },
+      recipient: BigInt(l2Bridge.address),
+      owner: BigInt(l2owner.starknetContract.address),
+      l2_bridge: BigInt(l2Bridge.address),
+    });
 
     {
-      const { name } = await l2StaticADai.call('name');
+      const { name } = await l2StaticADai.call("name");
       expect(name).to.equal(1234n);
-      const { symbol } = await l2StaticADai.call('symbol');
+      const { symbol } = await l2StaticADai.call("symbol");
       expect(symbol).to.equal(123n);
-      const { decimals } = await l2StaticADai.call('decimals');
+      const { decimals } = await l2StaticADai.call("decimals");
       expect(decimals).to.equal(18n);
     }
 
@@ -295,7 +295,7 @@ describe("Bridge", async function () {
     }
   });
 
-  it('set L1 token bridge as implementation contract', async () => {
+  it("set L1 token bridge as implementation contract", async () => {
     let ABI = ["function initialize(bytes calldata data)"];
     let iface = new ethers.utils.Interface(ABI);
     const initData = abiCoder.encode(
@@ -328,7 +328,7 @@ describe("Bridge", async function () {
     );
     expect(await l1Bridge.messagingContract()).to.eq(
       mockStarknetMessagingAddress
-    );    
+    );
     expect(await l1Bridge.rewardToken()).to.eq(await incentives.REWARD_TOKEN());
     stkaave = await ethers.getContractAt(
       "ERC20Mock",

@@ -55,12 +55,16 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
  * @param signer the deployer starknet account
  * @param  l2BridgeAddress address of the proxy bridge on L2
  * @param starknetMessagingAddress
+ * @param bridgeAdmin
+ * @param proxyAdmin
  */
 export async function deployL1Bridge(
   signer: SignerWithAddress,
   l2BridgeAddress: string,
   starknetMessagingAddress: string,
-  incentivesController: string
+  incentivesController: string,
+  bridgeAdmin: string,
+  proxyAdmin: string
 ) {
   let bridgeFactory: ContractFactory;
   let bridgeImpl: Contract;
@@ -71,38 +75,40 @@ export async function deployL1Bridge(
   try {
     const abiCoder = new ethers.utils.AbiCoder();
     bridgeFactory = await ethers.getContractFactory("Bridge", signer);
-    bridgeImpl = await bridgeFactory.deploy();
-    await bridgeImpl.deployed();
 
-    proxyFactory = await ethers.getContractFactory("ProxyBridge", signer);
+    proxyFactory = await ethers.getContractFactory(
+      "InitializableAdminUpgradeabilityProxy",
+      signer
+    );
     bridgeProxy = await proxyFactory.deploy();
     await bridgeProxy.deployed();
 
+    bridgeImpl = await bridgeFactory.deploy();
+    await bridgeImpl.deployed();
+
+    let ABI = ["function initialize(bytes calldata data)"];
+    let iface = new ethers.utils.Interface(ABI);
     const initData = abiCoder.encode(
-      ["address", "uint256", "address", "address"],
+      ["uint256", "address", "address", "address"],
       [
-        "0x0000000000000000000000000000000000000000",
         l2BridgeAddress,
         starknetMessagingAddress,
         incentivesController,
+        bridgeAdmin,
       ]
     );
-    await bridgeProxy.addImplementation(
-      bridgeImpl.address,
+
+    let encodedInitializedParams = iface.encodeFunctionData("initialize", [
       initData,
-      false
-    );
-    await bridgeProxy.upgradeTo(
+    ]);
+
+    await bridgeProxy["initialize(address,address,bytes)"](
       bridgeImpl.address,
-      initData,
-      false
+      proxyAdmin,
+      encodedInitializedParams
     );
 
-    bridge = await ethers.getContractAt(
-      "Bridge",
-      bridgeProxy.address,
-      signer
-    );
+    bridge = await ethers.getContractAt("Bridge", bridgeProxy.address, signer);
 
     fs.writeFileSync(
       "deployment/L1Bridge.json",

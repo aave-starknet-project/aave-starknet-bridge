@@ -12,9 +12,9 @@ chai.use(solidity);
 
 const { PRIVATE_KEY, ALCHEMY_KEY } = process.env;
 
-if (!PRIVATE_KEY) {
+/* if (!PRIVATE_KEY) {
   throw new Error("Please set your PRIVATE_KEY in your .env file");
-}
+} */
 
 /* if (!ALCHEMY_KEY) {
   throw new Error("Please set your ALCHEMY_KEY in your .env file");
@@ -25,7 +25,7 @@ if (!PRIVATE_KEY) {
 const config: HardhatUserConfig = {
   solidity: {
     compilers: [
-      // for @swp0x0/protocol-v2 contracts
+      // for @aave/protocol-v2 contracts
       {
         version: "0.6.12",
         settings: {
@@ -34,17 +34,7 @@ const config: HardhatUserConfig = {
             runs: 200,
           },
         },
-      },
-      // for @joriksch/sg-contracts contracts
-      {
-        version: "0.8.9",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
-      },
+      }
     ],
   },
   starknet: {
@@ -66,10 +56,10 @@ const config: HardhatUserConfig = {
     l1_testnet: {
       url: "http://localhost:8545",
     },
-    mainnet: {
+    /* mainnet: {
       url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,
       accounts: [PRIVATE_KEY],
-    },
+    }, */
   },
 };
 

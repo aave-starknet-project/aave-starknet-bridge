@@ -1,33 +1,64 @@
 // SPDX-License-Identifier: Apache-2.0.
 pragma solidity ^0.6.12;
 
-import "@joriksch/sg-contracts/src/starkware/contracts/components/GenericGovernance.sol";
-import "@joriksch/sg-contracts/src/starkware/contracts/interfaces/ContractInitializer.sol";
-import "@joriksch/sg-contracts/src/starkware/contracts/interfaces/ProxySupport.sol";
-import "@joriksch/sg-contracts/src/starkware/cairo/eth/CairoConstants.sol";
+import "./libraries/helpers/Cairo.sol";
 import "./interfaces/IStarknetMessaging.sol";
-
-import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {WadRayMath} from "@swp0x0/protocol-v2/contracts/protocol/libraries/math/WadRayMath.sol";
-import {RayMathNoRounding} from "@swp0x0/protocol-v2/contracts/protocol/libraries/math/RayMathNoRounding.sol";
-import {SafeMath} from "@swp0x0/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
-import {ILendingPool} from "@swp0x0/protocol-v2/contracts/interfaces/ILendingPool.sol";
-import {IAaveIncentivesController} from "@swp0x0/protocol-v2/contracts/interfaces/IAaveIncentivesController.sol";
-import {IScaledBalanceToken} from "@swp0x0/protocol-v2/contracts/interfaces/IScaledBalanceToken.sol";
-
+import {WadRayMath} from "@aave/protocol-v2/contracts/protocol/libraries/math/WadRayMath.sol";
+import {SafeERC20} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {IERC20} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {SafeMath} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
+import {RayMathNoRounding} from "./libraries/math/RayMathNoRounding.sol";
+import {ILendingPool} from "@aave/protocol-v2/contracts/interfaces/ILendingPool.sol";
+import {IAaveIncentivesController} from "./interfaces/IAaveIncentivesController.sol";
 import {IATokenWithPool} from "./interfaces/IATokenWithPool.sol";
+import {IScaledBalanceToken} from "@aave/protocol-v2/contracts/interfaces/IScaledBalanceToken.sol";
+import {VersionedInitializable} from "@aave/protocol-v2/contracts/protocol/libraries/aave-upgradeability/VersionedInitializable.sol";
 
-contract Bridge is GenericGovernance, ContractInitializer, ProxySupport {
-    using SafeERC20 for IERC20;
-    using WadRayMath for uint256;
-    using RayMathNoRounding for uint256;
-    using SafeMath for uint256;
+contract Bridge is VersionedInitializable {
+    IStarknetMessaging public messagingContract;
+    uint256 public l2Bridge;
+    address[] public approvedL1Tokens;
+    IERC20 public rewardToken;
+    IAaveIncentivesController public incentivesController;
+    // The selector of the "handle_deposit" l1_handler on L2.
+    uint256 constant DEPOSIT_HANDLER =
+        1285101517810983806491589552491143496277809242732141897358598292095611420389;
+    // The selector of the "handle_index_update" l1_handler on L2.
+    uint256 constant INDEX_UPDATE_HANDLER =
+        309177621854413231845513563663819170511421561802461396722380275428414897390;
+    uint256 constant TRANSFER_FROM_STARKNET = 0;
+    uint256 constant BRIDGE_REWARD_MESSAGE = 1;
+    uint256 constant UINT256_PART_SIZE_BITS = 128;
+    uint256 constant UINT256_PART_SIZE = 2**UINT256_PART_SIZE_BITS;
+    uint256 public constant BRIDGE_REVISION = 0x1;
+    address internal admin;
 
     struct ATokenData {
         uint256 l2TokenAddress;
         IERC20 underlyingAsset;
         ILendingPool lendingPool;
+    }
+    mapping(address => ATokenData) public aTokenData;
+
+    using SafeERC20 for IERC20;
+    using WadRayMath for uint256;
+    using RayMathNoRounding for uint256;
+    using SafeMath for uint256;
+
+    /**
+     * @dev Only valid l2 token addresses will can be approved if the function is marked by this modifier.
+     **/
+    modifier onlyValidL2Address(uint256 l2Address) {
+        require(Cairo.isValidL2Address(l2Address), "L2_ADDRESS_OUT_OF_RANGE");
+        _;
+    }
+
+    /**
+     * @dev Only bridge admin can call functions marked by this modifier.
+     **/
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "ONLY BRIDGE ADMIN");
+        _;
     }
 
     event LogDeposit(
@@ -47,78 +78,37 @@ contract Bridge is GenericGovernance, ContractInitializer, ProxySupport {
     event LogBridgeReward(uint256 l2sender, address recipient, uint256 amount);
     event LogTokenAdded(address l1Token, uint256 l2Token);
 
-    mapping(address => ATokenData) public aTokenData;
-    IStarknetMessaging public messagingContract;
-    uint256 public l2Bridge;
-    address[] public approvedL1Tokens;
-    IERC20 public rewardToken;
-    IAaveIncentivesController public incentivesController;
+    constructor() public {}
 
-    // The selector of the "handle_deposit" l1_handler on L2.
-    uint256 constant DEPOSIT_HANDLER =
-        1285101517810983806491589552491143496277809242732141897358598292095611420389;
-    // The selector of the "handle_index_update" l1_handler on L2.
-    uint256 constant INDEX_UPDATE_HANDLER =
-        309177621854413231845513563663819170511421561802461396722380275428414897390;
-
-    uint256 constant TRANSFER_FROM_STARKNET = 0;
-    uint256 constant BRIDGE_REWARD_MESSAGE = 1;
-    uint256 constant UINT256_PART_SIZE_BITS = 128;
-    uint256 constant UINT256_PART_SIZE = 2**UINT256_PART_SIZE_BITS;
-
-    constructor() public GenericGovernance("AAVE_BRIDGE_GOVERNANCE") {}
-
-    function toSplitUint(uint256 value)
-        internal
-        pure
-        returns (uint256, uint256)
-    {
-        uint256 low = value & ((1 << 128) - 1);
-        uint256 high = value >> 128;
-        return (low, high);
+    function getRevision() internal pure virtual override returns (uint256) {
+        return BRIDGE_REVISION;
     }
 
-    function isInitialized() internal view override returns (bool) {
-        return messagingContract != IStarknetMessaging(0);
-    }
-
-    function numOfSubContracts() internal pure override returns (uint256) {
-        return 0;
-    }
-
-    function validateInitData(bytes calldata data) internal pure override {
-        require(data.length == 96, "ILLEGAL_DATA_SIZE");
-    }
-
-    function processSubContractAddresses(bytes calldata subContractAddresses)
-        internal
-        override
-    {}
-
-    function isValidL2Address(uint256 l2Address) internal pure returns (bool) {
-        return (l2Address != 0) && (l2Address < CairoConstants.FIELD_PRIME);
-    }
-
-    modifier onlyValidL2Address(uint256 l2Address) {
-        require(isValidL2Address(l2Address), "L2_ADDRESS_OUT_OF_RANGE");
-        _;
-    }
-
-    /*
-      Gets the addresses of bridgedToken & messagingContract from the ProxySupport initialize(),
-      and sets the storage slot accordingly.
-    */
-    function initializeContractState(bytes calldata data) internal override {
+    /**
+     * @notice Initializes the Bridge.
+     * @dev Function is invoked by the proxy contract when the bridge contract is added, takes the following byte encoded input arguments:
+     *  L2 bridge address
+     *  Starknet messaging contract address
+     *  Address of Aave IncentivesController
+     *  admin of the bridge
+     **/
+    function initialize(bytes calldata data) external virtual initializer {
         (
             uint256 l2Bridge_,
             IStarknetMessaging messagingContract_,
-            IAaveIncentivesController incentivesController_
+            IAaveIncentivesController incentivesController_,
+            address admin_
         ) = abi.decode(
                 data,
-                (uint256, IStarknetMessaging, IAaveIncentivesController)
+                (
+                    uint256,
+                    IStarknetMessaging,
+                    IAaveIncentivesController,
+                    address
+                )
             );
 
-        require(isValidL2Address(l2Bridge_), "L2_ADDRESS_OUT_OF_RANGE");
+        require(Cairo.isValidL2Address(l2Bridge_), "L2_ADDRESS_OUT_OF_RANGE");
         require(
             address(incentivesController_) != address(0x0),
             "INVALID ADDRESS FOR INCENTIVE CONTROLLER"
@@ -128,11 +118,18 @@ contract Bridge is GenericGovernance, ContractInitializer, ProxySupport {
         l2Bridge = l2Bridge_;
         incentivesController = incentivesController_;
         rewardToken = IERC20(incentivesController.REWARD_TOKEN());
+        admin = admin_;
     }
 
+    /**
+     * @notice Approves a new L1<->L2 token bridge.
+     * @dev Function is invoked only by bridge admin
+     * @param l1AToken token address
+     * @param l2Token token address
+     **/
     function approveToken(address l1AToken, uint256 l2Token)
         external
-        onlyGovernance
+        onlyAdmin
         onlyValidL2Address(l2Token)
     {
         require(l1AToken != address(0x0), "l1Token address cannot be 0x0");
@@ -163,140 +160,14 @@ contract Bridge is GenericGovernance, ContractInitializer, ProxySupport {
         emit LogTokenAdded(l1AToken, l2Token);
     }
 
-    function sendDepositMessage(
-        address l1Token,
-        address from,
-        uint256 l2Recipient,
-        uint256 amount,
-        uint256 blockNumber,
-        uint256 currentRewardsIndex
-    ) internal {
-        uint256[] memory payload = new uint256[](9);
-        payload[0] = uint256(from);
-        payload[1] = l2Recipient;
-        payload[2] = aTokenData[l1Token].l2TokenAddress;
-        (payload[3], payload[4]) = toSplitUint(amount);
-        (payload[5], payload[6]) = toSplitUint(blockNumber);
-        (payload[7], payload[8]) = toSplitUint(currentRewardsIndex);
-
-        messagingContract.sendMessageToL2(
-            l2Bridge,
-            DEPOSIT_HANDLER,
-            payload
-        );
-
-        emit LogDeposit(
-            from,
-            l1Token,
-            amount,
-            l2Recipient,
-            blockNumber,
-            currentRewardsIndex
-        );
-    }
-
-    function sendIndexUpdateMessage(
-        address l1Token,
-        address from,
-        uint256 blockNumber,
-        uint256 currentRewardsIndex
-    ) internal {
-        uint256[] memory payload = new uint256[](6);
-        payload[0] = uint256(from);
-        payload[1] = aTokenData[l1Token].l2TokenAddress;
-        (payload[2], payload[3]) = toSplitUint(blockNumber);
-        (payload[4], payload[5]) = toSplitUint(currentRewardsIndex);
-
-        messagingContract.sendMessageToL2(
-            l2Bridge,
-            INDEX_UPDATE_HANDLER,
-            payload
-        );
-    }
-
-    function consumeMessage(
-        address l1Token,
-        uint256 l2sender,
-        address recipient,
-        uint256 amount,
-        uint256 l2RewardsIndex
-    ) internal {
-        emit LogWithdrawal(l1Token, l2sender, recipient, amount);
-
-        uint256[] memory payload = new uint256[](8);
-        payload[0] = TRANSFER_FROM_STARKNET;
-        payload[1] = uint256(address(l1Token));
-        payload[2] = l2sender;
-        payload[3] = uint256(recipient);
-        (payload[4], payload[5]) = toSplitUint(amount);
-        (payload[6], payload[7]) = toSplitUint(l2RewardsIndex);
-
-        // Consume the message from the StarkNet core contract.
-        // This will revert the (Ethereum) transaction if the message does not exist.
-        messagingContract.consumeMessageFromL2(l2Bridge, payload);
-    }
-
-    function _dynamicToStaticAmount(
-        uint256 amount,
-        address asset,
-        ILendingPool lendingPool
-    ) internal view returns (uint256) {
-        return amount.rayDiv(lendingPool.getReserveNormalizedIncome(asset));
-    }
-
-    function _staticToDynamicAmount(
-        uint256 amount,
-        address asset,
-        ILendingPool lendingPool
-    ) internal view returns (uint256) {
-        return amount.rayMul(lendingPool.getReserveNormalizedIncome(asset));
-    }
-
-    function getCurrentRewardsIndex(address l1AToken)
-        internal
-        view
-        returns (uint256)
-    {
-        (
-            uint256 index,
-            uint256 emissionPerSecond,
-            uint256 lastUpdateTimestamp
-        ) = incentivesController.getAssetData(l1AToken);
-        uint256 distributionEnd = incentivesController.DISTRIBUTION_END();
-        uint256 totalSupply = IScaledBalanceToken(l1AToken).scaledTotalSupply();
-
-        if (
-            emissionPerSecond == 0 ||
-            totalSupply == 0 ||
-            lastUpdateTimestamp == block.timestamp ||
-            lastUpdateTimestamp >= distributionEnd
-        ) {
-            return index;
-        }
-
-        uint256 currentTimestamp = block.timestamp > distributionEnd
-            ? distributionEnd
-            : block.timestamp;
-        uint256 timeDelta = currentTimestamp.sub(lastUpdateTimestamp);
-        return
-            emissionPerSecond
-                .mul(timeDelta)
-                .mul(10**uint256(18))
-                .div(totalSupply)
-                .add(index); // 18- precision, should be loaded
-    }
-
-    function updateL2State(address l1AToken) external onlyGovernance {
-        uint256 rewardsIndex = getCurrentRewardsIndex(l1AToken);
-
-        sendIndexUpdateMessage(
-            l1AToken,
-            msg.sender,
-            block.number,
-            rewardsIndex
-        );
-    }
-
+    /**
+     * @notice allows deposits of aTokens or their underlying assets on L2
+     * @param l1AToken aToken address
+     * @param l2Recipient recipient address
+     * @param amount to be minted on l2
+     * @param referralCode of asset
+     * @param fromUnderlyingAsset if set to true will accept deposit from underlying assets
+     **/
     function deposit(
         address l1AToken,
         uint256 l2Recipient,
@@ -352,6 +223,14 @@ contract Bridge is GenericGovernance, ContractInitializer, ProxySupport {
         return staticAmount;
     }
 
+    /**
+     * @notice allows withdraw of aTokens or their underlying assets from L2
+     * @param l1AToken aToken address
+     * @param l2sender sender address
+     * @param recipient l1 recipient
+     * @param staticAmount amount to be withdraw
+     * @param toUnderlyingAsset if set to true will withdraw underlying asset tokens from pool and transfer them to recipient
+     **/
     function withdraw(
         address l1AToken,
         uint256 l2sender,
@@ -408,6 +287,144 @@ contract Bridge is GenericGovernance, ContractInitializer, ProxySupport {
         transferRewards(recipient, rewardsAmount);
     }
 
+    /**
+     * @notice allows bridge admin to manually update the rewards index of tokens on l2
+     * @param l1AToken aToken address
+     **/
+    function updateL2State(address l1AToken) external onlyAdmin {
+        uint256 rewardsIndex = getCurrentRewardsIndex(l1AToken);
+
+        sendIndexUpdateMessage(
+            l1AToken,
+            msg.sender,
+            block.number,
+            rewardsIndex
+        );
+    }
+
+    function sendDepositMessage(
+        address l1Token,
+        address from,
+        uint256 l2Recipient,
+        uint256 amount,
+        uint256 blockNumber,
+        uint256 currentRewardsIndex
+    ) internal {
+        uint256[] memory payload = new uint256[](9);
+        payload[0] = uint256(from);
+        payload[1] = l2Recipient;
+        payload[2] = aTokenData[l1Token].l2TokenAddress;
+        (payload[3], payload[4]) = Cairo.toSplitUint(amount);
+        (payload[5], payload[6]) = Cairo.toSplitUint(blockNumber);
+        (payload[7], payload[8]) = Cairo.toSplitUint(currentRewardsIndex);
+
+        messagingContract.sendMessageToL2(l2Bridge, DEPOSIT_HANDLER, payload);
+
+        emit LogDeposit(
+            from,
+            l1Token,
+            amount,
+            l2Recipient,
+            blockNumber,
+            currentRewardsIndex
+        );
+    }
+
+    function sendIndexUpdateMessage(
+        address l1Token,
+        address from,
+        uint256 blockNumber,
+        uint256 currentRewardsIndex
+    ) internal {
+        uint256[] memory payload = new uint256[](6);
+        payload[0] = uint256(from);
+        payload[1] = aTokenData[l1Token].l2TokenAddress;
+        (payload[2], payload[3]) = Cairo.toSplitUint(blockNumber);
+        (payload[4], payload[5]) = Cairo.toSplitUint(currentRewardsIndex);
+
+        messagingContract.sendMessageToL2(
+            l2Bridge,
+            INDEX_UPDATE_HANDLER,
+            payload
+        );
+    }
+
+    function consumeMessage(
+        address l1Token,
+        uint256 l2sender,
+        address recipient,
+        uint256 amount,
+        uint256 l2RewardsIndex
+    ) internal {
+        emit LogWithdrawal(l1Token, l2sender, recipient, amount);
+
+        uint256[] memory payload = new uint256[](8);
+        payload[0] = TRANSFER_FROM_STARKNET;
+        payload[1] = uint256(address(l1Token));
+        payload[2] = l2sender;
+        payload[3] = uint256(recipient);
+        (payload[4], payload[5]) = Cairo.toSplitUint(amount);
+        (payload[6], payload[7]) = Cairo.toSplitUint(l2RewardsIndex);
+
+        // Consume the message from the StarkNet core contract.
+        // This will revert the (Ethereum) transaction if the message does not exist.
+        messagingContract.consumeMessageFromL2(l2Bridge, payload);
+    }
+
+    function _dynamicToStaticAmount(
+        uint256 amount,
+        address asset,
+        ILendingPool lendingPool
+    ) internal view returns (uint256) {
+        return amount.rayDiv(lendingPool.getReserveNormalizedIncome(asset));
+    }
+
+    function _staticToDynamicAmount(
+        uint256 amount,
+        address asset,
+        ILendingPool lendingPool
+    ) internal view returns (uint256) {
+        return amount.rayMul(lendingPool.getReserveNormalizedIncome(asset));
+    }
+
+    /**
+     * @notice gets the latest rewards index of the given aToken on L1.
+     **/
+
+    function getCurrentRewardsIndex(address l1AToken)
+        internal
+        view
+        returns (uint256)
+    {
+        (
+            uint256 index,
+            uint256 emissionPerSecond,
+            uint256 lastUpdateTimestamp
+        ) = incentivesController.getAssetData(l1AToken);
+        uint256 distributionEnd = incentivesController.DISTRIBUTION_END();
+        uint256 totalSupply = IScaledBalanceToken(l1AToken).scaledTotalSupply();
+
+        if (
+            emissionPerSecond == 0 ||
+            totalSupply == 0 ||
+            lastUpdateTimestamp == block.timestamp ||
+            lastUpdateTimestamp >= distributionEnd
+        ) {
+            return index;
+        }
+
+        uint256 currentTimestamp = block.timestamp > distributionEnd
+            ? distributionEnd
+            : block.timestamp;
+        uint256 timeDelta = currentTimestamp.sub(lastUpdateTimestamp);
+        return
+            emissionPerSecond
+                .mul(timeDelta)
+                .mul(10**uint256(18))
+                .div(totalSupply)
+                .add(index); // 18- precision, should be loaded
+    }
+
     function computeRewardsDiff(
         uint256 amount,
         uint256 l2RewardsIndex,
@@ -430,11 +447,17 @@ contract Bridge is GenericGovernance, ContractInitializer, ProxySupport {
         payload[0] = BRIDGE_REWARD_MESSAGE;
         payload[1] = l2sender;
         payload[2] = uint256(recipient);
-        (payload[3], payload[4]) = toSplitUint(amount);
+        (payload[3], payload[4]) = Cairo.toSplitUint(amount);
 
         messagingContract.consumeMessageFromL2(l2Bridge, payload);
     }
 
+    /**
+     * @notice called to transfer the bridged rewards tokens to the l1 recipient
+     * @param l2sender sender on l2
+     * @param recipient on l1
+     * @param amount of tokens to be claimed to user on l1
+     **/
     function receiveRewards(
         uint256 l2sender,
         address recipient,
@@ -445,6 +468,11 @@ contract Bridge is GenericGovernance, ContractInitializer, ProxySupport {
         transferRewards(recipient, amount);
     }
 
+    /**
+     * @notice claims pending rewards of the l1 bridge by calling the aave Incentives Controller and transfers them back to the l1 recipient
+     * @param recipient of rewards tokens
+     * @param rewardsAmount to be transferred to recipient
+     **/
     function transferRewards(address recipient, uint256 rewardsAmount)
         internal
     {

@@ -1,0 +1,31 @@
+node_modules
+
+#Hardhat files
+cache
+artifacts
+
+#Python artifacts
+.venv*
+__pycache__
+.pytest_cache
+
+#Starknet plugin
+starknet-artifacts
+
+#NPM lock file
+package-lock.json
+
+#Environment variables file
+.env
+
+#deployment artifacts folder
+deployment
+
+# Yarn error file
+yarn-error.log
+
+# Apple related file
+.DS_Store 
+
+#IDEs
+.idea

@@ -2,7 +2,7 @@
 pragma solidity ^0.6.12;
 
 import "./libraries/helpers/Cairo.sol";
-import "./interfaces/IStarknetMessaging.sol";
+import {IStarknetMessaging} from "./interfaces/IStarknetMessaging.sol";
 import {WadRayMath} from "@aave/protocol-v2/contracts/protocol/libraries/math/WadRayMath.sol";
 import {SafeERC20} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IERC20} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
@@ -13,37 +13,30 @@ import {IAaveIncentivesController} from "./interfaces/IAaveIncentivesController.
 import {IATokenWithPool} from "./interfaces/IATokenWithPool.sol";
 import {IScaledBalanceToken} from "@aave/protocol-v2/contracts/interfaces/IScaledBalanceToken.sol";
 import {VersionedInitializable} from "@aave/protocol-v2/contracts/protocol/libraries/aave-upgradeability/VersionedInitializable.sol";
+import {IBridge} from "./interfaces/IBridge.sol";
 
-contract Bridge is VersionedInitializable {
+contract Bridge is IBridge, VersionedInitializable {
+    using SafeERC20 for IERC20;
+    using WadRayMath for uint256;
+    using RayMathNoRounding for uint256;
+    using SafeMath for uint256;
+
     IStarknetMessaging public messagingContract;
     uint256 public l2Bridge;
     address[] public approvedL1Tokens;
     IERC20 public rewardToken;
     IAaveIncentivesController public incentivesController;
-    // The selector of the "handle_deposit" l1_handler on L2.
     uint256 constant DEPOSIT_HANDLER =
-        1285101517810983806491589552491143496277809242732141897358598292095611420389;
-    // The selector of the "handle_index_update" l1_handler on L2.
+        1285101517810983806491589552491143496277809242732141897358598292095611420389; // The selector of the "handle_deposit" l1_handler on L2.
     uint256 constant INDEX_UPDATE_HANDLER =
-        309177621854413231845513563663819170511421561802461396722380275428414897390;
+        309177621854413231845513563663819170511421561802461396722380275428414897390; // The selector of the "handle_index_update" l1_handler on L2.
     uint256 constant TRANSFER_FROM_STARKNET = 0;
     uint256 constant BRIDGE_REWARD_MESSAGE = 1;
     uint256 constant UINT256_PART_SIZE_BITS = 128;
     uint256 constant UINT256_PART_SIZE = 2**UINT256_PART_SIZE_BITS;
     uint256 public constant BRIDGE_REVISION = 0x1;
-    address internal admin;
 
-    struct ATokenData {
-        uint256 l2TokenAddress;
-        IERC20 underlyingAsset;
-        ILendingPool lendingPool;
-    }
     mapping(address => ATokenData) public aTokenData;
-
-    using SafeERC20 for IERC20;
-    using WadRayMath for uint256;
-    using RayMathNoRounding for uint256;
-    using SafeMath for uint256;
 
     /**
      * @dev Only valid l2 token addresses will can be approved if the function is marked by this modifier.
@@ -53,31 +46,6 @@ contract Bridge is VersionedInitializable {
         _;
     }
 
-    /**
-     * @dev Only bridge admin can call functions marked by this modifier.
-     **/
-    modifier onlyAdmin() {
-        require(msg.sender == admin, "ONLY BRIDGE ADMIN");
-        _;
-    }
-
-    event LogDeposit(
-        address sender,
-        address token,
-        uint256 amount,
-        uint256 l2Recipient,
-        uint256 blockNumber,
-        uint256 rewardsIndex
-    );
-    event LogWithdrawal(
-        address token,
-        uint256 l2sender,
-        address recipient,
-        uint256 amount
-    );
-    event LogBridgeReward(uint256 l2sender, address recipient, uint256 amount);
-    event LogTokenAdded(address l1Token, uint256 l2Token);
-
     constructor() public {}
 
     function getRevision() internal pure virtual override returns (uint256) {
@@ -85,26 +53,29 @@ contract Bridge is VersionedInitializable {
     }
 
     /**
-     * @notice Initializes the Bridge.
+     * @notice Initializes the Bridge
      * @dev Function is invoked by the proxy contract when the bridge contract is added, takes the following byte encoded input arguments:
      *  L2 bridge address
      *  Starknet messaging contract address
      *  Address of Aave IncentivesController
-     *  admin of the bridge
+     *  Array of l1 tokens
+     *  Array of l2 tokens
      **/
     function initialize(bytes calldata data) external virtual initializer {
         (
             uint256 l2Bridge_,
             IStarknetMessaging messagingContract_,
             IAaveIncentivesController incentivesController_,
-            address admin_
+            address[] memory l1Tokens,
+            uint256[] memory l2Tokens
         ) = abi.decode(
                 data,
                 (
                     uint256,
                     IStarknetMessaging,
                     IAaveIncentivesController,
-                    address
+                    address[],
+                    uint256[]
                 )
             );
 
@@ -113,12 +84,19 @@ contract Bridge is VersionedInitializable {
             address(incentivesController_) != address(0x0),
             "INVALID ADDRESS FOR INCENTIVE CONTROLLER"
         );
+        require(
+            l1Tokens.length == l2Tokens.length,
+            "MISMATCHING TOKENS ARRAYS"
+        );
 
         messagingContract = messagingContract_;
         l2Bridge = l2Bridge_;
         incentivesController = incentivesController_;
         rewardToken = IERC20(incentivesController.REWARD_TOKEN());
-        admin = admin_;
+
+        for (uint256 i = 0; i < l1Tokens.length; i++) {
+            _approveToken(l1Tokens[i], l2Tokens[i]);
+        }
     }
 
     /**
@@ -127,9 +105,8 @@ contract Bridge is VersionedInitializable {
      * @param l1AToken token address
      * @param l2Token token address
      **/
-    function approveToken(address l1AToken, uint256 l2Token)
-        external
-        onlyAdmin
+    function _approveToken(address l1AToken, uint256 l2Token)
+        internal
         onlyValidL2Address(l2Token)
     {
         require(l1AToken != address(0x0), "l1Token address cannot be 0x0");
@@ -157,24 +134,16 @@ contract Bridge is VersionedInitializable {
             lendingPool
         );
         approvedL1Tokens.push(l1AToken);
-        emit LogTokenAdded(l1AToken, l2Token);
+        emit ApprovedBridge(l1AToken, l2Token);
     }
 
-    /**
-     * @notice allows deposits of aTokens or their underlying assets on L2
-     * @param l1AToken aToken address
-     * @param l2Recipient recipient address
-     * @param amount to be minted on l2
-     * @param referralCode of asset
-     * @param fromUnderlyingAsset if set to true will accept deposit from underlying assets
-     **/
     function deposit(
         address l1AToken,
         uint256 l2Recipient,
         uint256 amount,
         uint16 referralCode,
         bool fromUnderlyingAsset
-    ) external onlyValidL2Address(l2Recipient) returns (uint256) {
+    ) external override onlyValidL2Address(l2Recipient) returns (uint256) {
         IERC20 underlyingAsset = aTokenData[l1AToken].underlyingAsset;
         ILendingPool lendingPool = aTokenData[l1AToken].lendingPool;
         require(
@@ -203,7 +172,7 @@ contract Bridge is VersionedInitializable {
 
         // update L2 state and emit deposit event
 
-        uint256 rewardsIndex = getCurrentRewardsIndex(l1AToken);
+        uint256 rewardsIndex = _getCurrentRewardsIndex(l1AToken);
 
         uint256 staticAmount = _dynamicToStaticAmount(
             amount,
@@ -211,7 +180,7 @@ contract Bridge is VersionedInitializable {
             lendingPool
         );
 
-        sendDepositMessage(
+        _sendDepositMessage(
             l1AToken,
             msg.sender,
             l2Recipient,
@@ -223,14 +192,6 @@ contract Bridge is VersionedInitializable {
         return staticAmount;
     }
 
-    /**
-     * @notice allows withdraw of aTokens or their underlying assets from L2
-     * @param l1AToken aToken address
-     * @param l2sender sender address
-     * @param recipient l1 recipient
-     * @param staticAmount amount to be withdraw
-     * @param toUnderlyingAsset if set to true will withdraw underlying asset tokens from pool and transfer them to recipient
-     **/
     function withdraw(
         address l1AToken,
         uint256 l2sender,
@@ -238,19 +199,16 @@ contract Bridge is VersionedInitializable {
         uint256 staticAmount,
         uint256 l2RewardsIndex,
         bool toUnderlyingAsset
-    ) external {
-        // check that the function call is valid and emit withdraw event
+    ) external override {
+        require(recipient != address(0x0), "INVALID_RECIPIENT");
 
-        consumeMessage(
+        _consumeMessage(
             l1AToken,
             l2sender,
             recipient,
             staticAmount,
             l2RewardsIndex
         );
-        require(recipient != address(0x0), "INVALID_RECIPIENT");
-
-        // withdraw tokens
 
         address underlyingAsset = address(aTokenData[l1AToken].underlyingAsset);
         ILendingPool lendingPool = aTokenData[l1AToken].lendingPool;
@@ -266,11 +224,13 @@ contract Bridge is VersionedInitializable {
             IERC20(l1AToken).safeTransfer(recipient, amount);
         }
 
+        emit Withdrawal(l1AToken, l2sender, recipient, amount);
+
         // update L2 state
 
-        uint256 l1CurrentRewardsIndex = getCurrentRewardsIndex(l1AToken);
+        uint256 l1CurrentRewardsIndex = _getCurrentRewardsIndex(l1AToken);
 
-        sendIndexUpdateMessage(
+        _sendIndexUpdateMessage(
             l1AToken,
             msg.sender,
             block.number,
@@ -279,22 +239,21 @@ contract Bridge is VersionedInitializable {
 
         // transfer rewards
 
-        uint256 rewardsAmount = computeRewardsDiff(
+        uint256 rewardsAmount = _computeRewardsDiff(
             staticAmount,
             l2RewardsIndex,
             l1CurrentRewardsIndex
         );
-        transferRewards(recipient, rewardsAmount);
+        if (rewardsAmount > 0) {
+            _transferRewards(recipient, rewardsAmount);
+            emit RewardsTransferred(l2sender, recipient, rewardsAmount);
+        }
     }
 
-    /**
-     * @notice allows bridge admin to manually update the rewards index of tokens on l2
-     * @param l1AToken aToken address
-     **/
-    function updateL2State(address l1AToken) external onlyAdmin {
-        uint256 rewardsIndex = getCurrentRewardsIndex(l1AToken);
+    function updateL2State(address l1AToken) external override {
+        uint256 rewardsIndex = _getCurrentRewardsIndex(l1AToken);
 
-        sendIndexUpdateMessage(
+        _sendIndexUpdateMessage(
             l1AToken,
             msg.sender,
             block.number,
@@ -302,7 +261,18 @@ contract Bridge is VersionedInitializable {
         );
     }
 
-    function sendDepositMessage(
+    function receiveRewards(
+        uint256 l2sender,
+        address recipient,
+        uint256 amount
+    ) external override {
+        _consumeBridgeRewardMessage(l2sender, recipient, amount);
+        require(recipient != address(0x0), "INVALID_RECIPIENT");
+        _transferRewards(recipient, amount);
+        emit RewardsTransferred(l2sender, recipient, amount);
+    }
+
+    function _sendDepositMessage(
         address l1Token,
         address from,
         uint256 l2Recipient,
@@ -320,7 +290,7 @@ contract Bridge is VersionedInitializable {
 
         messagingContract.sendMessageToL2(l2Bridge, DEPOSIT_HANDLER, payload);
 
-        emit LogDeposit(
+        emit Deposit(
             from,
             l1Token,
             amount,
@@ -330,7 +300,7 @@ contract Bridge is VersionedInitializable {
         );
     }
 
-    function sendIndexUpdateMessage(
+    function _sendIndexUpdateMessage(
         address l1Token,
         address from,
         uint256 blockNumber,
@@ -349,15 +319,13 @@ contract Bridge is VersionedInitializable {
         );
     }
 
-    function consumeMessage(
+    function _consumeMessage(
         address l1Token,
         uint256 l2sender,
         address recipient,
         uint256 amount,
         uint256 l2RewardsIndex
     ) internal {
-        emit LogWithdrawal(l1Token, l2sender, recipient, amount);
-
         uint256[] memory payload = new uint256[](8);
         payload[0] = TRANSFER_FROM_STARKNET;
         payload[1] = uint256(address(l1Token));
@@ -391,7 +359,7 @@ contract Bridge is VersionedInitializable {
      * @notice gets the latest rewards index of the given aToken on L1.
      **/
 
-    function getCurrentRewardsIndex(address l1AToken)
+    function _getCurrentRewardsIndex(address l1AToken)
         internal
         view
         returns (uint256)
@@ -425,7 +393,7 @@ contract Bridge is VersionedInitializable {
                 .add(index); // 18- precision, should be loaded
     }
 
-    function computeRewardsDiff(
+    function _computeRewardsDiff(
         uint256 amount,
         uint256 l2RewardsIndex,
         uint256 l1RewardsIndex
@@ -436,13 +404,11 @@ contract Bridge is VersionedInitializable {
                 .rayToWad();
     }
 
-    function consumeBridgeRewardMessage(
+    function _consumeBridgeRewardMessage(
         uint256 l2sender,
         address recipient,
         uint256 amount
     ) internal {
-        emit LogBridgeReward(l2sender, recipient, amount);
-
         uint256[] memory payload = new uint256[](5);
         payload[0] = BRIDGE_REWARD_MESSAGE;
         payload[1] = l2sender;
@@ -453,31 +419,14 @@ contract Bridge is VersionedInitializable {
     }
 
     /**
-     * @notice called to transfer the bridged rewards tokens to the l1 recipient
-     * @param l2sender sender on l2
-     * @param recipient on l1
-     * @param amount of tokens to be claimed to user on l1
-     **/
-    function receiveRewards(
-        uint256 l2sender,
-        address recipient,
-        uint256 amount
-    ) external {
-        consumeBridgeRewardMessage(l2sender, recipient, amount);
-        require(recipient != address(0x0), "INVALID_RECIPIENT");
-        transferRewards(recipient, amount);
-    }
-
-    /**
      * @notice claims pending rewards of the l1 bridge by calling the aave Incentives Controller and transfers them back to the l1 recipient
      * @param recipient of rewards tokens
      * @param rewardsAmount to be transferred to recipient
      **/
-    function transferRewards(address recipient, uint256 rewardsAmount)
+    function _transferRewards(address recipient, uint256 rewardsAmount)
         internal
     {
         address self = address(this);
-
         uint256 rewardBalance = rewardToken.balanceOf(self);
 
         if (rewardBalance < rewardsAmount) {

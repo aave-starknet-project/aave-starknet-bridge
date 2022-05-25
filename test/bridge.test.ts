@@ -299,12 +299,14 @@ describe("Bridge", async function () {
     let ABI = ["function initialize(bytes calldata data)"];
     let iface = new ethers.utils.Interface(ABI);
     const initData = abiCoder.encode(
-      ["uint256", "address", "address", "address"],
+      ["uint256", "address", "address", "address", "address[]", "uint256[]"],
       [
         l2BridgeProxy.address,
         mockStarknetMessagingAddress,
         INCENTIVES_CONTROLLER,
         signer.address,
+        [aDai.address, aUsdc.address],
+        [l2StaticADai.address, l2StaticAUsdc.address],
       ]
     );
 
@@ -344,17 +346,6 @@ describe("Bridge", async function () {
     ).to.be.reverted;
   });
 
-  it("disallows non admin to approve new token on l1 bridge", async () => {
-    const l1Bridge = await ethers.getContractAt(
-      "Bridge",
-      l1BridgeProxy.address,
-      l1user
-    );
-
-    expect(l1Bridge.approveToken(aDai.address, l2StaticADai.address)).to.be
-      .reverted;
-  });
-
   it("l1user receives tokens and converts them to aTokens", async () => {
     // l1user receives dai and usdc
     await dai.connect(daiWhale).transfer(l1user.address, 2n * daiAmount);
@@ -374,10 +365,6 @@ describe("Bridge", async function () {
   });
 
   it("initialize the bridge on L1 and L2", async () => {
-    // map L2 tokens to L1 tokens on L1 bridge
-    await l1Bridge.approveToken(aDai.address, l2StaticADai.address);
-    await l1Bridge.approveToken(aUsdc.address, l2StaticAUsdc.address);
-
     // set L1 token bridge from L2 bridge
     await l2user.invoke(l2Bridge, "initialize_bridge", {
       governor_address: BigInt(l2user.starknetContract.address),

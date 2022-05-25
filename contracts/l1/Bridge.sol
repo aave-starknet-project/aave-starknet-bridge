@@ -26,6 +26,7 @@ contract Bridge is IBridge, VersionedInitializable {
     address[] public approvedL1Tokens;
     IERC20 public rewardToken;
     IAaveIncentivesController public incentivesController;
+    mapping(address => ATokenData) public aTokenData;
     uint256 constant DEPOSIT_HANDLER =
         1285101517810983806491589552491143496277809242732141897358598292095611420389; // The selector of the "handle_deposit" l1_handler on L2.
     uint256 constant INDEX_UPDATE_HANDLER =
@@ -36,8 +37,6 @@ contract Bridge is IBridge, VersionedInitializable {
     uint256 constant UINT256_PART_SIZE = 2**UINT256_PART_SIZE_BITS;
     uint256 public constant BRIDGE_REVISION = 0x1;
 
-    mapping(address => ATokenData) public aTokenData;
-
     /**
      * @dev Only valid l2 token addresses will can be approved if the function is marked by this modifier.
      **/
@@ -47,10 +46,6 @@ contract Bridge is IBridge, VersionedInitializable {
     }
 
     constructor() public {}
-
-    function getRevision() internal pure virtual override returns (uint256) {
-        return BRIDGE_REVISION;
-    }
 
     /**
      * @notice Initializes the Bridge
@@ -99,44 +94,6 @@ contract Bridge is IBridge, VersionedInitializable {
         }
     }
 
-    /**
-     * @notice Approves a new L1<->L2 token bridge.
-     * @dev Function is invoked only by bridge admin
-     * @param l1AToken token address
-     * @param l2Token token address
-     **/
-    function _approveToken(address l1AToken, uint256 l2Token)
-        internal
-        onlyValidL2Address(l2Token)
-    {
-        require(l1AToken != address(0x0), "l1Token address cannot be 0x0");
-
-        require(
-            aTokenData[l1AToken].l2TokenAddress == 0,
-            "l2Token already set"
-        );
-
-        require(
-            IATokenWithPool(l1AToken).getIncentivesController() ==
-                incentivesController,
-            "L1 TOKEN CONFIGURED WITH DIFFERENT INCENTIVES CONTROLLER THAN BRIDGE'S"
-        );
-
-        IERC20 underlyingAsset = IERC20(
-            IATokenWithPool(l1AToken).UNDERLYING_ASSET_ADDRESS()
-        );
-        ILendingPool lendingPool = IATokenWithPool(l1AToken).POOL();
-        underlyingAsset.safeApprove(address(lendingPool), type(uint256).max);
-
-        aTokenData[l1AToken] = ATokenData(
-            l2Token,
-            underlyingAsset,
-            lendingPool
-        );
-        approvedL1Tokens.push(l1AToken);
-        emit ApprovedBridge(l1AToken, l2Token);
-    }
-
     function deposit(
         address l1AToken,
         uint256 l2Recipient,
@@ -147,11 +104,10 @@ contract Bridge is IBridge, VersionedInitializable {
         IERC20 underlyingAsset = aTokenData[l1AToken].underlyingAsset;
         ILendingPool lendingPool = aTokenData[l1AToken].lendingPool;
         require(
-            (underlyingAsset != IERC20(0x0)) &&
-                (lendingPool != ILendingPool(0x0)),
+            underlyingAsset != IERC20(0x0),
             "This aToken has not been approved yet."
         );
-
+        require(amount > 0, "insufficient amount");
         // deposit aToken or underlying asset
 
         if (fromUnderlyingAsset) {
@@ -188,6 +144,14 @@ contract Bridge is IBridge, VersionedInitializable {
             block.number,
             rewardsIndex
         );
+        emit Deposit(
+            from,
+            l1Token,
+            amount,
+            l2Recipient,
+            blockNumber,
+            currentRewardsIndex
+        );
 
         return staticAmount;
     }
@@ -201,7 +165,7 @@ contract Bridge is IBridge, VersionedInitializable {
         bool toUnderlyingAsset
     ) external override {
         require(recipient != address(0x0), "INVALID_RECIPIENT");
-
+        require(staticAmount > 0, "insufficient amount");
         _consumeMessage(
             l1AToken,
             l2sender,
@@ -266,10 +230,53 @@ contract Bridge is IBridge, VersionedInitializable {
         address recipient,
         uint256 amount
     ) external override {
-        _consumeBridgeRewardMessage(l2sender, recipient, amount);
         require(recipient != address(0x0), "INVALID_RECIPIENT");
+        require(amount > 0, "insufficient amount");
+        _consumeBridgeRewardMessage(l2sender, recipient, amount);
         _transferRewards(recipient, amount);
         emit RewardsTransferred(l2sender, recipient, amount);
+    }
+
+    function getRevision() internal pure virtual override returns (uint256) {
+        return BRIDGE_REVISION;
+    }
+
+    /**
+     * @notice Approves a new L1<->L2 token bridge.
+     * @dev Function is invoked only by bridge admin
+     * @param l1AToken token address
+     * @param l2Token token address
+     **/
+    function _approveToken(address l1AToken, uint256 l2Token)
+        internal
+        onlyValidL2Address(l2Token)
+    {
+        require(l1AToken != address(0x0), "l1Token address cannot be 0x0");
+
+        require(
+            aTokenData[l1AToken].l2TokenAddress == 0,
+            "l2Token already set"
+        );
+
+        require(
+            IATokenWithPool(l1AToken).getIncentivesController() ==
+                incentivesController,
+            "L1 TOKEN CONFIGURED WITH DIFFERENT INCENTIVES CONTROLLER THAN BRIDGE'S"
+        );
+
+        IERC20 underlyingAsset = IERC20(
+            IATokenWithPool(l1AToken).UNDERLYING_ASSET_ADDRESS()
+        );
+        ILendingPool lendingPool = IATokenWithPool(l1AToken).POOL();
+        underlyingAsset.safeApprove(address(lendingPool), type(uint256).max);
+
+        aTokenData[l1AToken] = ATokenData(
+            l2Token,
+            underlyingAsset,
+            lendingPool
+        );
+        approvedL1Tokens.push(l1AToken);
+        emit ApprovedBridge(l1AToken, l2Token);
     }
 
     function _sendDepositMessage(
@@ -289,15 +296,6 @@ contract Bridge is IBridge, VersionedInitializable {
         (payload[7], payload[8]) = Cairo.toSplitUint(currentRewardsIndex);
 
         messagingContract.sendMessageToL2(l2Bridge, DEPOSIT_HANDLER, payload);
-
-        emit Deposit(
-            from,
-            l1Token,
-            amount,
-            l2Recipient,
-            blockNumber,
-            currentRewardsIndex
-        );
     }
 
     function _sendIndexUpdateMessage(

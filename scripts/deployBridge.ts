@@ -55,16 +55,18 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
  * @param signer the deployer starknet account
  * @param  l2BridgeAddress address of the proxy bridge on L2
  * @param starknetMessagingAddress
- * @param bridgeAdmin
  * @param proxyAdmin
+ * @param l1Tokens array of aTokens to be approved on l1
+ * @param l2Tokens array of static_a_tokens to be approved on l1
  */
 export async function deployL1Bridge(
   signer: SignerWithAddress,
   l2BridgeAddress: string,
   starknetMessagingAddress: string,
   incentivesController: string,
-  bridgeAdmin: string,
-  proxyAdmin: string
+  proxyAdmin: string,
+  l1Tokens: string[],
+  l2Tokens: bigint[]
 ) {
   let bridgeFactory: ContractFactory;
   let bridgeImpl: Contract;
@@ -89,12 +91,13 @@ export async function deployL1Bridge(
     let ABI = ["function initialize(bytes calldata data)"];
     let iface = new ethers.utils.Interface(ABI);
     const initData = abiCoder.encode(
-      ["uint256", "address", "address", "address"],
+      ["uint256", "address", "address", "address[]", "uint256[]"],
       [
         l2BridgeAddress,
         starknetMessagingAddress,
         incentivesController,
-        bridgeAdmin,
+        l1Tokens,
+        l2Tokens,
       ]
     );
 

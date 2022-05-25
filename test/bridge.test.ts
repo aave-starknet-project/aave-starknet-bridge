@@ -328,13 +328,15 @@ describe("Bridge", async function () {
       l1BridgeProxy.address,
       signer
     );
-    expect(await l1Bridge.messagingContract()).to.eq(
+    expect(await l1Bridge._messagingContract()).to.eq(
       mockStarknetMessagingAddress
     );
-    expect(await l1Bridge.rewardToken()).to.eq(await incentives.REWARD_TOKEN());
+    expect(await l1Bridge._rewardToken()).to.eq(
+      await incentives.REWARD_TOKEN()
+    );
     stkaave = await ethers.getContractAt(
       "ERC20Mock",
-      await l1Bridge.rewardToken()
+      await l1Bridge._rewardToken()
     );
     // doesn't initialize bridge when already initiliazed
     expect(

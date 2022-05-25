@@ -89,9 +89,7 @@ contract Bridge is IBridge, VersionedInitializable {
         incentivesController = incentivesController_;
         rewardToken = IERC20(incentivesController.REWARD_TOKEN());
 
-        for (uint256 i = 0; i < l1Tokens.length; i++) {
-            _approveToken(l1Tokens[i], l2Tokens[i]);
-        }
+        _approveBridgeTokens(l1Tokens, l2Tokens);
     }
 
     function deposit(
@@ -145,12 +143,12 @@ contract Bridge is IBridge, VersionedInitializable {
             rewardsIndex
         );
         emit Deposit(
-            from,
-            l1Token,
-            amount,
+            msg.sender,
+            l1AToken,
+            staticAmount,
             l2Recipient,
-            blockNumber,
-            currentRewardsIndex
+            block.number,
+            rewardsIndex
         );
 
         return staticAmount;
@@ -239,6 +237,19 @@ contract Bridge is IBridge, VersionedInitializable {
 
     function getRevision() internal pure virtual override returns (uint256) {
         return BRIDGE_REVISION;
+    }
+
+    /**
+     * @notice Approves a new L1<->L2 token bridge in a loop, shouldn't be porvided by a large array of aTokens for gas opt.
+     * @dev Function is invoked at initialize
+     **/
+    function _approveBridgeTokens(
+        address[] memory l1Tokens,
+        uint256[] memory l2Tokens
+    ) internal {
+        for (uint256 i = 0; i < l1Tokens.length; i++) {
+            _approveToken(l1Tokens[i], l2Tokens[i]);
+        }
     }
 
     /**

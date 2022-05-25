@@ -2,6 +2,7 @@
 pragma solidity ^0.6.12;
 
 import "./libraries/helpers/Cairo.sol";
+import {Errors} from "./libraries/helpers/Errors.sol";
 import {IStarknetMessaging} from "./interfaces/IStarknetMessaging.sol";
 import {WadRayMath} from "@aave/protocol-v2/contracts/protocol/libraries/math/WadRayMath.sol";
 import {SafeERC20} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
@@ -21,16 +22,12 @@ contract Bridge is IBridge, VersionedInitializable {
     using RayMathNoRounding for uint256;
     using SafeMath for uint256;
 
-    IStarknetMessaging public messagingContract;
-    uint256 public l2Bridge;
-    address[] public approvedL1Tokens;
-    IERC20 public rewardToken;
-    IAaveIncentivesController public incentivesController;
-    mapping(address => ATokenData) public aTokenData;
-    uint256 constant DEPOSIT_HANDLER =
-        1285101517810983806491589552491143496277809242732141897358598292095611420389; // The selector of the "handle_deposit" l1_handler on L2.
-    uint256 constant INDEX_UPDATE_HANDLER =
-        309177621854413231845513563663819170511421561802461396722380275428414897390; // The selector of the "handle_index_update" l1_handler on L2.
+    IStarknetMessaging public _messagingContract;
+    uint256 public _l2Bridge;
+    address[] public _approvedL1Tokens;
+    IERC20 public _rewardToken;
+    IAaveIncentivesController public _incentivesController;
+    mapping(address => ATokenData) public _aTokenData;
     uint256 constant TRANSFER_FROM_STARKNET = 0;
     uint256 constant BRIDGE_REWARD_MESSAGE = 1;
     uint256 constant UINT256_PART_SIZE_BITS = 128;
@@ -41,7 +38,10 @@ contract Bridge is IBridge, VersionedInitializable {
      * @dev Only valid l2 token addresses will can be approved if the function is marked by this modifier.
      **/
     modifier onlyValidL2Address(uint256 l2Address) {
-        require(Cairo.isValidL2Address(l2Address), "L2_ADDRESS_OUT_OF_RANGE");
+        require(
+            Cairo.isValidL2Address(l2Address),
+            Errors.L2_ADDRESS_OUT_OF_RANGE
+        );
         _;
     }
 
@@ -58,9 +58,9 @@ contract Bridge is IBridge, VersionedInitializable {
      **/
     function initialize(bytes calldata data) external virtual initializer {
         (
-            uint256 l2Bridge_,
-            IStarknetMessaging messagingContract_,
-            IAaveIncentivesController incentivesController_,
+            uint256 l2Bridge,
+            IStarknetMessaging messagingContract,
+            IAaveIncentivesController incentivesController,
             address[] memory l1Tokens,
             uint256[] memory l2Tokens
         ) = abi.decode(
@@ -74,20 +74,18 @@ contract Bridge is IBridge, VersionedInitializable {
                 )
             );
 
-        require(Cairo.isValidL2Address(l2Bridge_), "L2_ADDRESS_OUT_OF_RANGE");
         require(
-            address(incentivesController_) != address(0x0),
-            "INVALID ADDRESS FOR INCENTIVE CONTROLLER"
+            Cairo.isValidL2Address(l2Bridge),
+            Errors.L2_ADDRESS_OUT_OF_RANGE
         );
         require(
-            l1Tokens.length == l2Tokens.length,
-            "MISMATCHING TOKENS ARRAYS"
+            address(incentivesController) != address(0x0),
+            Errors.INVALID_INCENTIVE_CONTROLLER_ADDRESS
         );
-
-        messagingContract = messagingContract_;
-        l2Bridge = l2Bridge_;
-        incentivesController = incentivesController_;
-        rewardToken = IERC20(incentivesController.REWARD_TOKEN());
+        _messagingContract = messagingContract;
+        _l2Bridge = l2Bridge;
+        _incentivesController = incentivesController;
+        _rewardToken = IERC20(_incentivesController.REWARD_TOKEN());
 
         _approveBridgeTokens(l1Tokens, l2Tokens);
     }
@@ -99,13 +97,10 @@ contract Bridge is IBridge, VersionedInitializable {
         uint16 referralCode,
         bool fromUnderlyingAsset
     ) external override onlyValidL2Address(l2Recipient) returns (uint256) {
-        IERC20 underlyingAsset = aTokenData[l1AToken].underlyingAsset;
-        ILendingPool lendingPool = aTokenData[l1AToken].lendingPool;
-        require(
-            underlyingAsset != IERC20(0x0),
-            "This aToken has not been approved yet."
-        );
-        require(amount > 0, "insufficient amount");
+        IERC20 underlyingAsset = _aTokenData[l1AToken].underlyingAsset;
+        ILendingPool lendingPool = _aTokenData[l1AToken].lendingPool;
+        require(underlyingAsset != IERC20(0x0), Errors.ATOKEN_NOT_APPROVED);
+        require(amount > 0, Errors.INSUFFICIENT_AMOUNT);
         // deposit aToken or underlying asset
 
         if (fromUnderlyingAsset) {
@@ -162,8 +157,8 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 l2RewardsIndex,
         bool toUnderlyingAsset
     ) external override {
-        require(recipient != address(0x0), "INVALID_RECIPIENT");
-        require(staticAmount > 0, "insufficient amount");
+        require(recipient != address(0x0), Errors.INVALID_RECIPIENT);
+        require(staticAmount > 0, Errors.INSUFFICIENT_AMOUNT);
         _consumeMessage(
             l1AToken,
             l2sender,
@@ -172,8 +167,10 @@ contract Bridge is IBridge, VersionedInitializable {
             l2RewardsIndex
         );
 
-        address underlyingAsset = address(aTokenData[l1AToken].underlyingAsset);
-        ILendingPool lendingPool = aTokenData[l1AToken].lendingPool;
+        address underlyingAsset = address(
+            _aTokenData[l1AToken].underlyingAsset
+        );
+        ILendingPool lendingPool = _aTokenData[l1AToken].lendingPool;
         uint256 amount = _staticToDynamicAmount(
             staticAmount,
             underlyingAsset,
@@ -228,8 +225,8 @@ contract Bridge is IBridge, VersionedInitializable {
         address recipient,
         uint256 amount
     ) external override {
-        require(recipient != address(0x0), "INVALID_RECIPIENT");
-        require(amount > 0, "insufficient amount");
+        require(recipient != address(0x0), Errors.INVALID_RECIPIENT);
+        require(amount > 0, Errors.INSUFFICIENT_AMOUNT);
         _consumeBridgeRewardMessage(l2sender, recipient, amount);
         _transferRewards(recipient, amount);
         emit RewardsTransferred(l2sender, recipient, amount);
@@ -247,6 +244,10 @@ contract Bridge is IBridge, VersionedInitializable {
         address[] memory l1Tokens,
         uint256[] memory l2Tokens
     ) internal {
+        require(
+            l1Tokens.length == l2Tokens.length,
+            Errors.MISMATCHING_ARRAYS_LENGTH
+        );
         for (uint256 i = 0; i < l1Tokens.length; i++) {
             _approveToken(l1Tokens[i], l2Tokens[i]);
         }
@@ -262,17 +263,17 @@ contract Bridge is IBridge, VersionedInitializable {
         internal
         onlyValidL2Address(l2Token)
     {
-        require(l1AToken != address(0x0), "l1Token address cannot be 0x0");
+        require(l1AToken != address(0x0), Errors.INVALID_ADDRESS);
 
         require(
-            aTokenData[l1AToken].l2TokenAddress == 0,
-            "l2Token already set"
+            _aTokenData[l1AToken].l2TokenAddress == 0,
+            Errors.TOKEN_ALREADY_APPROVED
         );
 
         require(
             IATokenWithPool(l1AToken).getIncentivesController() ==
-                incentivesController,
-            "L1 TOKEN CONFIGURED WITH DIFFERENT INCENTIVES CONTROLLER THAN BRIDGE'S"
+                _incentivesController,
+            Errors.INVALID_INCENTIVE_CONTROLLER_ADDRESS
         );
 
         IERC20 underlyingAsset = IERC20(
@@ -281,12 +282,12 @@ contract Bridge is IBridge, VersionedInitializable {
         ILendingPool lendingPool = IATokenWithPool(l1AToken).POOL();
         underlyingAsset.safeApprove(address(lendingPool), type(uint256).max);
 
-        aTokenData[l1AToken] = ATokenData(
+        _aTokenData[l1AToken] = ATokenData(
             l2Token,
             underlyingAsset,
             lendingPool
         );
-        approvedL1Tokens.push(l1AToken);
+        _approvedL1Tokens.push(l1AToken);
         emit ApprovedBridge(l1AToken, l2Token);
     }
 
@@ -301,12 +302,16 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256[] memory payload = new uint256[](9);
         payload[0] = uint256(from);
         payload[1] = l2Recipient;
-        payload[2] = aTokenData[l1Token].l2TokenAddress;
+        payload[2] = _aTokenData[l1Token].l2TokenAddress;
         (payload[3], payload[4]) = Cairo.toSplitUint(amount);
         (payload[5], payload[6]) = Cairo.toSplitUint(blockNumber);
         (payload[7], payload[8]) = Cairo.toSplitUint(currentRewardsIndex);
 
-        messagingContract.sendMessageToL2(l2Bridge, DEPOSIT_HANDLER, payload);
+        _messagingContract.sendMessageToL2(
+            _l2Bridge,
+            Cairo.DEPOSIT_HANDLER,
+            payload
+        );
     }
 
     function _sendIndexUpdateMessage(
@@ -317,13 +322,13 @@ contract Bridge is IBridge, VersionedInitializable {
     ) internal {
         uint256[] memory payload = new uint256[](6);
         payload[0] = uint256(from);
-        payload[1] = aTokenData[l1Token].l2TokenAddress;
+        payload[1] = _aTokenData[l1Token].l2TokenAddress;
         (payload[2], payload[3]) = Cairo.toSplitUint(blockNumber);
         (payload[4], payload[5]) = Cairo.toSplitUint(currentRewardsIndex);
 
-        messagingContract.sendMessageToL2(
-            l2Bridge,
-            INDEX_UPDATE_HANDLER,
+        _messagingContract.sendMessageToL2(
+            _l2Bridge,
+            Cairo.INDEX_UPDATE_HANDLER,
             payload
         );
     }
@@ -345,7 +350,7 @@ contract Bridge is IBridge, VersionedInitializable {
 
         // Consume the message from the StarkNet core contract.
         // This will revert the (Ethereum) transaction if the message does not exist.
-        messagingContract.consumeMessageFromL2(l2Bridge, payload);
+        _messagingContract.consumeMessageFromL2(_l2Bridge, payload);
     }
 
     function _dynamicToStaticAmount(
@@ -377,8 +382,8 @@ contract Bridge is IBridge, VersionedInitializable {
             uint256 index,
             uint256 emissionPerSecond,
             uint256 lastUpdateTimestamp
-        ) = incentivesController.getAssetData(l1AToken);
-        uint256 distributionEnd = incentivesController.DISTRIBUTION_END();
+        ) = _incentivesController.getAssetData(l1AToken);
+        uint256 distributionEnd = _incentivesController.DISTRIBUTION_END();
         uint256 totalSupply = IScaledBalanceToken(l1AToken).scaledTotalSupply();
 
         if (
@@ -424,7 +429,7 @@ contract Bridge is IBridge, VersionedInitializable {
         payload[2] = uint256(recipient);
         (payload[3], payload[4]) = Cairo.toSplitUint(amount);
 
-        messagingContract.consumeMessageFromL2(l2Bridge, payload);
+        _messagingContract.consumeMessageFromL2(_l2Bridge, payload);
     }
 
     /**
@@ -436,20 +441,20 @@ contract Bridge is IBridge, VersionedInitializable {
         internal
     {
         address self = address(this);
-        uint256 rewardBalance = rewardToken.balanceOf(self);
+        uint256 rewardBalance = _rewardToken.balanceOf(self);
 
         if (rewardBalance < rewardsAmount) {
-            rewardBalance += incentivesController.claimRewards(
-                approvedL1Tokens,
+            rewardBalance += _incentivesController.claimRewards(
+                _approvedL1Tokens,
                 rewardsAmount - rewardBalance,
                 self
             );
         }
 
         if (rewardBalance >= rewardsAmount) {
-            rewardToken.transfer(recipient, rewardsAmount);
+            _rewardToken.transfer(recipient, rewardsAmount);
             return;
         }
-        revert("NOT ENOUGH REWARDS");
+        revert(Errors.NOT_ENOUGH_REWARDS);
     }
 }

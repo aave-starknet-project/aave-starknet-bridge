@@ -2,7 +2,7 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import {Errors} from "./Errors.sol";
+import {Errors} from "../helpers/Errors.sol";
 
 library RayMathNoRounding {
     uint256 internal constant RAY = 1e27;

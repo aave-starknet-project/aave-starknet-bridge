@@ -31,6 +31,7 @@ interface IBridge {
         uint256 amount
     );
     event ApprovedBridge(address l1Token, uint256 l2Token);
+    event L2StateUpdated(address indexed l1Token, uint256 rewardsIndex);
 
     /**
      * @notice allows deposits of aTokens or their underlying assets on L2

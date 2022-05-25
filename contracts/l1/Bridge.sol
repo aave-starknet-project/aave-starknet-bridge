@@ -28,10 +28,6 @@ contract Bridge is IBridge, VersionedInitializable {
     IERC20 public _rewardToken;
     IAaveIncentivesController public _incentivesController;
     mapping(address => ATokenData) public _aTokenData;
-    uint256 constant TRANSFER_FROM_STARKNET = 0;
-    uint256 constant BRIDGE_REWARD_MESSAGE = 1;
-    uint256 constant UINT256_PART_SIZE_BITS = 128;
-    uint256 constant UINT256_PART_SIZE = 2**UINT256_PART_SIZE_BITS;
     uint256 public constant BRIDGE_REVISION = 0x1;
 
     /**
@@ -40,7 +36,7 @@ contract Bridge is IBridge, VersionedInitializable {
     modifier onlyValidL2Address(uint256 l2Address) {
         require(
             Cairo.isValidL2Address(l2Address),
-            Errors.L2_ADDRESS_OUT_OF_RANGE
+            Errors.B_L2_ADDRESS_OUT_OF_RANGE
         );
         _;
     }
@@ -76,11 +72,11 @@ contract Bridge is IBridge, VersionedInitializable {
 
         require(
             Cairo.isValidL2Address(l2Bridge),
-            Errors.L2_ADDRESS_OUT_OF_RANGE
+            Errors.B_L2_ADDRESS_OUT_OF_RANGE
         );
         require(
             address(incentivesController) != address(0x0),
-            Errors.INVALID_INCENTIVE_CONTROLLER_ADDRESS
+            Errors.B_INVALID_INCENTIVES_CONTROLLER_ADDRESS
         );
         _messagingContract = messagingContract;
         _l2Bridge = l2Bridge;
@@ -99,8 +95,8 @@ contract Bridge is IBridge, VersionedInitializable {
     ) external override onlyValidL2Address(l2Recipient) returns (uint256) {
         IERC20 underlyingAsset = _aTokenData[l1AToken].underlyingAsset;
         ILendingPool lendingPool = _aTokenData[l1AToken].lendingPool;
-        require(underlyingAsset != IERC20(0x0), Errors.ATOKEN_NOT_APPROVED);
-        require(amount > 0, Errors.INSUFFICIENT_AMOUNT);
+        require(underlyingAsset != IERC20(0x0), Errors.B_ATOKEN_NOT_APPROVED);
+        require(amount > 0, Errors.B_INSUFFICIENT_AMOUNT);
         // deposit aToken or underlying asset
 
         if (fromUnderlyingAsset) {
@@ -157,8 +153,8 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 l2RewardsIndex,
         bool toUnderlyingAsset
     ) external override {
-        require(recipient != address(0x0), Errors.INVALID_RECIPIENT);
-        require(staticAmount > 0, Errors.INSUFFICIENT_AMOUNT);
+        require(recipient != address(0x0), Errors.B_INVALID_ADDRESS);
+        require(staticAmount > 0, Errors.B_INSUFFICIENT_AMOUNT);
         _consumeMessage(
             l1AToken,
             l2sender,
@@ -218,6 +214,8 @@ contract Bridge is IBridge, VersionedInitializable {
             block.number,
             rewardsIndex
         );
+
+        emit L2StateUpdated(l1AToken, rewardsIndex);
     }
 
     function receiveRewards(
@@ -225,7 +223,7 @@ contract Bridge is IBridge, VersionedInitializable {
         address recipient,
         uint256 amount
     ) external override {
-        require(recipient != address(0x0), Errors.INVALID_RECIPIENT);
+        require(recipient != address(0x0), Errors.B_INVALID_ADDRESS);
         _consumeBridgeRewardMessage(l2sender, recipient, amount);
         _transferRewards(recipient, amount);
         emit RewardsTransferred(l2sender, recipient, amount);
@@ -245,7 +243,7 @@ contract Bridge is IBridge, VersionedInitializable {
     ) internal {
         require(
             l1Tokens.length == l2Tokens.length,
-            Errors.MISMATCHING_ARRAYS_LENGTH
+            Errors.B_MISMATCHING_ARRAYS_LENGTH
         );
         for (uint256 i = 0; i < l1Tokens.length; i++) {
             _approveToken(l1Tokens[i], l2Tokens[i]);
@@ -262,17 +260,17 @@ contract Bridge is IBridge, VersionedInitializable {
         internal
         onlyValidL2Address(l2Token)
     {
-        require(l1AToken != address(0x0), Errors.INVALID_ADDRESS);
+        require(l1AToken != address(0x0), Errors.B_INVALID_ADDRESS);
 
         require(
             _aTokenData[l1AToken].l2TokenAddress == 0,
-            Errors.TOKEN_ALREADY_APPROVED
+            Errors.B_TOKEN_ALREADY_APPROVED
         );
 
         require(
             IATokenWithPool(l1AToken).getIncentivesController() ==
                 _incentivesController,
-            Errors.INVALID_INCENTIVE_CONTROLLER_ADDRESS
+            Errors.B_INVALID_INCENTIVES_CONTROLLER_ADDRESS
         );
 
         IERC20 underlyingAsset = IERC20(
@@ -340,7 +338,7 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 l2RewardsIndex
     ) internal {
         uint256[] memory payload = new uint256[](8);
-        payload[0] = TRANSFER_FROM_STARKNET;
+        payload[0] = Cairo.TRANSFER_FROM_STARKNET;
         payload[1] = uint256(address(l1Token));
         payload[2] = l2sender;
         payload[3] = uint256(recipient);
@@ -423,7 +421,7 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 amount
     ) internal {
         uint256[] memory payload = new uint256[](5);
-        payload[0] = BRIDGE_REWARD_MESSAGE;
+        payload[0] = Cairo.BRIDGE_REWARD_MESSAGE;
         payload[1] = l2sender;
         payload[2] = uint256(recipient);
         (payload[3], payload[4]) = Cairo.toSplitUint(amount);
@@ -454,6 +452,6 @@ contract Bridge is IBridge, VersionedInitializable {
             _rewardToken.transfer(recipient, rewardsAmount);
             return;
         }
-        revert(Errors.NOT_ENOUGH_REWARDS);
+        revert(Errors.B_NOT_ENOUGH_REWARDS);
     }
 }

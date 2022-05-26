@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.10;
 
-import {IPool} from "@aave/core-v3/contracts/interfaces/IPool.sol";
+import {ILendingPool} from "./ILendingPool.sol";
 import {IAaveIncentivesController} from "./IAaveIncentivesController.sol";
 
 /**
@@ -43,7 +43,7 @@ interface IInitializableAToken {
      * @param aTokenSymbol The symbol of the aToken
      */
     function initialize(
-        IPool pool,
+        ILendingPool pool,
         address treasury,
         address underlyingAsset,
         IAaveIncentivesController incentivesController,

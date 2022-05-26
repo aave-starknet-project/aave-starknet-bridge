@@ -5,7 +5,6 @@ import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRay
 import {IERC20} from "@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IScaledBalanceToken} from "@aave/core-v3/contracts/interfaces/IScaledBalanceToken.sol";
 import {VersionedInitializable} from "@aave/core-v3/contracts/protocol/libraries/aave-upgradeability/VersionedInitializable.sol";
-import {IPool} from "@aave/core-v3/contracts/interfaces/IPool.sol";
 
 import "./libraries/helpers/Cairo.sol";
 import {Errors} from "./libraries/helpers/Errors.sol";
@@ -13,6 +12,7 @@ import {IStarknetMessaging} from "./interfaces/IStarknetMessaging.sol";
 import {RayMathNoRounding} from "./libraries/math/RayMathNoRounding.sol";
 import {IAaveIncentivesController} from "./interfaces/IAaveIncentivesController.sol";
 import {IATokenWithPool} from "./interfaces/IATokenWithPool.sol";
+import {ILendingPool} from "./interfaces/ILendingPool.sol";
 import {IBridge} from "./interfaces/IBridge.sol";
 
 contract Bridge is IBridge, VersionedInitializable {
@@ -89,7 +89,7 @@ contract Bridge is IBridge, VersionedInitializable {
         bool fromUnderlyingAsset
     ) external override onlyValidL2Address(l2Recipient) returns (uint256) {
         IERC20 underlyingAsset = _aTokenData[l1AToken].underlyingAsset;
-        IPool lendingPool = _aTokenData[l1AToken].lendingPool;
+        ILendingPool lendingPool = _aTokenData[l1AToken].lendingPool;
         require(
             underlyingAsset != IERC20(address(0)),
             Errors.B_ATOKEN_NOT_APPROVED
@@ -160,7 +160,7 @@ contract Bridge is IBridge, VersionedInitializable {
         address underlyingAsset = address(
             _aTokenData[l1AToken].underlyingAsset
         );
-        IPool lendingPool = _aTokenData[l1AToken].lendingPool;
+        ILendingPool lendingPool = _aTokenData[l1AToken].lendingPool;
         uint256 amount = _staticToDynamicAmount(
             staticAmount,
             underlyingAsset,
@@ -270,7 +270,7 @@ contract Bridge is IBridge, VersionedInitializable {
         IERC20 underlyingAsset = IERC20(
             IATokenWithPool(l1AToken).UNDERLYING_ASSET_ADDRESS()
         );
-        IPool lendingPool = IATokenWithPool(l1AToken).POOL();
+        ILendingPool lendingPool = IATokenWithPool(l1AToken).POOL();
         underlyingAsset.approve(address(lendingPool), type(uint256).max);
 
         _aTokenData[l1AToken] = ATokenData(
@@ -347,7 +347,7 @@ contract Bridge is IBridge, VersionedInitializable {
     function _dynamicToStaticAmount(
         uint256 amount,
         address asset,
-        IPool lendingPool
+        ILendingPool lendingPool
     ) internal view returns (uint256) {
         return amount.rayDiv(lendingPool.getReserveNormalizedIncome(asset));
     }
@@ -355,7 +355,7 @@ contract Bridge is IBridge, VersionedInitializable {
     function _staticToDynamicAmount(
         uint256 amount,
         address asset,
-        IPool lendingPool
+        ILendingPool lendingPool
     ) internal view returns (uint256) {
         return amount.rayMul(lendingPool.getReserveNormalizedIncome(asset));
     }

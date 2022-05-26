@@ -2,13 +2,13 @@
 pragma solidity 0.8.10;
 
 import {IERC20} from "@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IPool} from "@aave/core-v3/contracts/interfaces/IPool.sol";
+import {ILendingPool} from "./ILendingPool.sol";
 
 interface IBridge {
     struct ATokenData {
         uint256 l2TokenAddress;
         IERC20 underlyingAsset;
-        IPool lendingPool;
+        ILendingPool lendingPool;
     }
 
     event Deposit(

@@ -15,8 +15,9 @@ audited, might contain bugs and should not be used in production.
   - [2.1. Contracts](#contracts)
   - [2.2. static_a_tokens on L2](#staticatokens-on-l2)
   - [2.3. Bridging aTokens from L1<>L2](#bridging-atokens-from-l1--l2)
-    - [2.3.1. Transfer L1->L2](#transfer-l1--l2-)
-    - [2.3.2. Transfer L2->L1](#transfer-l2--l1-)
+    - [2.3.1. Approving aTokens bridge](#approve-bridge)
+    - [2.3.2. Transfer L1->L2](#transfer-l1--l2-)
+    - [2.3.3. Transfer L2->L1](#transfer-l2--l1-)
   - [2.4. Synchronisation of rewards on L1 <> L2](#synchronisation-of-rewards-on-l1----l2)
   - [2.5. Claiming rewards on L2](#claiming-rewards-on-l2)
   - [2.6. Bridging rewards from L2->L1](#bridging-rewards-from-l2--l1)
@@ -84,6 +85,10 @@ increasing `aTokens` amounts locked in the bridge contract on Ethereum.
 `static_a_tokens` can then be bridged back to `aTokens`.
 
 ## Bridging aTokens from L1<>L2 <a name="bridging-atokens-from-l1--l2"></a>
+
+### Approving bridge tokens <a name="approve-bridge"></a>
+
+L1 aTokens are approved on the bridge at `initiliaze` where `_approveBridgeTokens` is called internally to approve the provided array of aTokens in an array along with their corresponding static_a_tokens on L2. :warning: Gas limit concerns should apply here! 
 
 ### Transfer L1->L2: <a name="transfer-l1--l2-"></a>
 

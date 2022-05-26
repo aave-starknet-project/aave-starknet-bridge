@@ -296,21 +296,17 @@ describe("Bridge", async function () {
   });
 
   it("set L1 token bridge as implementation contract", async () => {
-    let ABI = ["function initialize(bytes calldata data)"];
+    let ABI = [
+      "function initialize(uint256 l2Bridge, address messagingContract, address incentivesController, address[] calldata l1Tokens, uint256[] calldata l2Tokens) ",
+    ];
     let iface = new ethers.utils.Interface(ABI);
-    const initData = abiCoder.encode(
-      ["uint256", "address", "address", "address[]", "uint256[]"],
-      [
-        l2BridgeProxy.address,
-        mockStarknetMessagingAddress,
-        INCENTIVES_CONTROLLER,
-        [aDai.address, aUsdc.address],
-        [l2StaticADai.address, l2StaticAUsdc.address],
-      ]
-    );
 
     let encodedInitializedParams = iface.encodeFunctionData("initialize", [
-      initData,
+      l2BridgeProxy.address,
+      mockStarknetMessagingAddress,
+      INCENTIVES_CONTROLLER,
+      [aDai.address, aUsdc.address],
+      [l2StaticADai.address, l2StaticAUsdc.address],
     ]);
     await l1BridgeProxy["initialize(address,address,bytes)"](
       l1BridgeImpl.address,

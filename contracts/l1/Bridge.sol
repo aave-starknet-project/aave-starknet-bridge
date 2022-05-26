@@ -40,31 +40,20 @@ contract Bridge is IBridge, VersionedInitializable {
 
     /**
      * @notice Initializes the Bridge
-     * @dev Function is invoked by the proxy contract when the bridge contract is added, takes the following byte encoded input arguments:
-     *  L2 bridge address
-     *  Starknet messaging contract address
-     *  Address of Aave IncentivesController
-     *  Array of l1 tokens
-     *  Array of l2 tokens
+     * @dev Function is invoked by the proxy contract when the bridge contract is added
+     * @param l2Bridge L2 bridge address
+     * @param messagingContract Starknet messaging contract address
+     * @param incentivesController Address of Aave IncentivesController
+     * @param l1Tokens Array of l1 tokens
+     * @param l2Tokens Array of l2 tokens
      **/
-    function initialize(bytes calldata data) external virtual initializer {
-        (
-            uint256 l2Bridge,
-            IStarknetMessaging messagingContract,
-            IAaveIncentivesController incentivesController,
-            address[] memory l1Tokens,
-            uint256[] memory l2Tokens
-        ) = abi.decode(
-                data,
-                (
-                    uint256,
-                    IStarknetMessaging,
-                    IAaveIncentivesController,
-                    address[],
-                    uint256[]
-                )
-            );
-
+    function initialize(
+        uint256 l2Bridge,
+        address messagingContract,
+        address incentivesController,
+        address[] calldata l1Tokens,
+        uint256[] calldata l2Tokens
+    ) external virtual initializer {
         require(
             Cairo.isValidL2Address(l2Bridge),
             Errors.B_L2_ADDRESS_OUT_OF_RANGE
@@ -73,9 +62,9 @@ contract Bridge is IBridge, VersionedInitializable {
             address(incentivesController) != address(0),
             Errors.B_INVALID_INCENTIVES_CONTROLLER_ADDRESS
         );
-        _messagingContract = messagingContract;
+        _messagingContract = IStarknetMessaging(messagingContract);
         _l2Bridge = l2Bridge;
-        _incentivesController = incentivesController;
+        _incentivesController = IAaveIncentivesController(incentivesController);
         _rewardToken = IERC20(_incentivesController.REWARD_TOKEN());
 
         _approveBridgeTokens(l1Tokens, l2Tokens);
@@ -232,8 +221,8 @@ contract Bridge is IBridge, VersionedInitializable {
      * @dev Function is invoked at initialize
      **/
     function _approveBridgeTokens(
-        address[] memory l1Tokens,
-        uint256[] memory l2Tokens
+        address[] calldata l1Tokens,
+        uint256[] calldata l2Tokens
     ) internal {
         require(
             l1Tokens.length == l2Tokens.length,

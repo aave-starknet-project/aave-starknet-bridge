@@ -25,7 +25,17 @@ const { PRIVATE_KEY, ALCHEMY_KEY } = process.env;
 const config: HardhatUserConfig = {
   solidity: {
     compilers: [
-      // for @aave/protocol-v2 contracts
+      {
+        version: "0.8.10",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+          evmVersion: "london",
+        },
+      },
+      // to compile LendingPool contract
       {
         version: "0.6.12",
         settings: {

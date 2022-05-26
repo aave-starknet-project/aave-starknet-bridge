@@ -1,4 +1,5 @@
-pragma solidity ^0.6.12;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity 0.8.10;
 
 library Cairo {
     uint256 public constant FIELD_PRIME =

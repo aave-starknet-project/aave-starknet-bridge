@@ -1,26 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0.
-pragma solidity ^0.6.12;
+pragma solidity 0.8.10;
+
+import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
+import {IERC20} from "@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IScaledBalanceToken} from "@aave/core-v3/contracts/interfaces/IScaledBalanceToken.sol";
+import {VersionedInitializable} from "@aave/core-v3/contracts/protocol/libraries/aave-upgradeability/VersionedInitializable.sol";
+import {IPool} from "@aave/core-v3/contracts/interfaces/IPool.sol";
 
 import "./libraries/helpers/Cairo.sol";
 import {Errors} from "./libraries/helpers/Errors.sol";
 import {IStarknetMessaging} from "./interfaces/IStarknetMessaging.sol";
-import {WadRayMath} from "@aave/protocol-v2/contracts/protocol/libraries/math/WadRayMath.sol";
-import {SafeERC20} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {IERC20} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {SafeMath} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {RayMathNoRounding} from "./libraries/math/RayMathNoRounding.sol";
-import {ILendingPool} from "@aave/protocol-v2/contracts/interfaces/ILendingPool.sol";
 import {IAaveIncentivesController} from "./interfaces/IAaveIncentivesController.sol";
 import {IATokenWithPool} from "./interfaces/IATokenWithPool.sol";
-import {IScaledBalanceToken} from "@aave/protocol-v2/contracts/interfaces/IScaledBalanceToken.sol";
-import {VersionedInitializable} from "@aave/protocol-v2/contracts/protocol/libraries/aave-upgradeability/VersionedInitializable.sol";
 import {IBridge} from "./interfaces/IBridge.sol";
 
 contract Bridge is IBridge, VersionedInitializable {
-    using SafeERC20 for IERC20;
     using WadRayMath for uint256;
     using RayMathNoRounding for uint256;
-    using SafeMath for uint256;
 
     IStarknetMessaging public _messagingContract;
     uint256 public _l2Bridge;
@@ -40,8 +37,6 @@ contract Bridge is IBridge, VersionedInitializable {
         );
         _;
     }
-
-    constructor() public {}
 
     /**
      * @notice Initializes the Bridge
@@ -75,7 +70,7 @@ contract Bridge is IBridge, VersionedInitializable {
             Errors.B_L2_ADDRESS_OUT_OF_RANGE
         );
         require(
-            address(incentivesController) != address(0x0),
+            address(incentivesController) != address(0),
             Errors.B_INVALID_INCENTIVES_CONTROLLER_ADDRESS
         );
         _messagingContract = messagingContract;
@@ -94,13 +89,16 @@ contract Bridge is IBridge, VersionedInitializable {
         bool fromUnderlyingAsset
     ) external override onlyValidL2Address(l2Recipient) returns (uint256) {
         IERC20 underlyingAsset = _aTokenData[l1AToken].underlyingAsset;
-        ILendingPool lendingPool = _aTokenData[l1AToken].lendingPool;
-        require(underlyingAsset != IERC20(0x0), Errors.B_ATOKEN_NOT_APPROVED);
+        IPool lendingPool = _aTokenData[l1AToken].lendingPool;
+        require(
+            underlyingAsset != IERC20(address(0)),
+            Errors.B_ATOKEN_NOT_APPROVED
+        );
         require(amount > 0, Errors.B_INSUFFICIENT_AMOUNT);
         // deposit aToken or underlying asset
 
         if (fromUnderlyingAsset) {
-            underlyingAsset.safeTransferFrom(msg.sender, address(this), amount);
+            underlyingAsset.transferFrom(msg.sender, address(this), amount);
             lendingPool.deposit(
                 address(underlyingAsset),
                 amount,
@@ -108,11 +106,7 @@ contract Bridge is IBridge, VersionedInitializable {
                 referralCode
             );
         } else {
-            IERC20(l1AToken).safeTransferFrom(
-                msg.sender,
-                address(this),
-                amount
-            );
+            IERC20(l1AToken).transferFrom(msg.sender, address(this), amount);
         }
 
         // update L2 state and emit deposit event
@@ -153,7 +147,7 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 l2RewardsIndex,
         bool toUnderlyingAsset
     ) external override {
-        require(recipient != address(0x0), Errors.B_INVALID_ADDRESS);
+        require(recipient != address(0), Errors.B_INVALID_ADDRESS);
         require(staticAmount > 0, Errors.B_INSUFFICIENT_AMOUNT);
         _consumeMessage(
             l1AToken,
@@ -166,7 +160,7 @@ contract Bridge is IBridge, VersionedInitializable {
         address underlyingAsset = address(
             _aTokenData[l1AToken].underlyingAsset
         );
-        ILendingPool lendingPool = _aTokenData[l1AToken].lendingPool;
+        IPool lendingPool = _aTokenData[l1AToken].lendingPool;
         uint256 amount = _staticToDynamicAmount(
             staticAmount,
             underlyingAsset,
@@ -176,7 +170,7 @@ contract Bridge is IBridge, VersionedInitializable {
         if (toUnderlyingAsset) {
             lendingPool.withdraw(underlyingAsset, amount, recipient);
         } else {
-            IERC20(l1AToken).safeTransfer(recipient, amount);
+            IERC20(l1AToken).transfer(recipient, amount);
         }
 
         emit Withdrawal(l1AToken, l2sender, recipient, amount);
@@ -223,7 +217,7 @@ contract Bridge is IBridge, VersionedInitializable {
         address recipient,
         uint256 amount
     ) external override {
-        require(recipient != address(0x0), Errors.B_INVALID_ADDRESS);
+        require(recipient != address(0), Errors.B_INVALID_ADDRESS);
         _consumeBridgeRewardMessage(l2sender, recipient, amount);
         _transferRewards(recipient, amount);
         emit RewardsTransferred(l2sender, recipient, amount);
@@ -260,7 +254,7 @@ contract Bridge is IBridge, VersionedInitializable {
         internal
         onlyValidL2Address(l2Token)
     {
-        require(l1AToken != address(0x0), Errors.B_INVALID_ADDRESS);
+        require(l1AToken != address(0), Errors.B_INVALID_ADDRESS);
 
         require(
             _aTokenData[l1AToken].l2TokenAddress == 0,
@@ -276,8 +270,8 @@ contract Bridge is IBridge, VersionedInitializable {
         IERC20 underlyingAsset = IERC20(
             IATokenWithPool(l1AToken).UNDERLYING_ASSET_ADDRESS()
         );
-        ILendingPool lendingPool = IATokenWithPool(l1AToken).POOL();
-        underlyingAsset.safeApprove(address(lendingPool), type(uint256).max);
+        IPool lendingPool = IATokenWithPool(l1AToken).POOL();
+        underlyingAsset.approve(address(lendingPool), type(uint256).max);
 
         _aTokenData[l1AToken] = ATokenData(
             l2Token,
@@ -297,7 +291,7 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 currentRewardsIndex
     ) internal {
         uint256[] memory payload = new uint256[](9);
-        payload[0] = uint256(from);
+        payload[0] = uint256(uint160(from));
         payload[1] = l2Recipient;
         payload[2] = _aTokenData[l1Token].l2TokenAddress;
         (payload[3], payload[4]) = Cairo.toSplitUint(amount);
@@ -318,7 +312,7 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 currentRewardsIndex
     ) internal {
         uint256[] memory payload = new uint256[](6);
-        payload[0] = uint256(from);
+        payload[0] = uint256(uint160(from));
         payload[1] = _aTokenData[l1Token].l2TokenAddress;
         (payload[2], payload[3]) = Cairo.toSplitUint(blockNumber);
         (payload[4], payload[5]) = Cairo.toSplitUint(currentRewardsIndex);
@@ -339,9 +333,9 @@ contract Bridge is IBridge, VersionedInitializable {
     ) internal {
         uint256[] memory payload = new uint256[](8);
         payload[0] = Cairo.TRANSFER_FROM_STARKNET;
-        payload[1] = uint256(address(l1Token));
+        payload[1] = uint256(uint160(l1Token));
         payload[2] = l2sender;
-        payload[3] = uint256(recipient);
+        payload[3] = uint256(uint160(recipient));
         (payload[4], payload[5]) = Cairo.toSplitUint(amount);
         (payload[6], payload[7]) = Cairo.toSplitUint(l2RewardsIndex);
 
@@ -353,7 +347,7 @@ contract Bridge is IBridge, VersionedInitializable {
     function _dynamicToStaticAmount(
         uint256 amount,
         address asset,
-        ILendingPool lendingPool
+        IPool lendingPool
     ) internal view returns (uint256) {
         return amount.rayDiv(lendingPool.getReserveNormalizedIncome(asset));
     }
@@ -361,7 +355,7 @@ contract Bridge is IBridge, VersionedInitializable {
     function _staticToDynamicAmount(
         uint256 amount,
         address asset,
-        ILendingPool lendingPool
+        IPool lendingPool
     ) internal view returns (uint256) {
         return amount.rayMul(lendingPool.getReserveNormalizedIncome(asset));
     }
@@ -395,13 +389,11 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 currentTimestamp = block.timestamp > distributionEnd
             ? distributionEnd
             : block.timestamp;
-        uint256 timeDelta = currentTimestamp.sub(lastUpdateTimestamp);
+        uint256 timeDelta = currentTimestamp - lastUpdateTimestamp;
         return
-            emissionPerSecond
-                .mul(timeDelta)
-                .mul(10**uint256(18))
-                .div(totalSupply)
-                .add(index); // 18- precision, should be loaded
+            (emissionPerSecond * timeDelta * 10**uint256(18)) /
+            totalSupply +
+            index;
     }
 
     function _computeRewardsDiff(
@@ -411,7 +403,7 @@ contract Bridge is IBridge, VersionedInitializable {
     ) internal pure returns (uint256) {
         uint256 rayAmount = amount.wadToRay();
         return
-            (rayAmount.rayMulNoRounding(l1RewardsIndex.sub(l2RewardsIndex)))
+            (rayAmount.rayMulNoRounding(l1RewardsIndex - l2RewardsIndex))
                 .rayToWad();
     }
 
@@ -423,7 +415,7 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256[] memory payload = new uint256[](5);
         payload[0] = Cairo.BRIDGE_REWARD_MESSAGE;
         payload[1] = l2sender;
-        payload[2] = uint256(recipient);
+        payload[2] = uint256(uint160(recipient));
         (payload[3], payload[4]) = Cairo.toSplitUint(amount);
 
         _messagingContract.consumeMessageFromL2(_l2Bridge, payload);

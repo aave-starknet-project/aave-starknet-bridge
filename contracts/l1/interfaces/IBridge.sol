@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
-import {IERC20} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {ILendingPool} from "@aave/protocol-v2/contracts/interfaces/ILendingPool.sol";
+pragma solidity 0.8.10;
+
+import {IERC20} from "@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IPool} from "@aave/core-v3/contracts/interfaces/IPool.sol";
 
 interface IBridge {
     struct ATokenData {
         uint256 l2TokenAddress;
         IERC20 underlyingAsset;
-        ILendingPool lendingPool;
+        IPool lendingPool;
     }
 
     event Deposit(

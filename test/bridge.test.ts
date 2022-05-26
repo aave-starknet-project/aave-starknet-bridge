@@ -175,12 +175,12 @@ describe("Bridge", async function () {
 
     aDai = await ethers.getContractAt("AToken", A_DAI);
     dai = await ethers.getContractAt(
-      "ERC20Mock",
+      "ERC20",
       await aDai.UNDERLYING_ASSET_ADDRESS()
     );
     aUsdc = await ethers.getContractAt("AToken", A_USDC);
     usdc = await ethers.getContractAt(
-      "ERC20Mock",
+      "ERC20",
       await aUsdc.UNDERLYING_ASSET_ADDRESS()
     );
 
@@ -210,7 +210,7 @@ describe("Bridge", async function () {
     await l1BridgeImpl.deployed();
 
     l1ProxyBridgeFactory = await ethers.getContractFactory(
-      "InitializableAdminUpgradeabilityProxyMock",
+      "InitializableAdminUpgradeabilityProxy",
       l1ProxyAdmin
     );
     l1BridgeProxy = await l1ProxyBridgeFactory.deploy();
@@ -334,7 +334,7 @@ describe("Bridge", async function () {
       await incentives.REWARD_TOKEN()
     );
     stkaave = await ethers.getContractAt(
-      "ERC20Mock",
+      "ERC20",
       await l1Bridge._rewardToken()
     );
     // doesn't initialize bridge when already initiliazed

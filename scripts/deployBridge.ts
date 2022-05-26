@@ -88,21 +88,17 @@ export async function deployL1Bridge(
     bridgeImpl = await bridgeFactory.deploy();
     await bridgeImpl.deployed();
 
-    let ABI = ["function initialize(bytes calldata data)"];
+    let ABI = [
+      "function initialize(uint256 l2Bridge, address messagingContract, address incentivesController, address[] calldata l1Tokens, uint256[] calldata l2Tokens) ",
+    ];
     let iface = new ethers.utils.Interface(ABI);
-    const initData = abiCoder.encode(
-      ["uint256", "address", "address", "address[]", "uint256[]"],
-      [
-        l2BridgeAddress,
-        starknetMessagingAddress,
-        incentivesController,
-        l1Tokens,
-        l2Tokens,
-      ]
-    );
 
     let encodedInitializedParams = iface.encodeFunctionData("initialize", [
-      initData,
+      l2BridgeAddress,
+      starknetMessagingAddress,
+      incentivesController,
+      l1Tokens,
+      l2Tokens,
     ]);
 
     await bridgeProxy["initialize(address,address,bytes)"](

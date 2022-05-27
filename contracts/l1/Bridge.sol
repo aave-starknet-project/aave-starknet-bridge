@@ -207,6 +207,7 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 amount
     ) external override {
         require(recipient != address(0), Errors.B_INVALID_ADDRESS);
+        require(amount > 0, Errors.B_INSUFFICIENT_AMOUNT);
         _consumeBridgeRewardMessage(l2sender, recipient, amount);
         _transferRewards(recipient, amount);
         emit RewardsTransferred(l2sender, recipient, amount);

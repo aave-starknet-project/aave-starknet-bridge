@@ -144,7 +144,7 @@ describe("static_a_token", function () {
     }
   });
 
-  it("allows bridge to update accRewards", async () => {
+  it("allows bridge to update rewards index", async () => {
     await bridge.invoke(token, "push_rewards_index", {
       block_number: {
         high: 0,

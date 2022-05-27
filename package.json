@@ -11,7 +11,7 @@
     "lint:fix": "npx prettier --write . && find contracts/ -iname *.cairo -exec .venv/bin/cairo-format -i {} +",
     "compile": "hardhat starknet-compile --cairo-path 'node_modules/@joriksch/oz-cairo/src'",
     "deploy:account": "yarn hardhat starknet-deploy-account --starknet-network l2_testnet --wallet OpenZeppelin",
-    "deploy-bridge": "hardhat run ./scripts/deploy.ts",
+    "deploy-bridge:testnet": "hardhat run ./scripts/deploy.ts --network l1_testnet",
     "prepare": "husky install"
   },
   "author": "AAVE",

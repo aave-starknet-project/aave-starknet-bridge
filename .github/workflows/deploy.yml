@@ -48,4 +48,4 @@ jobs:
 
       - name: Deploy bridge
         run: |
-          yarn deploy-bridge
+          yarn deploy-bridge:testnet

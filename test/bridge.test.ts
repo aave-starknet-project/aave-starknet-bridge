@@ -37,7 +37,6 @@ describe("Bridge", async function () {
   this.timeout(TIMEOUT);
 
   const networkUrl: string = (network.config as HttpNetworkConfig).url;
-  const abiCoder = new ethers.utils.AbiCoder();
 
   // users
   let l1user: SignerWithAddress;

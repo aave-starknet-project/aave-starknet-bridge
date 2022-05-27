@@ -75,7 +75,6 @@ export async function deployL1Bridge(
   let bridge: Contract;
 
   try {
-    const abiCoder = new ethers.utils.AbiCoder();
     bridgeFactory = await ethers.getContractFactory("Bridge", signer);
 
     proxyFactory = await ethers.getContractFactory(

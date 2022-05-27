@@ -4,10 +4,10 @@ import { deployStaticAToken, deployL2rewAAVE } from "./deployTokens";
 import { deployL1Bridge, deployL2Bridge } from "./deployBridge";
 import { starknet, ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-
-const STARKNET_MESSAGING_CONTRACT =
-  "0xae0ee0a63a2ce6baeeffe56e7714fb4efe48d419";
-const INCENTIVES_CONTROLLER = "0x83d055d382f25e6793099713505c68a5c7535a35";
+import {
+  STARKNET_MESSAGING_CONTRACT,
+  INCENTIVES_CONTROLLER,
+} from "../constants/addresses";
 
 async function deployAll() {
   try {
@@ -74,8 +74,10 @@ async function deployAll() {
       BigInt(l2Bridge.address)
     );
     console.log("deployed successfully");
+
+    process.exit();
   } catch (error) {
-    console.log(error);
+    process.exit(1);
   }
 }
 

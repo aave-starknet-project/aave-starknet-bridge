@@ -1,3 +1,12 @@
+import {
+  A_DAI,
+  A_USDC,
+  STKAAVE_WHALE,
+  INCENTIVES_CONTROLLER,
+  LENDING_POOL,
+  DAI_WHALE,
+  USDC_WHALE,
+} from "./../constants/addresses";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai, { expect } from "chai";
 import { Contract, ContractFactory, providers, BigNumber } from "ethers";
@@ -17,15 +26,6 @@ import { expectAddressEquality, uintFromParts } from "./utils";
 chai.use(solidity);
 
 const MAX_UINT256 = hre.ethers.constants.MaxInt256;
-
-const LENDING_POOL = "0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9";
-const INCENTIVES_CONTROLLER = "0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5";
-const A_DAI = "0x028171bCA77440897B824Ca71D1c56caC55b68A3";
-const A_USDC = "0xBcca60bB61934080951369a648Fb03DF4F96263C";
-
-const STKAAVE_WHALE = "0x32b61bb22cbe4834bc3e73dce85280037d944a4d";
-const DAI_WHALE = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
-const USDC_WHALE = "0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503";
 
 // Amount of dai and usdc to transfer to the user. Issued twice for aDai and aUsdc
 const DAI_UNIT = BigInt(10 ** 18);

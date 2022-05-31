@@ -105,4 +105,10 @@ contract IncentivesControllerMock is IAaveIncentivesController {
     function DISTRIBUTION_END() external view override returns (uint256) {
         return 0;
     }
+
+    function EMISSION_MANAGER() external view returns (address) {
+        return address(0);
+    }
+
+    function setDistributionEnd(uint256 distributionEnd) external {}
 }

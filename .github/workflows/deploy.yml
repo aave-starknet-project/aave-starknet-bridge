@@ -1,4 +1,4 @@
-name: Test deployment script
+name: Deployment
 
 on:
   push:
@@ -37,10 +37,6 @@ jobs:
           source .venv/bin/activate
           make
 
-      - name: Lint
-        run: |
-          yarn lint:check
-
       - name: Start the l2 & l1 test networks
         run: |
           yarn testnet:l2 &
@@ -52,4 +48,4 @@ jobs:
 
       - name: Deploy bridge
         run: |
-          yarn deploy-bridge
+          yarn deploy-bridge:testnet

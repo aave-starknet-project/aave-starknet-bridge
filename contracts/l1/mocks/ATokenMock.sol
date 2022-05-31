@@ -1,4 +1,4 @@
 // SPDX-License-Identifier: Apache-2.0.
-pragma solidity 0.6.12;
+pragma solidity 0.8.10;
 
-import "@aave/protocol-v2/contracts/protocol/tokenization/AToken.sol";
+import {AToken} from "@aave/core-v3/contracts/protocol/tokenization/AToken.sol";

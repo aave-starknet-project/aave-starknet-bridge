@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
+pragma solidity 0.8.10;
 
 /**
  * @title Errors library
@@ -106,7 +106,14 @@ library Errors {
     string public constant LP_NOT_CONTRACT = "78";
     string public constant SDT_STABLE_DEBT_OVERFLOW = "79";
     string public constant SDT_BURN_EXCEEDS_BALANCE = "80";
-
+    string public constant B_L2_ADDRESS_OUT_OF_RANGE = "81";
+    string public constant B_INVALID_INCENTIVES_CONTROLLER_ADDRESS = "82";
+    string public constant B_ATOKEN_NOT_APPROVED = "83";
+    string public constant B_MISMATCHING_ARRAYS_LENGTH = "84"; // When initializing the bridge with mismatching L1 and L2 token arrays
+    string public constant B_INSUFFICIENT_AMOUNT = "85";
+    string public constant B_TOKEN_ALREADY_APPROVED = "86";
+    string public constant B_INVALID_ADDRESS = "87";
+    string public constant B_NOT_ENOUGH_REWARDS = "88";
     enum CollateralManagerErrors {
         NO_ERROR,
         NO_COLLATERAL_AVAILABLE,

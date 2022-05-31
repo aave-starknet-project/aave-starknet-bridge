@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
+pragma solidity 0.8.10;
 
-import {ILendingPool} from "@aave/protocol-v2/contracts/interfaces/ILendingPool.sol";
+import {ILendingPool} from "./ILendingPool.sol";
 import {IAaveIncentivesController} from "./IAaveIncentivesController.sol";
 
 /**

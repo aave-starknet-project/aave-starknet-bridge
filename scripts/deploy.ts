@@ -4,19 +4,15 @@ import { deployStaticAToken, deployL2rewAAVE } from "./deployTokens";
 import { deployL1Bridge, deployL2Bridge } from "./deployBridge";
 import { starknet, ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-
-const { INCENTIVES_CONTROLLER, STARKNET_MESSAGING_CONTRACT } = process.env;
+import {
+  STARKNET_MESSAGING_CONTRACT,
+  INCENTIVES_CONTROLLER,
+} from "../constants/addresses";
 
 async function deployAll() {
   try {
     let l2deployer: Account;
     let l1deployer: SignerWithAddress;
-
-    if (!STARKNET_MESSAGING_CONTRACT || !INCENTIVES_CONTROLLER) {
-      throw new Error(
-        "Please initialize your .env file correctly, see .env.sample for details."
-      );
-    }
 
     [l1deployer] = await ethers.getSigners();
     l2deployer = await starknet.deployAccount("OpenZeppelin");
@@ -61,8 +57,9 @@ async function deployAll() {
       l2Bridge.address,
       STARKNET_MESSAGING_CONTRACT,
       INCENTIVES_CONTROLLER,
-      l1deployer.address, // @TBD: bridge admin
-      l1deployer.address // @TBD: proxy admin
+      l1deployer.address, // @TBD: proxy admin
+      [], // l1 aTokens to be approved
+      [] // l2 static_a_tokens to be approved
     );
 
     console.log("Deploying static_a_tokens...");
@@ -77,8 +74,10 @@ async function deployAll() {
       BigInt(l2Bridge.address)
     );
     console.log("deployed successfully");
+
+    process.exit();
   } catch (error) {
-    console.log(error);
+    process.exit(1);
   }
 }
 

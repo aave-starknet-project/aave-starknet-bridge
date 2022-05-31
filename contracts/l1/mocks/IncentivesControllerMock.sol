@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
+pragma solidity 0.8.10;
 
 import {IAaveIncentivesController} from "../interfaces/IAaveIncentivesController.sol";
-import {IERC20} from "@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IERC20} from "@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 
 contract IncentivesControllerMock is IAaveIncentivesController {
     address public override REWARD_TOKEN;

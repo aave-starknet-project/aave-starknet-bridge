@@ -55,16 +55,18 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
  * @param signer the deployer starknet account
  * @param  l2BridgeAddress address of the proxy bridge on L2
  * @param starknetMessagingAddress
- * @param bridgeAdmin
  * @param proxyAdmin
+ * @param l1Tokens array of aTokens to be approved on l1
+ * @param l2Tokens array of static_a_tokens to be approved on l1
  */
 export async function deployL1Bridge(
   signer: SignerWithAddress,
   l2BridgeAddress: string,
   starknetMessagingAddress: string,
   incentivesController: string,
-  bridgeAdmin: string,
-  proxyAdmin: string
+  proxyAdmin: string,
+  l1Tokens: string[],
+  l2Tokens: bigint[]
 ) {
   let bridgeFactory: ContractFactory;
   let bridgeImpl: Contract;
@@ -73,7 +75,6 @@ export async function deployL1Bridge(
   let bridge: Contract;
 
   try {
-    const abiCoder = new ethers.utils.AbiCoder();
     bridgeFactory = await ethers.getContractFactory("Bridge", signer);
 
     proxyFactory = await ethers.getContractFactory(
@@ -86,20 +87,17 @@ export async function deployL1Bridge(
     bridgeImpl = await bridgeFactory.deploy();
     await bridgeImpl.deployed();
 
-    let ABI = ["function initialize(bytes calldata data)"];
+    let ABI = [
+      "function initialize(uint256 l2Bridge, address messagingContract, address incentivesController, address[] calldata l1Tokens, uint256[] calldata l2Tokens) ",
+    ];
     let iface = new ethers.utils.Interface(ABI);
-    const initData = abiCoder.encode(
-      ["uint256", "address", "address", "address"],
-      [
-        l2BridgeAddress,
-        starknetMessagingAddress,
-        incentivesController,
-        bridgeAdmin,
-      ]
-    );
 
     let encodedInitializedParams = iface.encodeFunctionData("initialize", [
-      initData,
+      l2BridgeAddress,
+      starknetMessagingAddress,
+      incentivesController,
+      l1Tokens,
+      l2Tokens,
     ]);
 
     await bridgeProxy["initialize(address,address,bytes)"](

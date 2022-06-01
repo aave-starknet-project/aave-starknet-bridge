@@ -3,30 +3,35 @@
 [![Tests](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/e2e-tests.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/e2e-tests.yml)
 [![Tests](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/code-check.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/code-check.yml)
 [![Tests](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/deploy.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/deploy.yml)
-<a href="https://github.com/aave-starknet-project/aave-starknet-bridge/blob/main/LICENSE.md">License</a>
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/blob/main/LICENSE.md)
+
 
 :warning: This codebase is still in an experimental phase, has not been
 audited, might contain bugs and should not be used in production.
 
 ## Table of contents
 
-- [1. Overview](#overview)
-- [2. Architecture](#architecture)
-  - [2.1. Contracts](#contracts)
-  - [2.2. static_a_tokens on L2](#staticatokens-on-l2)
-  - [2.3. Bridging aTokens from L1<>L2](#bridging-atokens-from-l1--l2)
-    - [2.3.1. Approving aTokens bridge](#approve-bridge)
-    - [2.3.2. Transfer L1->L2](#transfer-l1--l2-)
-    - [2.3.3. Transfer L2->L1](#transfer-l2--l1-)
-  - [2.4. Synchronisation of rewards on L1 <> L2](#synchronisation-of-rewards-on-l1----l2)
-  - [2.5. Claiming rewards on L2](#claiming-rewards-on-l2)
-  - [2.6. Bridging rewards from L2->L1](#bridging-rewards-from-l2--l1)
-  - [2.7. Proxies](#proxies)
-  - [2.8. Governance](#governance)
-- [3. Development Setup](#development-setup)
-  - [3.1. Environment](#environment)
-  - [3.2. Tests](#run-the-tests)
-  - [3.3. Deployment](#deployment)
+- [AAVE Starknet Bridge](#aave-starknet-bridge)
+  - [Table of contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Architecture](#architecture)
+  - [Contracts](#contracts)
+  - [static_a_tokens on L2](#static_a_tokens-on-l2)
+  - [Bridging aTokens from L1<>L2 <a name="bridging-atokens-from-l1--l2"></a>](#bridging-atokens-from-l1l2-)
+    - [Approving bridge tokens <a name="approve-bridge"></a>](#approving-bridge-tokens-)
+    - [Transfer L1->L2: <a name="transfer-l1--l2-"></a>](#transfer-l1-l2-)
+    - [Transfer L2->L1: <a name="transfer-l2--l1-"></a>](#transfer-l2-l1-)
+  - [Synchronisation of rewards on L1 <> L2 <a name="synchronisation-of-rewards-on-l1----l2"></a>](#synchronisation-of-rewards-on-l1--l2-)
+  - [Claiming rewards on L2](#claiming-rewards-on-l2)
+  - [Bridging rewards from L2->L1 <a name="bridging-rewards-from-l2--l1"></a>](#bridging-rewards-from-l2-l1-)
+  - [Proxies](#proxies)
+  - [Governance](#governance)
+  - [Development Setup](#development-setup)
+    - [Environment](#environment)
+    - [Build the cairo files](#build-the-cairo-files)
+    - [Start testnets](#start-testnets)
+    - [Run the tests](#run-the-tests)
+    - [Deployment](#deployment)
 
 ## Overview
 

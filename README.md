@@ -93,7 +93,7 @@ increasing `aTokens` amounts locked in the bridge contract on Ethereum.
 
 ### Approving bridge tokens <a name="approve-bridge"></a>
 
-L1 aTokens are approved on the bridge at `initiliaze` where `_approveBridgeTokens` is called internally to approve the provided array of aTokens in an array along with their corresponding static_a_tokens on L2. :warning: Gas limit concerns should apply here! 
+L1 aTokens are approved on the bridge at `initiliaze` where `_approveBridgeTokens` is called internally to approve the provided array of aTokens in an array along with their corresponding static_a_tokens on L2. :warning: Gas limit concerns should apply here!
 
 ### Transfer L1->L2: <a name="transfer-l1--l2-"></a>
 

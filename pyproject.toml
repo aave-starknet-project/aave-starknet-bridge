@@ -5,7 +5,7 @@ description = "A bridge of aave staticATokens for reward collection on L2"
 authors = ["AAVE", "nethermind"]
 
 [tool.poetry.dependencies]
-python = "^3.7.2"
+python = "3.7.12"
 cairo-lang = "^0.8.1"
 starknet-devnet = "^0.1.23"
 marshmallow-dataclass = "8.5.3" # to fix an error with cairo-compile

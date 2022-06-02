@@ -5,7 +5,6 @@
 [![Tests](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/deploy.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/blob/main/LICENSE.md)
 
-
 :warning: This codebase is still in an experimental phase, has not been
 audited, might contain bugs and should not be used in production.
 
@@ -26,7 +25,7 @@ audited, might contain bugs and should not be used in production.
   - [Bridging rewards from L2->L1 <a name="bridging-rewards-from-l2--l1"></a>](#bridging-rewards-from-l2-l1-)
   - [Proxies](#proxies)
   - [Governance](#governance)
-  - [Development Setup](#development-setup)
+  - [Installation](#installation)
     - [Environment](#environment)
     - [Build the cairo files](#build-the-cairo-files)
     - [Start testnets](#start-testnets)
@@ -171,22 +170,38 @@ delegates the calls to the available implementation of these contracts.
 - `static_a_token`s are controlled by the `bridge`
 - `rewAAVE` token is owned by the `bridge`
 
-## [Development](Development) Setup
+## Installation
 
 ### Environment
 
-Before installing cairo you'll need to install GMP
+**Install Node 16**
+
+Our codebase relies on Node 16. To install it, you can first install [nvm](https://github.com/nvm-sh/nvm) and then run the following commands:
+
+```bash
+nvm install 16
+nvm use
+```
+
+**Install Python 3.7.12**
+
+Our codebase relies on Python 3.7.12. To install it, you can first install [pyenv](https://github.com/pyenv/pyenv) and then run the following commands:
+
+```bash
+pyenv install 3.7.12
+pyenv local 3.7.12
+```
+
+**Install GMP (needed for Cairo)**
+
+Before installing Cairo you need to install GMP. Run one of the following command depending on your OS.
 
 ```bash
 sudo apt install -y libgmp3-dev # linux
 brew install gmp # mac
 ```
 
-Install node
-
-```bash
-nvm install 16
-```
+**Install Node dependencies**
 
 First let's install all our project dependencies
 
@@ -200,11 +215,13 @@ To enable our pre-hooks commits we need to install husky by running:
 yarn prepare
 ```
 
-Let’s create a virtual environment. It helps isolate your project’s
+**Install Python dependencies**
+
+Let’s create a virtual environment to isolate your project’s
 requirements from your global Python environment.
 
 ```bash
-python3.7 -m venv .venv
+python -m venv .venv
 source .venv/bin/activate
 ```
 
@@ -215,33 +232,38 @@ pip install poetry
 poetry install
 ```
 
-### Build the cairo files
+### Build Cairo files
+
+Solidity files are automatically compiled before running the tests, but Cairo files are not. To compile them, run:
 
 ```bash
-yarn compile
+yarn compile:l2
 ```
 
 ### Start testnets
 
-First make sure to create a `.env` file in your project (see [`.env.example`](https://github.com/aave-starknet-project/aave-starknet-bridge/blob/main/.env.example) for
-the needed variables in your environment).
+We recommend to run L1 and L2 testnets in different terminals.
 
-You can get an `ALCHEMY KEY` [here](https://www.alchemy.com/)
+**Start L2 testnet**
 
-Then load all the environment variables
-
-```bash
-source .env/*
-```
-
-Then start the testnets. It's wise to do this in two separate shells.
-
-```bash
-yarn testnet:l1
-```
+In a terminal where `venv` is activated, run:
 
 ```bash
 yarn testnet:l2
+```
+
+**Start L1 testnet**
+
+Create a `.env` file from the sample (`cp .env.sample .env`), and fill a value for the variable `ALCHEMY KEY` - you can get one [here](https://www.alchemy.com/). Then, load all the environment variables.
+
+```bash
+source .env
+```
+
+And start L1 testnet in the same terminal by running:
+
+```bash
+yarn testnet:l1
 ```
 
 ### Run the tests
@@ -252,14 +274,6 @@ hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin) and
 
 ```
 yarn test
-```
-
-### Deployment
-
-To deploy the bridge on testnets:
-
-```bash
-yarn deploy-bridge
 ```
 
 Contributors

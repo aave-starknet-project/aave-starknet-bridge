@@ -62,7 +62,7 @@ jobs:
 
       - name: Compile Cairo
         run: |
-          yarn compile
+          yarn compile:l2
 
       - name: Run tests
         run: |

@@ -9,7 +9,8 @@
     "testnet:l1": "yarn ganache --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_KEY@$BLOCK_NUMBER --gasPrice 2000000000000 -u $DAI_WHALE -u $USDC_WHALE -u $STKAAVE_WHALE -u $EMISSION_MANAGER",
     "lint:check": "npx prettier --check . && find contracts/ -iname '*.cairo' -exec .venv/bin/cairo-format -c {} +",
     "lint:fix": "npx prettier --write . && find contracts/ -iname '*.cairo' -exec .venv/bin/cairo-format -i {} +",
-    "compile": "hardhat starknet-compile --cairo-path 'node_modules/@joriksch/oz-cairo/src'",
+    "compile:l1": "hardhat compile",
+    "compile:l2": "hardhat starknet-compile --cairo-path 'node_modules/@joriksch/oz-cairo/src'",
     "deploy:account": "yarn hardhat starknet-deploy-account --starknet-network l2_testnet --wallet OpenZeppelin",
     "deploy-bridge:testnet": "hardhat run ./scripts/deploy.ts --network l1_testnet",
     "prepare": "husky install"

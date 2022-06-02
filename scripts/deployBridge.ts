@@ -66,7 +66,7 @@ export async function deployL1Bridge(
   incentivesController: string,
   proxyAdmin: string,
   l1Tokens: string[],
-  l2Tokens: bigint[]
+  l2Tokens: BigInt[]
 ) {
   let bridgeFactory: ContractFactory;
   let bridgeImpl: Contract;

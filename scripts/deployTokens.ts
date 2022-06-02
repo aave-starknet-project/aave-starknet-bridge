@@ -22,11 +22,13 @@ export async function deployStaticAToken(
   initial_supply: { low: bigint; high: bigint },
   owner: bigint,
   l2_bridge: bigint
-) {
+): Promise<BigInt> {
   let proxyFactory: StarknetContractFactory;
   let staticATokenProxy: StarknetContract;
   let staticATokenImpl: StarknetContract;
   let staticAToken: StarknetContract;
+
+  console.log("deploying", name);
 
   const staticATokenFactory = await starknet.getContractFactory(
     "static_a_token"
@@ -44,7 +46,7 @@ export async function deployStaticAToken(
   });
 
   fs.writeFileSync(
-    `deployment/${name}.json`,
+    `deployment/staticATokens/${name}.json`,
     JSON.stringify({
       token: name,
       proxy: staticATokenProxy.address,
@@ -63,6 +65,8 @@ export async function deployStaticAToken(
     owner: owner,
     l2_bridge: l2_bridge,
   });
+
+  return BigInt(staticATokenProxy.address);
 }
 
 export async function deployL2rewAAVE(

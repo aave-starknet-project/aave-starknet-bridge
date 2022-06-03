@@ -1,7 +1,7 @@
 # Aave Starknet Bridge
 
 [![Tests](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/e2e-tests.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/e2e-tests.yml)
-[![Tests](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/code-check.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/code-check.yml)
+[![Check](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/code-check.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/code-check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/blob/main/LICENSE.md)
 
 :warning: This codebase is still in an experimental phase, has not been
@@ -206,16 +206,10 @@ brew install gmp # mac
 
 **Install Node dependencies**
 
-First let's install all our project dependencies
+Let's install all our project dependencies:
 
 ```bash
 yarn install
-```
-
-To enable our pre-hooks commits we need to install husky by running:
-
-```bash
-yarn prepare
 ```
 
 **Install Python dependencies**
@@ -231,6 +225,7 @@ source .venv/bin/activate
 Install poetry for dependencies management
 
 ```bash
+python -m pip install --upgrade pip
 pip install poetry
 poetry install
 ```

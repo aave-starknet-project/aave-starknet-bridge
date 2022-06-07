@@ -274,6 +274,14 @@ hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin) and
 yarn test
 ```
 
+
+### Deployment
+
+First make sure to set the aTokens addresses to be approved on the bridge as well as the metadata related to the `staticATokens` to be deployed on l2 in `./scripts/allowlistedTokens.ts`.
+
+```bash
+yarn deploy-bridge:testnet #deploys bridge on l1 & l2 testnets
+```
 Contributors
 
 <a href = "https://github.com/aave-starknet-project/aave-starknet-bridge/graphs/contributors">

@@ -1,7 +1,7 @@
 import {
-  whitelistedStaticATokens,
-  whitelistedATokens,
-} from "./whitelistedTokens";
+  allowlistedATokensAddresses,
+  allowlistedStaticATokensData,
+} from "./allowlistedTokens";
 import { Account } from "hardhat/types";
 import fs from "fs";
 import { deployStaticAToken, deployL2rewAAVE } from "./deployTokens";
@@ -64,12 +64,12 @@ async function deployAll() {
     }
 
     console.log("Deploying static_a_tokens...");
-    for (let i = 0; i < whitelistedATokens.length; i++) {
+    for (let i = 0; i < allowlistedATokensAddresses.length; i++) {
       await deployStaticAToken(
         l2deployer,
-        whitelistedStaticATokens[i].name,
-        whitelistedStaticATokens[i].symbol,
-        whitelistedStaticATokens[i].decimals,
+        allowlistedStaticATokensData[i].name,
+        allowlistedStaticATokensData[i].symbol,
+        allowlistedStaticATokensData[i].decimals,
         { high: 0n, low: 0n }, //total supply of all staticATokens defaulted to zero
         BigInt(l2deployer.starknetContract.address), //proxy admin
         BigInt(l2Bridge.address)
@@ -85,7 +85,7 @@ async function deployAll() {
       STARKNET_MESSAGING_CONTRACT,
       INCENTIVES_CONTROLLER,
       l1deployer.address, // @TBD: proxy admin
-      whitelistedATokens, // l1 aTokens to be approved
+      allowlistedATokensAddresses, // l1 aTokens to be approved
       staticATokensAddresses // l2 static_a_tokens to be approved
     );
     console.log("setting l1 bridge address on l2 bridge...");

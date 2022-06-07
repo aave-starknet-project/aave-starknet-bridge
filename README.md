@@ -256,10 +256,10 @@ yarn test
 
 ### Deployment
 
-To deploy the bridge on testnets:
+First make sure to set the aTokens addresses to be approved on the bridge as well as the metadata related to the `staticATokens` to be deployed on l2 in `./constants/allowlistedTokens.ts`.
 
 ```bash
-yarn deploy-bridge
+yarn deploy-bridge:testnet #deploys bridge on l1 & l2 testnets
 ```
 
 Contributors

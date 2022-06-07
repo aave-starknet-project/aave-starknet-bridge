@@ -48,3 +48,4 @@ jobs:
       - name: Lint
         run: |
           yarn lint:check
+        continue-on-error: true

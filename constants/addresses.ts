@@ -8,3 +8,4 @@ export const DAI_WHALE = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 export const USDC_WHALE = "0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503";
 export const STARKNET_MESSAGING_CONTRACT =
   "0xae0ee0a63a2ce6baeeffe56e7714fb4efe48d419";
+export const EMISSION_MANAGER = "0xEE56e2B3D491590B5b31738cC34d5232F378a8D5";

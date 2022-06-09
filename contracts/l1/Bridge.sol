@@ -391,10 +391,8 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 l2RewardsIndex,
         uint256 l1RewardsIndex
     ) internal pure returns (uint256) {
-        uint256 rayAmount = amount.wadToRay();
-        return
-            (rayAmount.rayMulNoRounding(l1RewardsIndex - l2RewardsIndex))
-                .rayToWad();
+        // l1RewardsIndex and l1RewardsIndex are both in wad, so the result of next line is also in wad.
+        return amount.wadMul(l1RewardsIndex - l2RewardsIndex);
     }
 
     function _consumeBridgeRewardMessage(

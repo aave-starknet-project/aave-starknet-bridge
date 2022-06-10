@@ -36,7 +36,7 @@ from contracts.l2.tokens.incentivized_erc20 import (
     incentivized_erc20_only_bridge,
     incentivized_erc20_get_claimable_rewards,
 )
-from contracts.l2.lib.wad_ray_math import Ray
+from contracts.l2.lib.wad_ray_math import Wad
 
 @contract_interface
 namespace IBridge:
@@ -210,7 +210,7 @@ end
 
 @external
 func push_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    block_number : Uint256, rewards_index : Ray
+    block_number : Uint256, rewards_index : Wad
 ):
     incentivized_erc20_push_rewards_index(block_number, rewards_index)
     return ()
@@ -218,7 +218,7 @@ end
 
 @external
 func get_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-    rewards_index : Ray
+    rewards_index : Wad
 ):
     let (res) = incentivized_erc20_get_rewards_index()
     return (res)
@@ -229,7 +229,7 @@ func get_user_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ra
     user : felt
 ) -> (user_rewards_index : Uint256):
     let (res) = incentivized_erc20_get_user_rewards_index(user)
-    return (res.ray)
+    return (res.wad)
 end
 
 @view

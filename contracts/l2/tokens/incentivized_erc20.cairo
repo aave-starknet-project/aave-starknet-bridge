@@ -6,11 +6,10 @@ from starkware.starknet.common.syscalls import get_caller_address
 
 from contracts.l2.lib.wad_ray_math import (
     Wad,
-    Ray,
     wad_to_ray,
-    ray_add,
-    ray_sub,
-    ray_mul_no_rounding,
+    wad_add,
+    wad_sub,
+    wad_mul,
     ray_to_wad_no_rounding,
 )
 from openzeppelin.token.erc20.library import ERC20_balanceOf
@@ -24,17 +23,17 @@ func last_update() -> (block_number : Uint256):
 end
 
 @storage_var
-func rewards_index() -> (res : Ray):
+func rewards_index() -> (res : Wad):
 end
 
 # user => rewards index at last interaction (in RAYs)
 @storage_var
-func user_snapshot_rewards_index(user : felt) -> (rewards_index : Ray):
+func user_snapshot_rewards_index(user : felt) -> (rewards_index : Wad):
 end
 
 # user => unclaimed_rewards (in RAYs)
 @storage_var
-func unclaimed_rewards(user : felt) -> (unclaimed : Ray):
+func unclaimed_rewards(user : felt) -> (unclaimed : Wad):
 end
 
 func update_user_snapshot_rewards_index{
@@ -53,7 +52,7 @@ func update_user{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     else:
         let (pending) = incentivized_erc20_get_pending_rewards(user)
         let (unclaimed) = incentivized_erc20_get_user_unclaimed_rewards(user)
-        let (unclaimed, overflow) = ray_add(unclaimed, pending)
+        let (unclaimed, overflow) = wad_add(unclaimed, pending)
         assert overflow = 0
         unclaimed_rewards.write(user, unclaimed)
         update_user_snapshot_rewards_index(user)
@@ -86,18 +85,16 @@ end
 
 func incentivized_erc20_get_pending_rewards{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
-}(user : felt) -> (pending_rewards : Ray):
+}(user : felt) -> (pending_rewards : Wad):
     alloc_locals
     let (balance) = ERC20_balanceOf(user)
-    let (balance_in_ray) = wad_to_ray(Wad(balance))
+    local balance_in_wad : Wad = Wad(balance)
     let (rewards_index_) = rewards_index.read()
     let (user_snapshot_rewards_index_) = user_snapshot_rewards_index.read(user)
-    let (rewards_index_since_last_interaction) = ray_sub(
+    let (rewards_index_since_last_interaction) = wad_sub(
         rewards_index_, user_snapshot_rewards_index_
     )
-    let (pending_rewards) = ray_mul_no_rounding(
-        rewards_index_since_last_interaction, balance_in_ray
-    )
+    let (pending_rewards) = wad_mul(rewards_index_since_last_interaction, balance_in_wad)
 
     return (pending_rewards)
 end
@@ -108,10 +105,9 @@ func incentivized_erc20_get_claimable_rewards{
     alloc_locals
     let (unclaimed_rewards_) = unclaimed_rewards.read(user)
     let (pending) = incentivized_erc20_get_pending_rewards(user)
-    let (incentivized_erc20_rewards, overflow) = ray_add(unclaimed_rewards_, pending)
+    let (incentivized_erc20_rewards, overflow) = wad_add(unclaimed_rewards_, pending)
     assert overflow = 0
-    let (incentivized_erc20_rewards_) = ray_to_wad_no_rounding(incentivized_erc20_rewards)
-    return (incentivized_erc20_rewards_)
+    return (incentivized_erc20_rewards)
 end
 
 func incentivized_erc20_claim_rewards{
@@ -120,7 +116,7 @@ func incentivized_erc20_claim_rewards{
     alloc_locals
     let (rewards) = incentivized_erc20_get_claimable_rewards(user)
 
-    unclaimed_rewards.write(user, Ray(Uint256(0, 0)))
+    unclaimed_rewards.write(user, Wad(Uint256(0, 0)))
 
     if rewards.wad.high + rewards.wad.low == 0:
         return (Wad(Uint256(0, 0)))
@@ -132,7 +128,7 @@ end
 
 func incentivized_erc20_push_rewards_index{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
-}(block_number : Uint256, new_rewards_index : Ray):
+}(block_number : Uint256, new_rewards_index : Wad):
     alloc_locals
     incentivized_erc20_only_bridge()
     let (last_block_number) = last_update.read()
@@ -140,7 +136,7 @@ func incentivized_erc20_push_rewards_index{
     let (le) = uint256_le(last_block_number, block_number)
     if le == 1:
         let (prev_index) = rewards_index.read()
-        let (le) = uint256_le(prev_index.ray, new_rewards_index.ray)
+        let (le) = uint256_le(prev_index.wad, new_rewards_index.wad)
         if le == 1:
             last_update.write(block_number)
             rewards_index.write(new_rewards_index)
@@ -155,19 +151,19 @@ end
 
 func incentivized_erc20_get_rewards_index{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
-}() -> (res : Ray):
+}() -> (res : Wad):
     return rewards_index.read()
 end
 
 func incentivized_erc20_get_user_rewards_index{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
-}(user : felt) -> (res : Ray):
+}(user : felt) -> (res : Wad):
     return user_snapshot_rewards_index.read(user)
 end
 
 func incentivized_erc20_get_user_unclaimed_rewards{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
-}(user : felt) -> (res : Ray):
+}(user : felt) -> (res : Wad):
     return unclaimed_rewards.read(user)
 end
 

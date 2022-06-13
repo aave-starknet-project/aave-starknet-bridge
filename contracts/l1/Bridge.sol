@@ -5,6 +5,7 @@ import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRay
 import {IERC20} from "@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IScaledBalanceToken} from "@aave/core-v3/contracts/interfaces/IScaledBalanceToken.sol";
 import {VersionedInitializable} from "@aave/core-v3/contracts/protocol/libraries/aave-upgradeability/VersionedInitializable.sol";
+import {GPv2SafeERC20} from "@aave/core-v3/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol";
 
 import "./libraries/helpers/Cairo.sol";
 import {Errors} from "./libraries/helpers/Errors.sol";
@@ -18,6 +19,7 @@ import {IBridge} from "./interfaces/IBridge.sol";
 contract Bridge is IBridge, VersionedInitializable {
     using WadRayMath for uint256;
     using RayMathNoRounding for uint256;
+    using GPv2SafeERC20 for IERC20;
 
     IStarknetMessaging public _messagingContract;
     uint256 public _l2Bridge;
@@ -87,7 +89,7 @@ contract Bridge is IBridge, VersionedInitializable {
         // deposit aToken or underlying asset
 
         if (fromUnderlyingAsset) {
-            underlyingAsset.transferFrom(msg.sender, address(this), amount);
+            underlyingAsset.safeTransferFrom(msg.sender, address(this), amount);
             lendingPool.deposit(
                 address(underlyingAsset),
                 amount,
@@ -95,7 +97,11 @@ contract Bridge is IBridge, VersionedInitializable {
                 referralCode
             );
         } else {
-            IERC20(l1AToken).transferFrom(msg.sender, address(this), amount);
+            IERC20(l1AToken).safeTransferFrom(
+                msg.sender,
+                address(this),
+                amount
+            );
         }
 
         // update L2 state and emit deposit event

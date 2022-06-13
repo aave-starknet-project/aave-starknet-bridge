@@ -774,7 +774,7 @@ describe("Bridge", async function () {
       account: BigInt(l2user.starknetContract.address),
     });
 
-    expect(6n * BigInt(10 ** 8)).to.be.lte(
+    expect(5n * BigInt(10 ** 8)).to.be.lte(
       BigNumber.from(claimed["balance"]["low"])
     );
     expect(claimed).to.deep.equal({

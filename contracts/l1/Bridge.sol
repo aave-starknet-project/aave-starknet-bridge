@@ -181,6 +181,8 @@ contract Bridge is IBridge, VersionedInitializable {
             l1CurrentRewardsIndex
         );
 
+        emit L2StateUpdated(l1AToken, l1CurrentRewardsIndex);
+
         // transfer rewards
 
         uint256 rewardsAmount = _computeRewardsDiff(

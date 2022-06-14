@@ -42,7 +42,7 @@ exclusively transacting on Starknet.
 
 The bridge allows users to deposit and withdraw their [aTokens](https://docs.aave.com/developers/tokens/atoken), and only `aTokens`, on StarkNet and get
 `static_a_tokens` - wrappers converting balance-increasing `aTokens` into
-exchange-rate-increasing `static_a_tokens`. We remind that `aTokens` are always pre-validated for being normal ERC20.
+exchange-rate-increasing `static_a_tokens`. We assume that L1 tokens approved by the bridge are pre-validated tokens, and that they are not deflationary.
 
 The bridge is also shaped for liquidity providers who are able to assume the
 Ethereum gas cost of deposits and withdrawals as they transact large enough

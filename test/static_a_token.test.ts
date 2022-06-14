@@ -151,7 +151,7 @@ describe("static_a_token", function () {
         low: 1,
       },
       rewards_index: {
-        ray: {
+        wad: {
           high: 0,
           low: BigInt(decimalToWad(2)),
         },
@@ -161,7 +161,7 @@ describe("static_a_token", function () {
     const { rewards_index } = await token.call("get_rewards_index");
 
     expect(rewards_index).to.deep.equal({
-      ray: {
+      wad: {
         high: 0n,
         low: BigInt(decimalToWad(2)),
       },
@@ -176,7 +176,7 @@ describe("static_a_token", function () {
           low: 2,
         },
         rewards_index: {
-          ray: {
+          wad: {
             high: 0n,
             low: BigInt(decimalToWad(2)),
           },
@@ -195,7 +195,7 @@ describe("static_a_token", function () {
           low: 3,
         },
         rewards_index: {
-          ray: {
+          wad: {
             high: 0,
             low: 0,
           },
@@ -214,7 +214,7 @@ describe("static_a_token", function () {
           low: 0,
         },
         rewards_index: {
-          ray: {
+          wad: {
             high: 0,
             low: BigInt(decimalToWad(2)),
           },
@@ -233,10 +233,10 @@ describe("static_a_token", function () {
       }
     );
 
-    //expect claimable rewards amount in RAY
+    //expect claimable rewards amount in WAD
     expect(userClaimableRewards.user_claimable_rewards).to.deep.equal({
       high: 0n,
-      low: BigInt(wadToRay(100)),
+      low: BigInt(decimalToWad(100)),
     });
   });
 
@@ -356,7 +356,7 @@ describe("static_a_token", function () {
         low: 2,
       },
       rewards_index: {
-        ray: {
+        wad: {
           high: 0,
           low: BigInt(decimalToWad(3)),
         },
@@ -402,7 +402,7 @@ describe("static_a_token", function () {
         high: 3,
       },
       rewards_index: {
-        ray: {
+        wad: {
           high: 0,
           low: BigInt(decimalToWad(4)),
         },
@@ -444,7 +444,7 @@ describe("static_a_token", function () {
 
     expect(user_claimable_rewards).to.deep.equal({
       high: 0n,
-      low: BigInt(wadToRay(50)),
+      low: BigInt(decimalToWad(50)),
     });
   });
 });

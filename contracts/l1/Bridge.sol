@@ -437,7 +437,7 @@ contract Bridge is IBridge, VersionedInitializable {
         }
 
         if (rewardBalance >= rewardsAmount) {
-            _rewardToken.transfer(recipient, rewardsAmount);
+            _rewardToken.safeTransfer(recipient, rewardsAmount);
             return;
         }
         revert(Errors.B_NOT_ENOUGH_REWARDS);

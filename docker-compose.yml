@@ -1,0 +1,22 @@
+version: "3.9"
+services:
+  testnet-l1:
+    build:
+      context: .
+    container_name: testnet-l1
+    command: yarn testnet:l1:docker
+    ports:
+      - "8545:8545"
+  testnet-l2:
+    build:
+      context: .
+    container_name: testnet-l2
+    command: yarn testnet:l2
+    ports:
+      - "5000:5000"
+  test-runner:
+    build:
+      context: .
+    container_name: test-runner
+    command: sleep 99999
+    # command: yarn test

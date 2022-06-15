@@ -10,7 +10,7 @@ dotenvConfig({ path: resolve(__dirname, "./.env") });
 
 chai.use(solidity);
 
-const { PRIVATE_KEY, ALCHEMY_KEY } = process.env;
+const { PRIVATE_KEY, ALCHEMY_KEY, HOSTNAME_L1, HOSTNAME_L2 } = process.env;
 
 /* if (!PRIVATE_KEY) {
   throw new Error("Please set your PRIVATE_KEY in your .env file");
@@ -61,10 +61,10 @@ const config: HardhatUserConfig = {
   },
   networks: {
     l2_testnet: {
-      url: "http://localhost:5000",
+      url: `http://${HOSTNAME_L2 || "localhost"}:5000`,
     },
     l1_testnet: {
-      url: "http://localhost:8545",
+      url: `http://${HOSTNAME_L1 || "localhost"}:8545`,
     },
     /* mainnet: {
       url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,

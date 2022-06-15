@@ -15,11 +15,12 @@ import hre, { starknet, network, ethers } from "hardhat";
 import {
   StarknetContractFactory,
   StarknetContract,
-  HttpNetworkConfig,
+  HardhatUserConfig,
   Account,
   StringMap,
 } from "hardhat/types";
 import { solidity } from "ethereum-waffle";
+import config from "../hardhat.config";
 
 import { TIMEOUT } from "./constants";
 import { expectAddressEquality, uintFromParts } from "./utils";
@@ -37,7 +38,9 @@ const usdcAmount = 300n * USDC_UNIT;
 describe("Bridge", async function () {
   this.timeout(TIMEOUT);
 
-  const networkUrl: string = (network.config as HttpNetworkConfig).url;
+  const networkUrl =
+    (config as HardhatUserConfig).networks?.l1_testnet?.url ||
+    "http://localhost:8545";
 
   // users
   let l1user: SignerWithAddress;
@@ -51,6 +54,7 @@ describe("Bridge", async function () {
   let emissionManager: providers.JsonRpcSigner;
 
   // misk
+  let provider: any;
   let blockNumberDai: number;
   let blockNumberUsdc: number;
   let txDai: any;
@@ -185,7 +189,7 @@ describe("Bridge", async function () {
       await aUsdc.UNDERLYING_ASSET_ADDRESS()
     );
 
-    const provider = new ethers.providers.JsonRpcProvider(networkUrl);
+    provider = new ethers.providers.JsonRpcProvider(networkUrl);
     daiWhale = provider.getSigner(DAI_WHALE);
     usdcWhale = provider.getSigner(USDC_WHALE);
     stkaaveWhale = provider.getSigner(STKAAVE_WHALE);
@@ -580,8 +584,8 @@ describe("Bridge", async function () {
   });
 
   it("jump into the future", async () => {
-    await network.provider.send("evm_increaseTime", [31536000]); // one year in seconds
-    await network.provider.send("evm_mine");
+    await provider.send("evm_increaseTime", [31536000]); // one year in seconds
+    await provider.send("evm_mine");
   });
 
   it("withdraw aDai and aUsdc to L1 user", async () => {

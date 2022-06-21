@@ -5,6 +5,7 @@ import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRay
 import {IERC20} from "@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IScaledBalanceToken} from "@aave/core-v3/contracts/interfaces/IScaledBalanceToken.sol";
 import {VersionedInitializable} from "@aave/core-v3/contracts/protocol/libraries/aave-upgradeability/VersionedInitializable.sol";
+import {GPv2SafeERC20} from "@aave/core-v3/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol";
 
 import "./libraries/helpers/Cairo.sol";
 import {Errors} from "./libraries/helpers/Errors.sol";
@@ -18,6 +19,7 @@ import {IBridge} from "./interfaces/IBridge.sol";
 contract Bridge is IBridge, VersionedInitializable {
     using WadRayMath for uint256;
     using RayMathNoRounding for uint256;
+    using GPv2SafeERC20 for IERC20;
 
     IStarknetMessaging public _messagingContract;
     uint256 public _l2Bridge;
@@ -87,7 +89,7 @@ contract Bridge is IBridge, VersionedInitializable {
         // deposit aToken or underlying asset
 
         if (fromUnderlyingAsset) {
-            underlyingAsset.transferFrom(msg.sender, address(this), amount);
+            underlyingAsset.safeTransferFrom(msg.sender, address(this), amount);
             lendingPool.deposit(
                 address(underlyingAsset),
                 amount,
@@ -95,7 +97,11 @@ contract Bridge is IBridge, VersionedInitializable {
                 referralCode
             );
         } else {
-            IERC20(l1AToken).transferFrom(msg.sender, address(this), amount);
+            IERC20(l1AToken).safeTransferFrom(
+                msg.sender,
+                address(this),
+                amount
+            );
         }
 
         // update L2 state and emit deposit event
@@ -174,6 +180,8 @@ contract Bridge is IBridge, VersionedInitializable {
             block.number,
             l1CurrentRewardsIndex
         );
+
+        emit L2StateUpdated(l1AToken, l1CurrentRewardsIndex);
 
         // transfer rewards
 
@@ -391,10 +399,8 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 l2RewardsIndex,
         uint256 l1RewardsIndex
     ) internal pure returns (uint256) {
-        uint256 rayAmount = amount.wadToRay();
-        return
-            (rayAmount.rayMulNoRounding(l1RewardsIndex - l2RewardsIndex))
-                .rayToWad();
+        // l1RewardsIndex and l1RewardsIndex are both in wad, so the result of next line is also in wad.
+        return amount.wadMul(l1RewardsIndex - l2RewardsIndex);
     }
 
     function _consumeBridgeRewardMessage(
@@ -431,7 +437,7 @@ contract Bridge is IBridge, VersionedInitializable {
         }
 
         if (rewardBalance >= rewardsAmount) {
-            _rewardToken.transfer(recipient, rewardsAmount);
+            _rewardToken.safeTransfer(recipient, rewardsAmount);
             return;
         }
         revert(Errors.B_NOT_ENOUGH_REWARDS);

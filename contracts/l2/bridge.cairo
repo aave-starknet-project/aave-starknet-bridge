@@ -15,13 +15,13 @@ from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address
 
 from contracts.l2.lib.wad_ray_math import (
-    Ray,
     Wad,
-    ray_sub,
+    wad_sub,
     wad_to_ray,
     ray_mul_no_rounding,
-    ray_le,
+    wad_le,
     ray_to_wad_no_rounding,
+    wad_mul,
 )
 from contracts.l2.interfaces.IERC20 import IERC20
 from contracts.l2.interfaces.Istatic_a_token import Istatic_a_token
@@ -224,8 +224,8 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     assert message_payload[3] = l1_recipient
     assert message_payload[4] = amount.low
     assert message_payload[5] = amount.high
-    assert message_payload[6] = current_rewards_index.ray.low
-    assert message_payload[7] = current_rewards_index.ray.high
+    assert message_payload[6] = current_rewards_index.wad.low
+    assert message_payload[7] = current_rewards_index.wad.high
 
     # burn static_a_tokens
     IERC20.burn(contract_address=l2_token, account=caller_address, amount=amount)
@@ -234,7 +234,7 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     send_message_to_l1(to_address=to_address, payload_size=8, payload=message_payload)
 
     withdraw_initiated.emit(
-        l2_token, l1_recipient, amount, caller_address, current_rewards_index.ray
+        l2_token, l1_recipient, amount, caller_address, current_rewards_index.wad
     )
     return ()
 end
@@ -288,7 +288,7 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     local amount : Wad = Wad(amount_)
 
     let l1_rewards_index_ = Uint256(low=l1_rewards_index_low, high=l1_rewards_index_high)
-    local l1_rewards_index : Ray = Ray(l1_rewards_index_)
+    local l1_rewards_index : Wad = Wad(l1_rewards_index_)
 
     let block_number = Uint256(low=block_number_low, high=block_number_high)
 
@@ -310,23 +310,21 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 
     # handle the difference of the index at send and recieve
     let (current_index) = Istatic_a_token.get_rewards_index(l2_token)
-    let (le) = ray_le(current_index, l1_rewards_index)
+    let (le) = wad_le(current_index, l1_rewards_index)
     if le == 1:
         Istatic_a_token.push_rewards_index(
             contract_address=l2_token, block_number=block_number, rewards_index=l1_rewards_index
         )
     else:
-        let (amount_ray) = wad_to_ray(amount)
-        let (reward_diff) = ray_sub(current_index, l1_rewards_index)
-        let (reward_outstanding_ray) = ray_mul_no_rounding(reward_diff, amount_ray)
-        let (reward_outstanding) = ray_to_wad_no_rounding(reward_outstanding_ray)
+        let (reward_diff) = wad_sub(current_index, l1_rewards_index)
+        let (reward_outstanding) = wad_mul(reward_diff, amount)
         IERC20.mint(reward_token, l2_recipient, reward_outstanding.wad)
     end
 
     # Call mint on l2_token contract.
     IERC20.mint(l2_token, l2_recipient, amount.wad)
     deposit_handled.emit(
-        l2_token, l1_sender, l2_recipient, amount.wad, block_number, l1_rewards_index.ray
+        l2_token, l1_sender, l2_recipient, amount.wad, block_number, l1_rewards_index.wad
     )
     return ()
 end
@@ -360,7 +358,7 @@ func handle_index_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
     only_l1_handler(from_address_=from_address)
 
     let l1_rewards_index_ = Uint256(low=l1_rewards_index_low, high=l1_rewards_index_high)
-    local l1_rewards_index : Ray = Ray(l1_rewards_index_)
+    local l1_rewards_index : Wad = Wad(l1_rewards_index_)
 
     let block_number = Uint256(low=block_number_low, high=block_number_high)
 

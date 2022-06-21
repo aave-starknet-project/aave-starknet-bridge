@@ -40,9 +40,9 @@ earn high yield. That's why we brought to you an initial phase of the Aave <>
 Starknet integration allowing deposit/withdrawal on Aave Ethereum by
 exclusively transacting on Starknet.
 
-The bridge allows users to deposit and withdraw their [aTokens](https://docs.aave.com/developers/tokens/atoken) on StarkNet and get
+The bridge allows users to deposit and withdraw their [aTokens](https://docs.aave.com/developers/tokens/atoken), and only `aTokens`, on StarkNet and get
 `static_a_tokens` - wrappers converting balance-increasing `aTokens` into
-exchange-rate-increasing `static_a_tokens`.
+exchange-rate-increasing `static_a_tokens`. We assume that L1 tokens approved by the bridge are pre-validated tokens, and that they are not deflationary.
 
 The bridge is also shaped for liquidity providers who are able to assume the
 Ethereum gas cost of deposits and withdrawals as they transact large enough
@@ -274,7 +274,6 @@ hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin) and
 yarn test
 ```
 
-
 ### Deployment
 
 First make sure to set the aTokens addresses to be approved on the bridge as well as the metadata related to the `staticATokens` to be deployed on l2 in `./scripts/allowlistedTokens.ts`.
@@ -282,6 +281,7 @@ First make sure to set the aTokens addresses to be approved on the bridge as wel
 ```bash
 yarn deploy-bridge:testnet #deploys bridge on l1 & l2 testnets
 ```
+
 Contributors
 
 <a href = "https://github.com/aave-starknet-project/aave-starknet-bridge/graphs/contributors">

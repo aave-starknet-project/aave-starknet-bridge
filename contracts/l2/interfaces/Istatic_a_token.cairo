@@ -1,7 +1,7 @@
 %lang starknet
 
 from starkware.cairo.common.uint256 import Uint256
-from contracts.l2.lib.wad_ray_math import Ray
+from contracts.l2.lib.wad_ray_math import Wad
 
 @contract_interface
 namespace Istatic_a_token:
@@ -50,7 +50,7 @@ namespace Istatic_a_token:
     func burn(account : felt, amount : Uint256):
     end
 
-    func push_rewards_index(block_number : Uint256, rewards_index : Ray):
+    func push_rewards_index(block_number : Uint256, rewards_index : Wad):
     end
 
     func initialize_static_a_token(
@@ -63,6 +63,6 @@ namespace Istatic_a_token:
     ):
     end
 
-    func get_rewards_index() -> (rewards_index : Ray):
+    func get_rewards_index() -> (rewards_index : Wad):
     end
 end

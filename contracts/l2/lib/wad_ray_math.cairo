@@ -250,9 +250,9 @@ func ray_sub{range_check_ptr}(a : Ray, b : Ray) -> (res : Ray):
     return (Ray(diff))
 end
 
-func ray_le{range_check_ptr}(a : Ray, b : Ray) -> (res : felt):
-    let a_ray = a.ray
-    let b_ray = b.ray
-    let (res) = uint256_le(a_ray, b_ray)
+func wad_le{range_check_ptr}(a : Wad, b : Wad) -> (res : felt):
+    let a_wad = a.wad
+    let b_wad = b.wad
+    let (res) = uint256_le(a_wad, b_wad)
     return (res)
 end

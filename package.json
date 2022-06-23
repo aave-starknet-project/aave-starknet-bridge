@@ -4,9 +4,10 @@
   "description": "Bridging staticATokens to Starknet to allow for cheap reward collection and token transfer.",
   "main": "index.js",
   "scripts": {
-    "test": "hardhat --network localhost test",
+    "test": "hardhat --network l1_testnet test",
     "testnet:l2": ".venv/bin/starknet-devnet --host 0.0.0.0 --lite-mode",
-    "testnet:l1": "yarn ganache --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_KEY@$BLOCK_NUMBER --gasPrice 2000000000000 -u $DAI_WHALE -u $USDC_WHALE -u $STKAAVE_WHALE -u $EMISSION_MANAGER",
+    "testnet:l1": "if test -f .env; then export $(cat .env | xargs);fi; yarn ganache --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_KEY@$BLOCK_NUMBER --gasPrice 2000000000000 -u $DAI_WHALE -u $USDC_WHALE -u $STKAAVE_WHALE -u $EMISSION_MANAGER",
+    "testnet:l1:docker": "if test -f .env; then export $(cat .env | xargs);fi; yarn ganache --host 0.0.0.0 --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_KEY@$BLOCK_NUMBER --gasPrice 2000000000000 -u $DAI_WHALE -u $USDC_WHALE -u $STKAAVE_WHALE -u $EMISSION_MANAGER",
     "lint:check": "npx prettier --check . && find contracts/ -iname '*.cairo' -exec .venv/bin/cairo-format -c {} +",
     "lint:fix": "npx prettier --write . && find contracts/ -iname '*.cairo' -exec .venv/bin/cairo-format -i {} +",
     "compile:l1": "hardhat compile",

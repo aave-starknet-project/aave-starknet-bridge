@@ -29,7 +29,6 @@ audited, might contain bugs and should not be used in production.
   - [Build the cairo files](#build-cairo-files)
   - [Start testnets](#start-testnets)
   - [Run tests](#run-tests)
-  - [Deployment](#deployment)
 
 ## Introduction
 
@@ -268,9 +267,11 @@ yarn testnet:l1
 
 The project is tested using [hardhat](https://hardhat.org/), the [starknet
 hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin) and
-[starknet-devnet](https://github.com/Shard-Labs/starknet-devnet).
+[starknet-devnet](https://github.com/Shard-Labs/starknet-devnet). We created a Docker Compose file to run tests easily: we start L1 and L2 test networks in two separate containers and run the tests from a third one. To run all tests, simply run the following commands:
 
 ```
+docker compose up --build
+docker exec -ti $(docker ps -f name=test-runner -q) bash
 yarn test
 ```
 

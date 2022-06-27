@@ -53,6 +53,12 @@ func set_l2_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     return ()
 end
 
+# events
+
+@event
+func rewards_index_updated(block_number : Uint256, rewards_index : Wad):
+end
+
 #
 # Getters
 #
@@ -213,6 +219,7 @@ func push_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
     block_number : Uint256, rewards_index : Wad
 ):
     incentivized_erc20_push_rewards_index(block_number, rewards_index)
+    rewards_index_updated.emit(block_number, rewards_index)
     return ()
 end
 

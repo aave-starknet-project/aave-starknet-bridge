@@ -12,6 +12,16 @@ from openzeppelin.upgrades.library import (
     Proxy_set_implementation,
 )
 
+# events
+
+@event
+func implementation_upgraded(new_implementation : felt):
+end
+
+@event
+func admin_changed(new_admin : felt):
+end
+
 #
 # Constructor
 #
@@ -55,6 +65,8 @@ func upgrade_implementation{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ra
     end
 
     Proxy_set_implementation(new_implementation)
+
+    implementation_upgraded.emit(new_implementation)
     return ()
 end
 
@@ -88,6 +100,7 @@ func change_proxy_admin{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
 ):
     Proxy_only_admin()
     Proxy_set_admin(new_admin)
+    admin_changed.emit(new_admin)
     return ()
 end
 

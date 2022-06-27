@@ -5,8 +5,16 @@ from starkware.cairo.common.uint256 import Uint256, uint256_add, uint256_sub, ui
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.bool import TRUE, FALSE
 from contracts.l2.lib.wad_ray_math import (
-    Wad, wad_to_ray, wad_add, wad_sub, wad_mul, Ray, ray_add, ray_sub, ray_mul_no_rounding,
-    ray_to_wad, ray_to_wad_no_rounding)
+    Wad,
+    wad_to_ray,
+    wad_add,
+    Ray,
+    ray_add,
+    ray_sub,
+    ray_mul_no_rounding,
+    ray_to_wad,
+    ray_to_wad_no_rounding,
+)
 from openzeppelin.token.erc20.library import ERC20_balanceOf
 
 @storage_var
@@ -32,7 +40,8 @@ func unclaimed_rewards(user : felt) -> (unclaimed : Wad):
 end
 
 func update_user_snapshot_rewards_index{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(user : felt):
     let (rewards_index_) = rewards_index.read()
     user_snapshot_rewards_index.write(user, rewards_index_)
     return ()
@@ -55,7 +64,8 @@ func update_user{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
 end
 
 func incentivized_erc20_before_token_transfer{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(from_ : felt, to : felt):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(from_ : felt, to : felt):
     alloc_locals
     if from_ == 0:
         # do nothing
@@ -77,8 +87,8 @@ func incentivized_erc20_before_token_transfer{
 end
 
 func incentivized_erc20_get_pending_rewards{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt) -> (
-        pending_rewards : Wad):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(user : felt) -> (pending_rewards : Wad):
     alloc_locals
     let (balance) = ERC20_balanceOf(user)
     let (balance_in_ray) = wad_to_ray(Wad(balance))
@@ -87,16 +97,18 @@ func incentivized_erc20_get_pending_rewards{
     let (user_snapshot_rewards_index_ray) = wad_to_ray(user_snapshot_rewards_index_)
     let (rewards_index_ray) = wad_to_ray(rewards_index_)
     let (rewards_index_since_last_interaction) = ray_sub(
-        rewards_index_ray, user_snapshot_rewards_index_ray)
+        rewards_index_ray, user_snapshot_rewards_index_ray
+    )
     let (pending_rewards) = ray_mul_no_rounding(
-        rewards_index_since_last_interaction, balance_in_ray)
+        rewards_index_since_last_interaction, balance_in_ray
+    )
     let (pending_) = ray_to_wad_no_rounding(pending_rewards)
     return (pending_)
 end
 
 func incentivized_erc20_get_claimable_rewards{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt) -> (
-        incentivized_erc20_rewards : Wad):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(user : felt) -> (incentivized_erc20_rewards : Wad):
     alloc_locals
     let (unclaimed_rewards_) = unclaimed_rewards.read(user)
     let (pending) = incentivized_erc20_get_pending_rewards(user)
@@ -107,8 +119,8 @@ func incentivized_erc20_get_claimable_rewards{
 end
 
 func incentivized_erc20_claim_rewards{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt) -> (
-        rewards : Wad):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(user : felt) -> (rewards : Wad):
     alloc_locals
     let (rewards) = incentivized_erc20_get_claimable_rewards(user)
 
@@ -123,8 +135,8 @@ func incentivized_erc20_claim_rewards{
 end
 
 func incentivized_erc20_push_rewards_index{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        block_number : Uint256, new_rewards_index : Wad):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(block_number : Uint256, new_rewards_index : Wad):
     alloc_locals
     incentivized_erc20_only_bridge()
     let (last_block_number) = last_update.read()
@@ -146,41 +158,45 @@ func incentivized_erc20_push_rewards_index{
 end
 
 func incentivized_erc20_get_rewards_index{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (res : Wad):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}() -> (res : Wad):
     return rewards_index.read()
 end
 
 func incentivized_erc20_get_user_rewards_index{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt) -> (
-        res : Wad):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(user : felt) -> (res : Wad):
     return user_snapshot_rewards_index.read(user)
 end
 
 func incentivized_erc20_get_user_unclaimed_rewards{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt) -> (
-        res : Wad):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(user : felt) -> (res : Wad):
     return unclaimed_rewards.read(user)
 end
 
 func incentivized_erc20_get_last_update{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-        block_number : Uint256):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}() -> (block_number : Uint256):
     return last_update.read()
 end
 
 func incentivized_erc20_set_l2_bridge{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(l2_bridge_ : felt):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}(l2_bridge_ : felt):
     l2_bridge.write(l2_bridge_)
     return ()
 end
 
 func incentivized_erc20_get_l2_bridge{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (l2_bridge_ : felt):
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}() -> (l2_bridge_ : felt):
     return l2_bridge.read()
 end
 
 func incentivized_erc20_only_bridge{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}():
     let (caller_address) = get_caller_address()
     let (l2_bridge_) = l2_bridge.read()
     with_attr error_message("Caller address should be bridge: {l2_bridge_}"):

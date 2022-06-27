@@ -48,9 +48,33 @@ end
 func set_l2_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l2_bridge : felt
 ):
+    alloc_locals
     Ownable_only_owner()
     incentivized_erc20_set_l2_bridge(l2_bridge)
+    l2_bridge_updated.emit(l2_bridge)
     return ()
+end
+
+# events
+
+@event
+func rewards_index_updated(block_number : Uint256, rewards_index : Wad):
+end
+
+@event
+func l2_bridge_updated(l2_bridge : felt):
+end
+
+@event
+func static_a_token_initialized(
+    name : felt,
+    symbol : felt,
+    decimals : felt,
+    initial_supply : Uint256,
+    recipient : felt,
+    owner : felt,
+    l2_bridge : felt,
+):
 end
 
 #
@@ -130,6 +154,9 @@ func initialize_static_a_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*,
     ERC20_mint(recipient, initial_supply)
     Ownable_initializer(owner)
     incentivized_erc20_set_l2_bridge(l2_bridge)
+    static_a_token_initialized.emit(
+        name, symbol, decimals, initial_supply, recipient, owner, l2_bridge
+    )
     return ()
 end
 
@@ -213,6 +240,7 @@ func push_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
     block_number : Uint256, rewards_index : Wad
 ):
     incentivized_erc20_push_rewards_index(block_number, rewards_index)
+    rewards_index_updated.emit(block_number, rewards_index)
     return ()
 end
 

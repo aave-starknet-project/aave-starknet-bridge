@@ -1,3 +1,4 @@
+from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.uint256 import (
     Uint256,
     uint256_add,
@@ -6,7 +7,6 @@ from starkware.cairo.common.uint256 import (
     uint256_unsigned_div_rem,
     uint256_le,
 )
-
 struct Wad:
     member wad : Uint256
 end
@@ -74,7 +74,7 @@ func wad_mul{range_check_ptr}(a : Wad, b : Wad) -> (res : Wad):
         let (bound) = uint256_sub(UINT256_MAX, HALF_WAD_UINT.wad)
         let (quotient, rem) = uint256_unsigned_div_rem(bound, b.wad)
         let (le) = uint256_le(a.wad, quotient)
-        assert le = 1
+        assert le = TRUE
     end
 
     let (ab, _) = uint256_mul(a.wad, b.wad)
@@ -87,7 +87,7 @@ func wad_div{range_check_ptr}(a : Wad, b : Wad) -> (res : Wad):
     alloc_locals
     with_attr error_message("WAD divide by zero"):
         if b.wad.high + b.wad.low == 0:
-            assert 1 = 0
+            assert TRUE = FALSE
         end
     end
 
@@ -100,7 +100,7 @@ func wad_div{range_check_ptr}(a : Wad, b : Wad) -> (res : Wad):
         let (bound) = uint256_sub(UINT256_MAX, halfB)
         let (quo, _) = uint256_unsigned_div_rem(bound, WAD_UINT.wad)
         let (le) = uint256_le(a.wad, quo)
-        assert le = 1
+        assert le = TRUE
     end
 
     let (aWAD, _) = uint256_mul(a.wad, WAD_UINT.wad)
@@ -136,7 +136,7 @@ func ray_mul{range_check_ptr}(a : Ray, b : Ray) -> (res : Ray):
         let (bound) = uint256_sub(UINT256_MAX, HALF_RAY_UINT.ray)
         let (quotient, rem) = uint256_unsigned_div_rem(bound, b.ray)
         let (le) = uint256_le(a.ray, quotient)
-        assert le = 1
+        assert le = TRUE
     end
 
     let (ab, _) = uint256_mul(a.ray, b.ray)
@@ -149,7 +149,7 @@ func ray_div{range_check_ptr}(a : Ray, b : Ray) -> (res : Ray):
     alloc_locals
     with_attr error_message("RAY divide by zero"):
         if b.ray.high + b.ray.low == 0:
-            assert 1 = 0
+            assert TRUE = FALSE
         end
     end
 
@@ -162,7 +162,7 @@ func ray_div{range_check_ptr}(a : Ray, b : Ray) -> (res : Ray):
         let (bound) = uint256_sub(UINT256_MAX, halfB)
         let (quo, _) = uint256_unsigned_div_rem(bound, RAY_UINT.ray)
         let (le) = uint256_le(a.ray, quo)
-        assert le = 1
+        assert le = TRUE
     end
 
     let (aRAY, _) = uint256_mul(a.ray, RAY_UINT.ray)
@@ -178,7 +178,7 @@ func ray_to_wad{range_check_ptr}(a : Ray) -> (res : Wad):
 
     let (res, overflow) = uint256_add(a.ray, HALF_WAD_RAY_RATIO_UINT)
     with_attr error_message("ray_to_wad overflow"):
-        assert overflow = 0
+        assert overflow = FALSE
     end
     let (res, _) = uint256_unsigned_div_rem(res, WAD_RAY_RATIO_UINT)
     return (Wad(res))
@@ -219,7 +219,7 @@ func ray_div_no_rounding{range_check_ptr}(a : Ray, b : Ray) -> (res : Ray):
     alloc_locals
     with_attr error_message("RAY divide by zero"):
         if b.ray.high + b.ray.low == 0:
-            assert 1 = 0
+            assert TRUE = FALSE
         end
     end
 

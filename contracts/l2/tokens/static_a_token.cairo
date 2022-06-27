@@ -5,24 +5,9 @@ from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.uint256 import Uint256
 from starkware.cairo.common.bool import TRUE
 
-from openzeppelin.token.erc20.library import (
-    ERC20_name,
-    ERC20_symbol,
-    ERC20_totalSupply,
-    ERC20_decimals,
-    ERC20_balanceOf,
-    ERC20_allowance,
-    ERC20_initializer,
-    ERC20_approve,
-    ERC20_increaseAllowance,
-    ERC20_decreaseAllowance,
-    ERC20_transfer,
-    ERC20_transferFrom,
-    ERC20_mint,
-    ERC20_burn,
-)
+from contracts.l2.dependencies.openzeppelin.token.erc20.library import ERC20
 
-from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner
+from contracts.l2.dependencies.openzeppelin.access.ownable import Ownable
 
 from contracts.l2.tokens.incentivized_erc20 import (
     incentivized_erc20_claim_rewards,
@@ -49,7 +34,7 @@ func set_l2_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     l2_bridge : felt
 ):
     alloc_locals
-    Ownable_only_owner()
+    Ownable.assert_only_owner()
     incentivized_erc20_set_l2_bridge(l2_bridge)
     l2_bridge_updated.emit(l2_bridge)
     return ()
@@ -90,40 +75,40 @@ end
 
 @view
 func name{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (name : felt):
-    return ERC20_name()
+    return ERC20.name()
 end
 
 @view
 func symbol{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (symbol : felt):
-    return ERC20_symbol()
+    return ERC20.symbol()
 end
 
 @view
 func totalSupply{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     totalSupply : Uint256
 ):
-    return ERC20_totalSupply()
+    return ERC20.total_supply()
 end
 
 @view
 func decimals{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     decimals : felt
 ):
-    return ERC20_decimals()
+    return ERC20.decimals()
 end
 
 @view
 func balanceOf{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     account : felt
 ) -> (balance : Uint256):
-    return ERC20_balanceOf(account)
+    return ERC20.balance_of(account)
 end
 
 @view
 func allowance{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     owner : felt, spender : felt
 ) -> (remaining : Uint256):
-    return ERC20_allowance(owner, spender)
+    return ERC20.allowance(owner, spender)
 end
 
 #
@@ -140,9 +125,9 @@ func initialize_static_a_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*,
     owner : felt,
     l2_bridge : felt,
 ):
-    let (name_) = ERC20_name()
-    let (symbol_) = ERC20_symbol()
-    let (decimals_) = ERC20_decimals()
+    let (name_) = ERC20.name()
+    let (symbol_) = ERC20.symbol()
+    let (decimals_) = ERC20.decimals()
 
     with_attr error_message("static_a_token already initialized"):
         assert name_ = 0
@@ -150,9 +135,9 @@ func initialize_static_a_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*,
         assert decimals_ = 0
     end
 
-    ERC20_initializer(name, symbol, decimals)
-    ERC20_mint(recipient, initial_supply)
-    Ownable_initializer(owner)
+    ERC20.initializer(name, symbol, decimals)
+    ERC20._mint(recipient, initial_supply)
+    Ownable.initializer(owner)
     incentivized_erc20_set_l2_bridge(l2_bridge)
     static_a_token_initialized.emit(
         name, symbol, decimals, initial_supply, recipient, owner, l2_bridge
@@ -166,7 +151,7 @@ func transfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
 ) -> (success : felt):
     let (from_) = get_caller_address()
     incentivized_erc20_before_token_transfer(from_, recipient)
-    ERC20_transfer(recipient, amount)
+    ERC20.transfer(recipient, amount)
     return (TRUE)
 end
 
@@ -175,7 +160,7 @@ func transferFrom{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
     sender : felt, recipient : felt, amount : Uint256
 ) -> (success : felt):
     incentivized_erc20_before_token_transfer(sender, recipient)
-    ERC20_transferFrom(sender, recipient, amount)
+    ERC20.transfer_from(sender, recipient, amount)
     return (TRUE)
 end
 
@@ -183,7 +168,7 @@ end
 func approve{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     spender : felt, amount : Uint256
 ) -> (success : felt):
-    ERC20_approve(spender, amount)
+    ERC20.approve(spender, amount)
     return (TRUE)
 end
 
@@ -191,7 +176,7 @@ end
 func increaseAllowance{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     spender : felt, added_value : Uint256
 ) -> (success : felt):
-    ERC20_increaseAllowance(spender, added_value)
+    ERC20.increase_allowance(spender, added_value)
     return (TRUE)
 end
 
@@ -199,7 +184,7 @@ end
 func decreaseAllowance{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     spender : felt, subtracted_value : Uint256
 ) -> (success : felt):
-    ERC20_decreaseAllowance(spender, subtracted_value)
+    ERC20.decrease_allowance(spender, subtracted_value)
     return (TRUE)
 end
 
@@ -209,7 +194,7 @@ func mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
 ):
     incentivized_erc20_only_bridge()
     incentivized_erc20_before_token_transfer(0, recipient)
-    ERC20_mint(recipient, amount)
+    ERC20._mint(recipient, amount)
     return ()
 end
 
@@ -219,7 +204,7 @@ func burn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
 ):
     incentivized_erc20_only_bridge()
     incentivized_erc20_before_token_transfer(account, 0)
-    ERC20_burn(account=account, amount=amount)
+    ERC20._burn(account=account, amount=amount)
     return ()
 end
 

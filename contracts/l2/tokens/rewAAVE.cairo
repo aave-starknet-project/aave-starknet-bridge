@@ -26,6 +26,25 @@ from openzeppelin.token.erc20.library import (
 
 from openzeppelin.access.ownable import Ownable_initializer, Ownable_only_owner
 
+#
+# Events
+#
+
+@event
+func rewAAVE_initialized(
+    name : felt,
+    symbol : felt,
+    decimals : felt,
+    initial_supply : Uint256,
+    recipient : felt,
+    owner : felt,
+):
+end
+
+#
+# Constructor
+#
+
 @external
 func initialize_rewAAVE{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     name : felt,
@@ -38,6 +57,7 @@ func initialize_rewAAVE{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
     ERC20_initializer(name, symbol, decimals)
     ERC20_mint(recipient, initial_supply)
     Ownable_initializer(owner)
+    rewAAVE_initialized.emit(name, symbol, decimals, initial_supply, recipient, owner)
     return ()
 end
 

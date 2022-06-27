@@ -79,6 +79,26 @@ end
 func bridged_rewards(caller : felt, l1_recipient : felt, amount : Uint256):
 end
 
+@event
+func rewards_index_updated(l2_token : felt, block_number : Uint256, l1_rewards_index : Wad):
+end
+
+@event
+func reward_token_updated(reward_token : felt):
+end
+
+@event
+func l1_bridge_updated(l1_bridge_address : felt):
+end
+
+@event
+func bridge_initialized(governor_address : felt):
+end
+
+@event
+func bridge_approved(l2_token : felt, l1_token : felt):
+end
+
 # Getters.
 
 @view
@@ -140,6 +160,7 @@ func initialize_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     end
     assert_not_zero(governor_address)
     governor.write(value=governor_address)
+    bridge_initialized.emit(governor_address)
     return ()
 end
 
@@ -159,6 +180,8 @@ func set_l1_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
 
     # Set new value.
     l1_bridge.write(value=l1_bridge_address)
+
+    l1_bridge_updated.emit(l1_bridge_address)
     return ()
 end
 
@@ -171,6 +194,9 @@ func set_reward_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
     only_governor()
 
     rewAAVE.write(reward_token)
+
+    reward_token_updated.emit(reward_token)
+
     return ()
 end
 
@@ -192,6 +218,7 @@ func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     assert_not_zero(l1_token)
     assert_lt_felt(l1_token, ETH_ADDRESS_BOUND)
     l2_token_to_l1_token.write(l2_token, l1_token)
+    bridge_approved.emit(l2_token, l1_token)
     return ()
 end
 
@@ -375,6 +402,6 @@ func handle_index_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
     Istatic_a_token.push_rewards_index(
         contract_address=l2_token, block_number=block_number, rewards_index=l1_rewards_index
     )
-
+    rewards_index_updated.emit(l2_token, block_number, l1_rewards_index)
     return ()
 end

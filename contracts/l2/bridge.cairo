@@ -4,14 +4,7 @@ from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math import assert_lt_felt, assert_not_zero
-from starkware.cairo.common.math_cmp import is_le
-from starkware.cairo.common.uint256 import (
-    Uint256,
-    uint256_check,
-    uint256_le,
-    uint256_sub,
-    uint256_mul,
-)
+from starkware.cairo.common.uint256 import Uint256, uint256_check, uint256_le
 from starkware.starknet.common.messages import send_message_to_l1
 from starkware.starknet.common.syscalls import get_caller_address
 
@@ -21,7 +14,6 @@ from contracts.l2.lib.wad_ray_math import (
     wad_to_ray,
     ray_mul_no_rounding,
     wad_le,
-    ray_to_wad_no_rounding,
     wad_mul,
 )
 from contracts.l2.interfaces.IERC20 import IERC20

@@ -1,6 +1,7 @@
 %lang starknet
 
 from starkware.cairo.common.alloc import alloc
+from starkware.cairo.common.bool import TRUE
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math import assert_lt_felt, assert_not_zero
 from starkware.cairo.common.math_cmp import is_le
@@ -338,7 +339,7 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     # handle the difference of the index at send and recieve
     let (current_index) = Istatic_a_token.get_rewards_index(l2_token)
     let (le) = wad_le(current_index, l1_rewards_index)
-    if le == 1:
+    if le == TRUE:
         Istatic_a_token.push_rewards_index(
             contract_address=l2_token, block_number=block_number, rewards_index=l1_rewards_index
         )

@@ -3,6 +3,8 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math import assert_not_zero
 from starkware.starknet.common.syscalls import delegate_l1_handler, delegate_call
+from starkware.cairo.common.bool import TRUE, FALSE
+
 from openzeppelin.upgrades.library import (
     Proxy_initialized,
     Proxy_get_admin,
@@ -50,10 +52,10 @@ func initialize_proxy{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
     Proxy_only_admin()
     let (initialized) = Proxy_initialized.read()
     with_attr error_message("Proxy: contract already initialized"):
-        assert initialized = 0
+        assert initialized = FALSE
     end
 
-    Proxy_initialized.write(1)
+    Proxy_initialized.write(TRUE)
     Proxy_set_implementation(implementation_address)
     proxy_initialized.emit(implementation_address)
     return ()
@@ -71,7 +73,7 @@ func upgrade_implementation{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ra
 
     let (initialized) = Proxy_initialized.read()
     with_attr error_message("Proxy: contract not initialized"):
-        assert initialized = 1
+        assert initialized = TRUE
     end
 
     Proxy_set_implementation(new_implementation)

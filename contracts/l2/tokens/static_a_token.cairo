@@ -244,7 +244,7 @@ func push_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
     return ()
 end
 
-@external
+@view
 func get_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     rewards_index : Wad
 ):
@@ -252,7 +252,7 @@ func get_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     return (res)
 end
 
-@external
+@view
 func get_user_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     user : felt
 ) -> (user_rewards_index : Uint256):

@@ -15,7 +15,7 @@ from contracts.l2.lib.wad_ray_math import (
     ray_to_wad,
     ray_to_wad_no_rounding,
 )
-from openzeppelin.token.erc20.library import ERC20_balanceOf
+from contracts.l2.dependencies.openzeppelin.token.erc20.library import ERC20
 
 @storage_var
 func l2_bridge() -> (address : felt):
@@ -49,7 +49,7 @@ end
 
 func update_user{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt):
     alloc_locals
-    let (balance) = ERC20_balanceOf(user)
+    let (balance) = ERC20.balance_of(user)
     if balance.high + balance.low == 0:
         update_user_snapshot_rewards_index(user)
     else:
@@ -90,7 +90,7 @@ func incentivized_erc20_get_pending_rewards{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt) -> (pending_rewards : Wad):
     alloc_locals
-    let (balance) = ERC20_balanceOf(user)
+    let (balance) = ERC20.balance_of(user)
     let (balance_in_ray) = wad_to_ray(Wad(balance))
     let (rewards_index_) = rewards_index.read()
     let (user_snapshot_rewards_index_) = user_snapshot_rewards_index.read(user)

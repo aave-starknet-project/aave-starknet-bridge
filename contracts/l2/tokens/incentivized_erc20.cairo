@@ -3,7 +3,7 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.uint256 import Uint256, uint256_add, uint256_sub, uint256_le
 from starkware.starknet.common.syscalls import get_caller_address
-
+from starkware.cairo.common.bool import TRUE, FALSE
 from contracts.l2.lib.wad_ray_math import (
     Wad, wad_to_ray, wad_add, wad_sub, wad_mul, Ray, ray_add, ray_sub, ray_mul_no_rounding,
     ray_to_wad, ray_to_wad_no_rounding)
@@ -47,7 +47,7 @@ func update_user{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
         let (pending) = incentivized_erc20_get_pending_rewards(user)
         let (unclaimed) = incentivized_erc20_get_user_unclaimed_rewards(user)
         let (unclaimed, overflow) = wad_add(unclaimed, pending)
-        assert overflow = 0
+        assert overflow = FALSE
         unclaimed_rewards.write(user, unclaimed)
         update_user_snapshot_rewards_index(user)
     end
@@ -101,7 +101,7 @@ func incentivized_erc20_get_claimable_rewards{
     let (unclaimed_rewards_) = unclaimed_rewards.read(user)
     let (pending) = incentivized_erc20_get_pending_rewards(user)
     let (incentivized_erc20_rewards, overflow) = wad_add(unclaimed_rewards_, pending)
-    assert overflow = 0
+    assert overflow = FALSE
 
     return (incentivized_erc20_rewards)
 end
@@ -130,10 +130,10 @@ func incentivized_erc20_push_rewards_index{
     let (last_block_number) = last_update.read()
     # This is le because the rewards may update in a block
     let (le) = uint256_le(last_block_number, block_number)
-    if le == 1:
+    if le == TRUE:
         let (prev_index) = rewards_index.read()
         let (le) = uint256_le(prev_index.wad, new_rewards_index.wad)
-        if le == 1:
+        if le == TRUE:
             last_update.write(block_number)
             rewards_index.write(new_rewards_index)
             return ()

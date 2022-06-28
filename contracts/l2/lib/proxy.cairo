@@ -33,6 +33,9 @@ end
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     proxy_admin : felt
 ):
+    with_attr error_message("Proxy: proxy admin address should be non zero."):
+        assert_not_zero(proxy_admin)
+    end
     Proxy._set_admin(proxy_admin)
     proxy_deployed.emit(proxy_admin)
     return ()

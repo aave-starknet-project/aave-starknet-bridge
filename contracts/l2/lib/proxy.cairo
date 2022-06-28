@@ -62,6 +62,10 @@ end
 func upgrade_implementation{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     new_implementation : felt
 ):
+    with_attr error_message("Proxy: new implementation address should be non zero."):
+        assert_not_zero(new_implementation)
+    end
+
     Proxy.assert_only_admin()
 
     let (initialized) = Proxy_initialized.read()

@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := install
 
 install:
-	yarn
+	yarn install --frozen-lockfile
 	pip install poetry
 	poetry install

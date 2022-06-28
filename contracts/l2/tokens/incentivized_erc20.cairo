@@ -29,12 +29,12 @@ end
 func rewards_index() -> (res : Wad):
 end
 
-# user => rewards index at last interaction (in RAYs)
+# user => rewards index at last interaction (in WADs)
 @storage_var
 func user_snapshot_rewards_index(user : felt) -> (rewards_index : Wad):
 end
 
-# user => unclaimed_rewards (in RAYs)
+# user => unclaimed_rewards (in WADs)
 @storage_var
 func unclaimed_rewards(user : felt) -> (unclaimed : Wad):
 end

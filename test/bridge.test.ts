@@ -151,7 +151,7 @@ describe("Bridge", async function () {
       proxy_admin: BigInt(l2owner.starknetContract.address),
     });
 
-    await l2owner.invoke(l2rewAAVEProxy, "initialize_proxy", {
+    await l2owner.invoke(l2rewAAVEProxy, "set_implementation", {
       implementation_address: BigInt(l2rewAAVEImpl.address),
     });
     l2rewAAVE = rewAaveContractFactory.getContractAt(l2rewAAVEProxy.address);
@@ -247,7 +247,7 @@ describe("Bridge", async function () {
 
   it("set L2 implementation contracts", async () => {
     {
-      await l2user.invoke(l2StaticADaiProxy, "initialize_proxy", {
+      await l2user.invoke(l2StaticADaiProxy, "set_implementation", {
         implementation_address: BigInt(l2StaticADaiImpl.address),
       });
       const { implementation } = await l2StaticADaiProxy.call(
@@ -259,7 +259,7 @@ describe("Bridge", async function () {
     }
 
     {
-      await l2user.invoke(l2StaticAUsdcProxy, "initialize_proxy", {
+      await l2user.invoke(l2StaticAUsdcProxy, "set_implementation", {
         implementation_address: BigInt(l2StaticAUsdcImpl.address),
       });
       const { implementation } = await l2StaticAUsdcProxy.call(
@@ -271,7 +271,7 @@ describe("Bridge", async function () {
     }
 
     {
-      await l2user.invoke(l2BridgeProxy, "initialize_proxy", {
+      await l2user.invoke(l2BridgeProxy, "set_implementation", {
         implementation_address: BigInt(l2BridgeImpl.address),
       });
       const { implementation } = await l2BridgeProxy.call(

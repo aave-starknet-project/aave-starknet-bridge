@@ -41,7 +41,7 @@ export async function deployStaticAToken(
 
   staticATokenImpl = await staticATokenFactory.deploy();
 
-  await deployer.invoke(staticATokenProxy, "initialize_proxy", {
+  await deployer.invoke(staticATokenProxy, "set_implementation", {
     implementation_address: BigInt(staticATokenImpl.address),
   });
 
@@ -105,7 +105,7 @@ export async function deployL2rewAAVE(
   );
 
   console.log("initializing rewAAVE token proxy...");
-  await deployer.invoke(rewAAVEProxy, "initialize_proxy", {
+  await deployer.invoke(rewAAVEProxy, "set_implementation", {
     implementation_address: BigInt(rewAAVEImpl.address),
   });
 

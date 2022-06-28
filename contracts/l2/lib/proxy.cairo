@@ -5,7 +5,7 @@ from starkware.cairo.common.math import assert_not_zero
 from starkware.starknet.common.syscalls import delegate_l1_handler, delegate_call
 from starkware.cairo.common.bool import TRUE, FALSE
 
-from contracts.l2.dependencies.openzeppelin.upgrades.library import Proxy, Proxy_initialized
+from contracts.l2.dependencies.openzeppelin.upgrades.library import Proxy
 
 # events
 
@@ -14,11 +14,7 @@ func proxy_deployed(proxy_admin : felt):
 end
 
 @event
-func proxy_initialized(implementation_address : felt):
-end
-
-@event
-func implementation_upgraded(new_implementation : felt):
+func implementation_updated(implementation_address : felt):
 end
 
 @event
@@ -42,46 +38,15 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
 end
 
 @external
-func initialize_proxy{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func set_implementation{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     implementation_address : felt
 ):
-    with_attr error_message("Proxy: initial implementation address should be non zero."):
+    with_attr error_message("Proxy: implementation address should be non zero."):
         assert_not_zero(implementation_address)
     end
     Proxy.assert_only_admin()
-    let (initialized) = Proxy_initialized.read()
-    with_attr error_message("Proxy: contract already initialized"):
-        assert initialized = FALSE
-    end
-
-    Proxy_initialized.write(TRUE)
     Proxy._set_implementation(implementation_address)
-    proxy_initialized.emit(implementation_address)
-    return ()
-end
-
-#
-# Upgrades
-#
-
-@external
-func upgrade_implementation{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    new_implementation : felt
-):
-    with_attr error_message("Proxy: new implementation address should be non zero."):
-        assert_not_zero(new_implementation)
-    end
-
-    Proxy.assert_only_admin()
-
-    let (initialized) = Proxy_initialized.read()
-    with_attr error_message("Proxy: contract not initialized"):
-        assert initialized = TRUE
-    end
-
-    Proxy._set_implementation(new_implementation)
-
-    implementation_upgraded.emit(new_implementation)
+    implementation_updated.emit(implementation_address)
     return ()
 end
 

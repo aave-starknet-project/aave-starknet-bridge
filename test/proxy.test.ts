@@ -29,7 +29,7 @@ describe("Proxy", function () {
       proxy_admin: owner.starknetContract.address,
     });
 
-    await owner.invoke(proxyTokenContract, "initialize_proxy", {
+    await owner.invoke(proxyTokenContract, "set_implementation", {
       implementation_address: BigInt(tokenContractA.address),
     });
     proxiedTokenContract = TokenContractFactory.getContractAt(
@@ -65,8 +65,8 @@ describe("Proxy", function () {
 
   it("disallows random user to upgrade", async () => {
     try {
-      await randomUser.invoke(proxyTokenContract, "upgrade_implementation", {
-        new_implementation: BigInt(tokenContractB.address),
+      await randomUser.invoke(proxyTokenContract, "set_implementation", {
+        implementation_address: BigInt(tokenContractB.address),
       });
     } catch (e: any) {
       expect(e.message).to.contain("Proxy: caller is not admin");
@@ -83,8 +83,8 @@ describe("Proxy", function () {
   });
 
   it("allows owner to upgrade", async () => {
-    await randomUser.invoke(proxyTokenContract, "upgrade_implementation", {
-      new_implementation: BigInt(tokenContractB.address),
+    await randomUser.invoke(proxyTokenContract, "set_implementation", {
+      implementation_address: BigInt(tokenContractB.address),
     });
     const { implementation } = await proxyTokenContract.call(
       "get_implementation",

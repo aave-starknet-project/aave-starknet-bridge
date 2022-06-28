@@ -5,10 +5,18 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.uint256 import Uint256
-from starkware.cairo.common.bool import TRUE
+from starkware.cairo.common.bool import TRUE, FALSE
 
 from contracts.l2.dependencies.openzeppelin.token.erc20.library import ERC20
 from contracts.l2.dependencies.openzeppelin.access.ownable import Ownable
+
+#
+# Storage
+#
+
+@storage_var
+func initialized() -> (res : felt):
+end
 
 #
 # Events
@@ -38,6 +46,11 @@ func initialize_rewAAVE{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
     recipient : felt,
     owner : felt,
 ):
+    let (initialized_) = initialized.read()
+    with_attr error_message("rewAAVE: token already initialized"):
+        assert initialized_ = FALSE
+    end
+    initialized.write(TRUE)
     ERC20.initializer(name, symbol, decimals)
     ERC20._mint(recipient, initial_supply)
     Ownable.initializer(owner)

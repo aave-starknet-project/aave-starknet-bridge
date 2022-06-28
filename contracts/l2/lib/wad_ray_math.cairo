@@ -72,7 +72,7 @@ func wad_mul{range_check_ptr}(a : Wad, b : Wad) -> (res : Wad):
 
     with_attr error_message("WAD multiplication overflow"):
         let (bound) = uint256_sub(UINT256_MAX, HALF_WAD_UINT.wad)
-        let (quotient, rem) = uint256_unsigned_div_rem(bound, b.wad)
+        let (quotient, _) = uint256_unsigned_div_rem(bound, b.wad)
         let (le) = uint256_le(a.wad, quotient)
         assert le = TRUE
     end
@@ -134,7 +134,7 @@ func ray_mul{range_check_ptr}(a : Ray, b : Ray) -> (res : Ray):
 
     with_attr error_message("RAY div overflow"):
         let (bound) = uint256_sub(UINT256_MAX, HALF_RAY_UINT.ray)
-        let (quotient, rem) = uint256_unsigned_div_rem(bound, b.ray)
+        let (quotient, _) = uint256_unsigned_div_rem(bound, b.ray)
         let (le) = uint256_le(a.ray, quotient)
         assert le = TRUE
     end

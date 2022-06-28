@@ -4,6 +4,7 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.uint256 import Uint256, uint256_add, uint256_sub, uint256_le
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.bool import TRUE, FALSE
+from starkware.cairo.common.math import assert_not_zero
 from contracts.l2.lib.wad_ray_math import (
     Wad,
     wad_to_ray,
@@ -184,6 +185,9 @@ end
 func incentivized_erc20_set_l2_bridge{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(l2_bridge_ : felt):
+    with_attr error_message("L2 bridge address should be non zero."):
+        assert_not_zero(l2_bridge_)
+    end
     l2_bridge.write(l2_bridge_)
     return ()
 end

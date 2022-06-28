@@ -29,7 +29,7 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
 
   bridgeImplementation = await L2BridgeFactory.deploy();
 
-  await deployer.invoke(proxyBridge, "initialize_proxy", {
+  await deployer.invoke(proxyBridge, "set_implementation", {
     implementation_address: BigInt(bridgeImplementation.address),
   });
 

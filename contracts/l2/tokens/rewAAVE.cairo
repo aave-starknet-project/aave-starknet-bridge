@@ -6,6 +6,7 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.uint256 import Uint256
 from starkware.cairo.common.bool import TRUE
+from starkware.cairo.common.math import assert_not_zero
 
 from contracts.l2.dependencies.openzeppelin.token.erc20.library import ERC20
 from contracts.l2.dependencies.openzeppelin.access.ownable import Ownable
@@ -46,6 +47,20 @@ func initialize_rewAAVE{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
     owner : felt,
 ):
     VersionedInitializable.initializer(REVISION)
+
+    # check inputs
+    with_attr error_message("rewAAVE: name should be non zero"):
+        assert_not_zero(name)
+    end
+    with_attr error_message("rewAAVE: symbol should be non zero"):
+        assert_not_zero(symbol)
+    end
+    with_attr error_message("rewAAVE: decimals should be non zero"):
+        assert_not_zero(decimals)
+    end
+    with_attr error_message("rewAAVE: owner address should be non zero"):
+        assert_not_zero(owner)
+    end
 
     ERC20.initializer(name, symbol, decimals)
     ERC20._mint(recipient, initial_supply)

@@ -42,6 +42,9 @@ end
 func initialize_proxy{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     implementation_address : felt
 ):
+    with_attr error_message("Proxy: initial implementation address should be non zero."):
+        assert_not_zero(implementation_address)
+    end
     Proxy.assert_only_admin()
     let (initialized) = Proxy_initialized.read()
     with_attr error_message("Proxy: contract already initialized"):

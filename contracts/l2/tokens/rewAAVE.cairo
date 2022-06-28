@@ -9,6 +9,13 @@ from starkware.cairo.common.bool import TRUE
 
 from contracts.l2.dependencies.openzeppelin.token.erc20.library import ERC20
 from contracts.l2.dependencies.openzeppelin.access.ownable import Ownable
+from contracts.l2.lib.version_initializable import VersionedInitializable
+
+#
+# Version
+#
+
+const REVISION = 1
 
 #
 # Events
@@ -38,6 +45,8 @@ func initialize_rewAAVE{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
     recipient : felt,
     owner : felt,
 ):
+    VersionedInitializable.initializer(REVISION)
+
     ERC20.initializer(name, symbol, decimals)
     ERC20._mint(recipient, initial_supply)
     Ownable.initializer(owner)

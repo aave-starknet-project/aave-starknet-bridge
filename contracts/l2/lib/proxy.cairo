@@ -103,6 +103,9 @@ end
 func change_proxy_admin{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     new_admin : felt
 ):
+    with_attr error_message("Proxy: new admin address should be non zero."):
+        assert_not_zero(new_admin)
+    end
     Proxy.assert_only_admin()
     Proxy._set_admin(new_admin)
     admin_changed.emit(new_admin)

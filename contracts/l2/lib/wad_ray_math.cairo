@@ -27,7 +27,7 @@ const UINT128_MAX = 2 ** 128 - 1
 
 # WAD_RAY_RATIO = 1 * 10 ^ 9
 const WAD_RAY_RATIO = 10 ** 9
-const HALF_WAD_RAY_RATION = WAD_RAY_RATIO / 2
+const HALF_WAD_RAY_RATIO = WAD_RAY_RATIO / 2
 
 func ray() -> (ray : Ray):
     return (Ray(Uint256(RAY, 0)))
@@ -50,7 +50,7 @@ func wad_ray_ratio() -> (ratio : Uint256):
 end
 
 func half_wad_ray_ratio() -> (ratio : Uint256):
-    return (Uint256(HALF_WAD_RAY_RATION, 0))
+    return (Uint256(HALF_WAD_RAY_RATIO, 0))
 end
 
 func uint256_max() -> (max : Uint256):

@@ -4,6 +4,7 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.uint256 import Uint256
 from starkware.cairo.common.bool import TRUE
+from starkware.cairo.common.math import assert_not_zero
 
 from contracts.l2.dependencies.openzeppelin.token.erc20.library import ERC20
 
@@ -22,6 +23,7 @@ from contracts.l2.tokens.incentivized_erc20 import (
     incentivized_erc20_get_claimable_rewards,
 )
 from contracts.l2.lib.wad_ray_math import Wad
+from contracts.l2.lib.version_initializable import VersionedInitializable
 
 @contract_interface
 namespace IBridge:
@@ -39,6 +41,10 @@ func set_l2_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     l2_bridge_updated.emit(l2_bridge)
     return ()
 end
+
+# version
+
+const REVISION = 1
 
 # events
 
@@ -125,14 +131,20 @@ func initialize_static_a_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*,
     owner : felt,
     l2_bridge : felt,
 ):
-    let (name_) = ERC20.name()
-    let (symbol_) = ERC20.symbol()
-    let (decimals_) = ERC20.decimals()
+    VersionedInitializable.initializer(REVISION)
 
-    with_attr error_message("static_a_token already initialized"):
-        assert name_ = 0
-        assert symbol_ = 0
-        assert decimals_ = 0
+    # check inputs
+    with_attr error_message("static_a_token: name should be non zero"):
+        assert_not_zero(name)
+    end
+    with_attr error_message("static_a_token: symbol should be non zero"):
+        assert_not_zero(symbol)
+    end
+    with_attr error_message("static_a_token: decimals should be non zero"):
+        assert_not_zero(decimals)
+    end
+    with_attr error_message("static_a_token: owner address should be non zero"):
+        assert_not_zero(owner)
     end
 
     ERC20.initializer(name, symbol, decimals)

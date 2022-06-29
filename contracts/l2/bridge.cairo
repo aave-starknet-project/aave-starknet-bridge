@@ -141,6 +141,17 @@ func only_l1_handler{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
     return ()
 end
 
+func only_valid_l1_address{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    l1_address : felt
+):
+    with_attr error_message(
+            "L1 address is not valid: it should be between 1 and 2 ** 160. Current value: {l1_address}"):
+        assert_not_zero(l1_address)
+        assert_lt_felt(l1_address, ETH_ADDRESS_BOUND)
+    end
+    return ()
+end
+
 # Externals
 
 @external
@@ -168,8 +179,7 @@ func set_l1_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     assert l1_bridge_ = 0
 
     # Check new address is valid.
-    assert_lt_felt(l1_bridge_address, ETH_ADDRESS_BOUND)
-    assert_not_zero(l1_bridge_address)
+    only_valid_l1_address(l1_bridge_address)
 
     # Set new value.
     l1_bridge.write(value=l1_bridge_address)
@@ -212,8 +222,8 @@ func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
         assert l1_token_ = 0
     end
 
-    assert_not_zero(l1_token)
-    assert_lt_felt(l1_token, ETH_ADDRESS_BOUND)
+    only_valid_l1_address(l1_token)
+
     l2_token_to_l1_token.write(l2_token, l1_token)
     bridge_approved.emit(l2_token, l1_token)
     return ()
@@ -228,7 +238,7 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     let (to_address) = get_l1_bridge()
 
     # check l1 address is valid.
-    assert_lt_felt(l1_recipient, ETH_ADDRESS_BOUND)
+    only_valid_l1_address(l1_recipient)
 
     let (l1_token) = l2_token_to_l1_token.read(l2_token)
     with_attr error_message("No l1 token found for {l2_token}"):
@@ -267,6 +277,8 @@ end
 func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l1_recipient : felt, amount : Uint256
 ):
+    only_valid_l1_address(l1_recipient)
+
     let (to_address) = get_l1_bridge()
 
     let (token_owner) = get_caller_address()

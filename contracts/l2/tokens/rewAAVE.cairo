@@ -117,6 +117,12 @@ func allowance{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
     return (remaining)
 end
 
+@view
+func owner{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (owner : felt):
+    let (owner) = Ownable.owner()
+    return (owner=owner)
+end
+
 #
 # Externals
 #

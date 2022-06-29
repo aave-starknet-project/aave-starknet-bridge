@@ -16,6 +16,9 @@ namespace IERC20:
     func totalSupply() -> (totalSupply : Uint256):
     end
 
+    func owner() -> (owner : felt):
+    end
+
     func balanceOf(account : felt) -> (balance : Uint256):
     end
 

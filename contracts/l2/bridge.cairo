@@ -6,7 +6,7 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math import assert_lt_felt, assert_not_zero
 from starkware.cairo.common.uint256 import Uint256, uint256_check, uint256_le
 from starkware.starknet.common.messages import send_message_to_l1
-from starkware.starknet.common.syscalls import get_caller_address
+from starkware.starknet.common.syscalls import get_caller_address, get_contract_address
 
 from contracts.l2.lib.wad_ray_math import (
     Wad,
@@ -152,6 +152,17 @@ func only_valid_l1_address{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
     return ()
 end
 
+func only_owned_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    token_address : felt
+):
+    with_attr error_message("Bridge contract should be owner of the token."):
+        let (contract_address) = get_contract_address()
+        let (token_owner) = IERC20.owner(token_address)
+        assert token_owner = contract_address
+    end
+    return ()
+end
+
 # Externals
 
 @external
@@ -193,6 +204,8 @@ func set_reward_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
     reward_token : felt
 ):
     alloc_locals
+
+    only_owned_token(reward_token)
 
     with_attr error_message("Reward token address should be non zero."):
         assert_not_zero(reward_token)

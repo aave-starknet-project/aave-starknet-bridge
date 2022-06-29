@@ -198,8 +198,6 @@ end
 func set_reward_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     reward_token : felt
 ):
-    alloc_locals
-
     only_owned_token(reward_token)
 
     with_attr error_message("Reward token address should be non zero."):

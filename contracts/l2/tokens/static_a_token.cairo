@@ -117,6 +117,31 @@ func allowance{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
     return ERC20.allowance(owner, spender)
 end
 
+@view
+func get_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    rewards_index : Wad
+):
+    let (res) = incentivized_erc20_get_rewards_index()
+    return (res)
+end
+
+@view
+func get_user_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    user : felt
+) -> (user_rewards_index : Uint256):
+    let (res) = incentivized_erc20_get_user_rewards_index(user)
+    return (res.wad)
+end
+
+@view
+func get_user_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    user : felt
+) -> (user_claimable_rewards : Uint256):
+    alloc_locals
+    let (res) = incentivized_erc20_get_claimable_rewards(user)
+    return (res.wad)
+end
+
 #
 # Externals
 #
@@ -239,29 +264,4 @@ func push_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
     incentivized_erc20_push_rewards_index(block_number, rewards_index)
     rewards_index_updated.emit(block_number, rewards_index)
     return ()
-end
-
-@view
-func get_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-    rewards_index : Wad
-):
-    let (res) = incentivized_erc20_get_rewards_index()
-    return (res)
-end
-
-@view
-func get_user_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    user : felt
-) -> (user_rewards_index : Uint256):
-    let (res) = incentivized_erc20_get_user_rewards_index(user)
-    return (res.wad)
-end
-
-@view
-func get_user_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    user : felt
-) -> (user_claimable_rewards : Uint256):
-    alloc_locals
-    let (res) = incentivized_erc20_get_claimable_rewards(user)
-    return (res.wad)
 end

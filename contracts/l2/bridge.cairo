@@ -184,11 +184,6 @@ func set_l1_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     l1_bridge_address : felt
 ):
     only_governor()
-
-    # Check l1_bridge isn't already set.
-    let (l1_bridge_) = get_l1_bridge()
-    assert l1_bridge_ = 0
-
     # Check new address is valid.
     only_valid_l1_address(l1_bridge_address)
 

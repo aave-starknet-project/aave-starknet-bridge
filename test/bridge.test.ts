@@ -692,7 +692,7 @@ describe("Bridge", async function () {
     await l2user.invoke(l2Bridge, "initiate_withdraw", {
       l2_token: BigInt(l2StaticAUsdc.address),
       l1_recipient: BigInt(l1user.address),
-      amount: { high: 0n, low: 37n * USDC_UNIT },
+      amount: { high: 0n, low: 27n * USDC_UNIT },
     });
 
     // flush L2 messages to be consumed by L1
@@ -727,19 +727,11 @@ describe("Bridge", async function () {
         aUsdc.address,
         l2user.starknetContract.address,
         l1user.address,
-        37n * USDC_UNIT,
+        27n * USDC_UNIT,
         l2RewardsIndexUsdc,
         true
       );
     blockNumberUsdc = txUsdc.blockNumber;
-
-    // check that tokens have been transfered to l1user
-    expect(await dai.balanceOf(l1user.address)).to.be.lte(
-      BigNumber.from(l1InitialDaiBalance)
-    );
-    expect(BigNumber.from(l1InitialUsdcBalance)).to.be.lte(
-      await usdc.balanceOf(l1user.address)
-    );
 
     // flush L1 messages to be consumed by L2
     const flushL1Response = await starknet.devnet.flush();
@@ -756,6 +748,49 @@ describe("Bridge", async function () {
     });
   });
 
+  it("reverts withdrawal when wrong l2rewards index is provided", async () => {
+    await l2user.invoke(l2Bridge, "initiate_withdraw", {
+      l2_token: BigInt(l2StaticAUsdc.address),
+      l1_recipient: BigInt(l1user.address),
+      amount: { high: 0n, low: 10n * USDC_UNIT },
+    });
+
+    // flush L2 messages to be consumed by L1
+    const flushL2Response = await starknet.devnet.flush();
+    const flushL2Messages = flushL2Response.consumed_messages.from_l2;
+    expect(flushL2Response.consumed_messages.from_l1).to.be.empty;
+    expect(flushL2Messages).to.have.a.lengthOf(1);
+
+    const falseL2RewardsIndexUsdc = 10n * USDC_UNIT; //random value
+    const correctL2RewardsIndexUsdc = uintFromParts(
+      flushL2Messages[0].payload[6],
+      flushL2Messages[0].payload[7]
+    );
+
+    await expect(
+      l1Bridge
+        .connect(l1user)
+        .withdraw(
+          aUsdc.address,
+          l2user.starknetContract.address,
+          l1user.address,
+          10n * USDC_UNIT,
+          falseL2RewardsIndexUsdc,
+          true
+        )
+    ).to.be.reverted;
+
+    txUsdc = await l1Bridge
+      .connect(l1user)
+      .withdraw(
+        aUsdc.address,
+        l2user.starknetContract.address,
+        l1user.address,
+        10n * USDC_UNIT,
+        correctL2RewardsIndexUsdc,
+        true
+      );
+  });
   it("L2 user sends back reward accrued to L1 user", async () => {
     // check claimable rewards
     let claimableADai = await l2StaticADai.call("get_user_claimable_rewards", {
@@ -802,6 +837,13 @@ describe("Bridge", async function () {
     const flushL2Messages = flushL2Response.consumed_messages.from_l2;
     expect(flushL2Response.consumed_messages.from_l1).to.be.empty;
     expect(flushL2Messages).to.have.a.lengthOf(1);
+
+    //check that there are enough rewards on l1 bridge
+    const bridgePendingRewards = await incentives.getRewardsBalance(
+      [A_DAI, A_USDC],
+      l1Bridge.address
+    );
+    expect(bridgePendingRewards).to.be.gte(l2ClaimedRewards);
 
     // call recieveRewards on L1 to consume messages from L2
     const rewardsBalanceBeforeClaim = BigInt(

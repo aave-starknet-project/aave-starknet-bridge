@@ -131,7 +131,7 @@ func only_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     return ()
 end
 
-func only_l1_handler{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func only_l1_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     from_address_ : felt
 ):
     let (expected_from_address) = get_l1_bridge()
@@ -326,7 +326,7 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     l1_rewards_index_high : felt,
 ):
     alloc_locals
-    only_l1_handler(from_address_=from_address)
+    only_l1_bridge(from_address_=from_address)
 
     let amount_ = Uint256(low=amount_low, high=amount_high)
     local amount : Wad = Wad(amount_)
@@ -399,7 +399,7 @@ func handle_index_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
     l1_rewards_index_high : felt,
 ):
     alloc_locals
-    only_l1_handler(from_address_=from_address)
+    only_l1_bridge(from_address_=from_address)
 
     let l1_rewards_index_ = Uint256(low=l1_rewards_index_low, high=l1_rewards_index_high)
     local l1_rewards_index : Wad = Wad(l1_rewards_index_)

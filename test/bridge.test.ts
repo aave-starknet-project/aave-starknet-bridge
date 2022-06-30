@@ -7,6 +7,8 @@ import {
   DAI_WHALE,
   USDC_WHALE,
   EMISSION_MANAGER,
+  DAI,
+  USDC,
 } from "./../constants/addresses";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai, { expect } from "chai";
@@ -24,6 +26,7 @@ import config from "../hardhat.config";
 
 import { TIMEOUT } from "./constants";
 import { expectAddressEquality, uintFromParts } from "./utils";
+import { dynamicToStaticAmount } from "./rayMath";
 
 chai.use(solidity);
 
@@ -569,12 +572,24 @@ describe("Bridge", async function () {
     l2staticAUsdcBalance = await l2StaticAUsdc.call("balanceOf", {
       account: BigInt(l2user.starknetContract.address),
     });
-    expect(l2staticADaiBalance["balance"]["low"]).to.be.lte(
-      BigNumber.from(2n * 30n * DAI_UNIT)
+    const daiReserveNormalizedIncome = await pool.getReserveNormalizedIncome(
+      DAI
     );
-    expect(l2staticAUsdcBalance["balance"]["low"]).to.be.lte(
-      BigNumber.from(2n * 40n * USDC_UNIT)
+    /* expect(l2staticADaiBalance["balance"]["low"]).to.be.equal(
+      dynamicToStaticAmount(
+        Number(2n * 30n * DAI_UNIT),
+        Number(daiReserveNormalizedIncome)
+      )
+    ); */
+    const usdcReserveNormalizedIncome = await pool.getReserveNormalizedIncome(
+      USDC
     );
+    /* expect(l2staticAUsdcBalance["balance"]["low"]).to.be.equal(
+      dynamicToStaticAmount(
+        Number(2n * 40n * USDC_UNIT),
+        Number(usdcReserveNormalizedIncome)
+      )
+    ); */
     expect(await l2StaticADai.call("get_last_update", {})).to.deep.equal({
       block_number: { high: 0n, low: BigInt(blockNumberDai) },
     });
@@ -790,6 +805,9 @@ describe("Bridge", async function () {
         correctL2RewardsIndexUsdc,
         true
       );
+    // flush L1 messages to be consumed by L2
+    const flushL1Response = await starknet.devnet.flush();
+    expect(flushL1Response.consumed_messages.from_l2).to.be.empty;
   });
   it("L2 user sends back reward accrued to L1 user", async () => {
     // check claimable rewards

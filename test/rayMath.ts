@@ -78,3 +78,17 @@ export function rayToDecimal(a: BigNumberValue): number {
 export function decimalToWad(a: BigNumberValue): number {
   return valueToZDBigNumber(a).multipliedBy(WAD).toNumber();
 }
+
+export function staticToDynamicAmount(
+  amount: BigNumberValue,
+  reserveNormalizedIncome: BigNumberValue
+): BigNumber {
+  return rayMul(amount, reserveNormalizedIncome);
+}
+
+export function dynamicToStaticAmount(
+  amount: BigNumberValue,
+  reserveNormalizedIncome: BigNumberValue
+): BigNumber {
+  return rayDiv(amount, reserveNormalizedIncome);
+}

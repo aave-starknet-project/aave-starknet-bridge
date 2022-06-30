@@ -1,6 +1,4 @@
 import { expect } from "chai";
-import { Contract } from "ethers";
-import { ethers } from "hardhat";
 
 /**
  * Receives a hex address, converts it to bigint, converts it back to hex.

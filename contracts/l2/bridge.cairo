@@ -19,8 +19,8 @@ from contracts.l2.lib.wad_ray_math import (
 from contracts.l2.interfaces.IERC20 import IERC20
 from contracts.l2.interfaces.Istatic_a_token import Istatic_a_token
 
-const WITHDRAW_MESSAGE = 0
 const BRIDGE_REWARD_MESSAGE = 1
+const WITHDRAW_MESSAGE = 2
 const ETH_ADDRESS_BOUND = 2 ** 160
 
 # Storage.

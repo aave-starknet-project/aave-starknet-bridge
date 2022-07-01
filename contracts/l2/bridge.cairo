@@ -352,7 +352,7 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 
     let (reward_token) = rewAAVE.read()
 
-    # handle the difference of the index at send and recieve
+    # handle the difference of the index at send and receive
     let (current_index) = Istatic_a_token.get_rewards_index(l2_token)
     let (le) = wad_le(current_index, l1_rewards_index)
     if le == TRUE:

@@ -8,8 +8,8 @@ library Cairo {
         1285101517810983806491589552491143496277809242732141897358598292095611420389; // The selector of the "handle_deposit" l1_handler on L2.
     uint256 constant INDEX_UPDATE_HANDLER =
         309177621854413231845513563663819170511421561802461396722380275428414897390; // The selector of the "handle_index_update" l1_handler on L2.
-    uint256 constant TRANSFER_FROM_STARKNET = 0;
     uint256 constant BRIDGE_REWARD_MESSAGE = 1;
+    uint256 constant WITHDRAW_MESSAGE = 2;
 
     function toSplitUint(uint256 value)
         internal

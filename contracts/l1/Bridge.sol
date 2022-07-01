@@ -330,7 +330,7 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 l2RewardsIndex
     ) internal {
         uint256[] memory payload = new uint256[](8);
-        payload[0] = Cairo.TRANSFER_FROM_STARKNET;
+        payload[0] = Cairo.WITHDRAW_MESSAGE;
         payload[1] = uint256(uint160(l1Token));
         payload[2] = l2sender;
         payload[3] = uint256(uint160(recipient));

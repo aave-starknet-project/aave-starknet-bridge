@@ -23,10 +23,9 @@ import {
 } from "hardhat/types";
 import { solidity } from "ethereum-waffle";
 import config from "../hardhat.config";
-
+import "./wadraymath";
 import { TIMEOUT } from "./constants";
 import { expectAddressEquality, uintFromParts } from "./utils";
-import { dynamicToStaticAmount } from "./rayMath";
 
 chai.use(solidity);
 
@@ -37,7 +36,6 @@ const DAI_UNIT = 1000n * BigInt(10 ** 18);
 const USDC_UNIT = 1000n * BigInt(10 ** 6);
 const daiAmount = 300n * DAI_UNIT;
 const usdcAmount = 300n * USDC_UNIT;
-
 describe("Bridge", async function () {
   this.timeout(TIMEOUT);
 
@@ -426,7 +424,12 @@ describe("Bridge", async function () {
     // approve L1 bridge with max uint256 amount
     await dai.connect(l1user).approve(l1Bridge.address, MAX_UINT256);
     await usdc.connect(l1user).approve(l1Bridge.address, MAX_UINT256);
-
+    const daiReserveNormalizedIncome = await pool.getReserveNormalizedIncome(
+      DAI
+    );
+    const usdcReserveNormalizedIncome = await pool.getReserveNormalizedIncome(
+      USDC
+    );
     // l1user deposits 30 dai and 40 usdc on L1 for l2user on L2
     l1InitialDaiBalance = BigInt(await dai.balanceOf(l1user.address));
     txDai = await l1Bridge
@@ -439,6 +442,7 @@ describe("Bridge", async function () {
         true
       );
     blockNumberDai = txDai.blockNumber;
+
     expect(await dai.balanceOf(l1user.address)).to.equal(
       l1InitialDaiBalance - 30n * DAI_UNIT
     );
@@ -453,6 +457,7 @@ describe("Bridge", async function () {
         0,
         true
       );
+
     blockNumberUsdc = txUsdc.blockNumber;
     expect(await usdc.balanceOf(l1user.address)).to.equal(
       l1InitialUsdcBalance - 40n * USDC_UNIT
@@ -492,11 +497,15 @@ describe("Bridge", async function () {
     l2staticAUsdcBalance = await l2StaticAUsdc.call("balanceOf", {
       account: BigInt(l2user.starknetContract.address),
     });
+
+    const daiBalance = BigNumber.from(30n * DAI_UNIT);
+    const usdcBalance = BigNumber.from(40n * DAI_UNIT);
+
     expect(l2staticADaiBalance["balance"]["low"]).to.be.lte(
-      BigNumber.from(30n * DAI_UNIT)
+      daiBalance.rayDiv(daiReserveNormalizedIncome)
     );
     expect(l2staticAUsdcBalance["balance"]["low"]).to.be.lte(
-      BigNumber.from(40n * USDC_UNIT)
+      usdcBalance.rayDiv(usdcReserveNormalizedIncome)
     );
     expect(await l2StaticADai.call("get_last_update", {})).to.deep.equal({
       block_number: { high: 0n, low: BigInt(blockNumberDai) },
@@ -510,7 +519,12 @@ describe("Bridge", async function () {
     // approve L1 bridge with max uint256 amount
     await aDai.connect(l1user).approve(l1Bridge.address, MAX_UINT256);
     await aUsdc.connect(l1user).approve(l1Bridge.address, MAX_UINT256);
-
+    const daiReserveNormalizedIncome = await pool.getReserveNormalizedIncome(
+      DAI
+    );
+    const usdcReserveNormalizedIncome = await pool.getReserveNormalizedIncome(
+      USDC
+    );
     // l1user deposits 30 aDai and 40 aUsdc on L1 for l2user on L2
     l1InitialADaiBalance = BigInt(await aDai.balanceOf(l1user.address));
     txDai = await l1Bridge
@@ -523,6 +537,7 @@ describe("Bridge", async function () {
         false
       );
     blockNumberDai = txDai.blockNumber;
+
     expect(BigNumber.from(l1InitialADaiBalance - 30n * DAI_UNIT)).to.be.lte(
       await aDai.balanceOf(l1user.address)
     );
@@ -541,6 +556,28 @@ describe("Bridge", async function () {
     expect(BigNumber.from(l1InitialAUsdcBalance - 40n * USDC_UNIT)).to.be.lte(
       await aUsdc.balanceOf(l1user.address)
     );
+    //EXPECTED ENW BALANCES ON L2
+
+    const staticADaiBalanceBeforeDeposit = await l2StaticADai.call(
+      "balanceOf",
+      {
+        account: BigInt(l2user.starknetContract.address),
+      }
+    );
+    const staticAUsdcBalanceBeforeDeposit = await l2StaticAUsdc.call(
+      "balanceOf",
+      {
+        account: BigInt(l2user.starknetContract.address),
+      }
+    );
+
+    const expectedaDaiBalanceOnL2 = BigNumber.from(30n * DAI_UNIT)
+      .rayDiv(daiReserveNormalizedIncome)
+      .add(staticADaiBalanceBeforeDeposit["balance"]["low"]);
+
+    const expectedaUsdcBalanceOnL2 = BigNumber.from(40n * DAI_UNIT)
+      .rayDiv(usdcReserveNormalizedIncome)
+      .add(staticAUsdcBalanceBeforeDeposit["balance"]["low"]);
 
     const flushL1Response = await starknet.devnet.flush();
     const flushL1Messages = flushL1Response.consumed_messages.from_l1;
@@ -565,31 +602,20 @@ describe("Bridge", async function () {
       mockStarknetMessagingAddress
     );
 
-    // check balance and last update of L2 tokens
     l2staticADaiBalance = await l2StaticADai.call("balanceOf", {
       account: BigInt(l2user.starknetContract.address),
     });
     l2staticAUsdcBalance = await l2StaticAUsdc.call("balanceOf", {
       account: BigInt(l2user.starknetContract.address),
     });
-    const daiReserveNormalizedIncome = await pool.getReserveNormalizedIncome(
-      DAI
+
+    expect(l2staticADaiBalance["balance"]["low"]).to.be.lte(
+      expectedaDaiBalanceOnL2
     );
-    /* expect(l2staticADaiBalance["balance"]["low"]).to.be.equal(
-      dynamicToStaticAmount(
-        Number(2n * 30n * DAI_UNIT),
-        Number(daiReserveNormalizedIncome)
-      )
-    ); */
-    const usdcReserveNormalizedIncome = await pool.getReserveNormalizedIncome(
-      USDC
+    expect(l2staticAUsdcBalance["balance"]["low"]).to.be.lte(
+      expectedaUsdcBalanceOnL2
     );
-    /* expect(l2staticAUsdcBalance["balance"]["low"]).to.be.equal(
-      dynamicToStaticAmount(
-        Number(2n * 40n * USDC_UNIT),
-        Number(usdcReserveNormalizedIncome)
-      )
-    ); */
+
     expect(await l2StaticADai.call("get_last_update", {})).to.deep.equal({
       block_number: { high: 0n, low: BigInt(blockNumberDai) },
     });

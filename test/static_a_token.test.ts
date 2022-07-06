@@ -216,6 +216,7 @@ describe("static_a_token", function () {
 
   it("rejects old block numbers", async () => {
     try {
+      const rewards_index_value = BigNumber.from("2").mul(WAD).toString();
       await bridge.invoke(token, "push_rewards_index", {
         block_number: {
           high: 0,
@@ -224,7 +225,7 @@ describe("static_a_token", function () {
         rewards_index: {
           wad: {
             high: 0,
-            low: BigInt(2),
+            low: BigInt(rewards_index_value),
           },
         },
       });

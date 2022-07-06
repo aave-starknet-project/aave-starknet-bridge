@@ -13,7 +13,7 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai, { expect } from "chai";
 import { Contract, ContractFactory, providers, BigNumber } from "ethers";
-import hre, { starknet, network, ethers } from "hardhat";
+import hre, { starknet, ethers } from "hardhat";
 import {
   StarknetContractFactory,
   StarknetContract,
@@ -556,7 +556,7 @@ describe("Bridge", async function () {
     expect(BigNumber.from(l1InitialAUsdcBalance - 40n * USDC_UNIT)).to.be.lte(
       await aUsdc.balanceOf(l1user.address)
     );
-    //EXPECTED ENW BALANCES ON L2
+    //expected new balances on l2
 
     const staticADaiBalanceBeforeDeposit = await l2StaticADai.call(
       "balanceOf",
@@ -802,7 +802,7 @@ describe("Bridge", async function () {
     expect(flushL2Response.consumed_messages.from_l1).to.be.empty;
     expect(flushL2Messages).to.have.a.lengthOf(1);
 
-    const falseL2RewardsIndexUsdc = 10n * USDC_UNIT; //random value
+    const falseL2RewardsIndexUsdc = 10n * USDC_UNIT; //incorrect value
     const correctL2RewardsIndexUsdc = uintFromParts(
       flushL2Messages[0].payload[6],
       flushL2Messages[0].payload[7]

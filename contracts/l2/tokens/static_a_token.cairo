@@ -78,7 +78,8 @@ end
 func totalSupply{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     totalSupply : Uint256
 ):
-    return ERC20_totalSupply()
+    let (totalSupply) = ERC20_totalSupply()
+    return (totalSupply)
 end
 
 @view

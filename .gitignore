@@ -11,6 +11,7 @@ __pycache__
 
 #Starknet plugin
 starknet-artifacts/contracts
+starknet-artifacts/account-contract-artifacts
 
 #NPM lock file
 package-lock.json

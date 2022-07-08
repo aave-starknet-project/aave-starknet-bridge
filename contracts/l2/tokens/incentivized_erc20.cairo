@@ -167,13 +167,15 @@ end
 func incentivized_erc20_get_user_rewards_index{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt) -> (res : Wad):
-    return user_snapshot_rewards_index.read(user)
+    let (res) = user_snapshot_rewards_index.read(user)
+    return (res)
 end
 
 func incentivized_erc20_get_user_unclaimed_rewards{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt) -> (res : Wad):
-    return unclaimed_rewards.read(user)
+    let (res) = unclaimed_rewards.read(user)
+    return (res)
 end
 
 func incentivized_erc20_get_last_update{
@@ -195,7 +197,8 @@ end
 func incentivized_erc20_get_l2_bridge{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }() -> (l2_bridge_ : felt):
-    return l2_bridge.read()
+    let (l2_bridge_) = l2_bridge.read()
+    return (l2_bridge_)
 end
 
 func incentivized_erc20_only_bridge{

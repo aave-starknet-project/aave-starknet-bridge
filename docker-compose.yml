@@ -13,7 +13,7 @@ services:
     container_name: testnet-l2
     command: yarn testnet:l2
     ports:
-      - "5000:5000"
+      - "5050:5050"
   test-runner:
     build:
       context: .

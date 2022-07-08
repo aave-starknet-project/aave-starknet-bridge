@@ -61,7 +61,7 @@ const config: HardhatUserConfig = {
   },
   networks: {
     l2_testnet: {
-      url: `http://${HOSTNAME_L2 || "localhost"}:5000`,
+      url: `http://${HOSTNAME_L2 || "localhost"}:5050`,
     },
     l1_testnet: {
       url: `http://${HOSTNAME_L1 || "localhost"}:8545`,

@@ -2,7 +2,7 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math import assert_not_zero
-from starkware.starknet.common.syscalls import delegate_l1_handler, delegate_call
+from starkware.starknet.common.syscalls import library_call_l1_handler, library_call
 from starkware.cairo.common.bool import TRUE, FALSE
 
 from contracts.l2.dependencies.openzeppelin.upgrades.library import Proxy
@@ -14,7 +14,7 @@ func proxy_deployed(proxy_admin : felt):
 end
 
 @event
-func implementation_updated(implementation_address : felt):
+func implementation_updated(implementation_hash : felt):
 end
 
 @event
@@ -39,14 +39,14 @@ end
 
 @external
 func set_implementation{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    implementation_address : felt
+    implementation_hash : felt
 ):
-    with_attr error_message("Proxy: implementation address should be non zero."):
-        assert_not_zero(implementation_address)
+    with_attr error_message("Proxy: implementation hash should be non zero."):
+        assert_not_zero(implementation_hash)
     end
     Proxy.assert_only_admin()
-    Proxy._set_implementation(implementation_address)
-    implementation_updated.emit(implementation_address)
+    Proxy._set_implementation_hash(implementation_hash)
+    implementation_updated.emit(implementation_hash)
     return ()
 end
 
@@ -66,7 +66,7 @@ end
 func get_implementation{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     implementation : felt
 ):
-    let (implementation) = Proxy.get_implementation()
+    let (implementation) = Proxy.get_implementation_hash()
     return (implementation)
 end
 
@@ -97,13 +97,13 @@ end
 func __default__{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     selector : felt, calldata_size : felt, calldata : felt*
 ) -> (retdata_size : felt, retdata : felt*):
-    let (address) = Proxy.get_implementation()
-    with_attr error_message("Proxy: does not have an implementation."):
-        assert_not_zero(address)
+    let (class_hash) = Proxy.get_implementation_hash()
+    with_attr error_message("Proxy: does not have a class hash."):
+        assert_not_zero(class_hash)
     end
 
-    let (retdata_size : felt, retdata : felt*) = delegate_call(
-        contract_address=address,
+    let (retdata_size : felt, retdata : felt*) = library_call(
+        class_hash=class_hash,
         function_selector=selector,
         calldata_size=calldata_size,
         calldata=calldata,
@@ -117,13 +117,13 @@ end
 func __l1_default__{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     selector : felt, calldata_size : felt, calldata : felt*
 ):
-    let (address) = Proxy.get_implementation()
-    with_attr error_message("Proxy: does not have an implementation."):
-        assert_not_zero(address)
+    let (class_hash) = Proxy.get_implementation_hash()
+    with_attr error_message("Proxy: does not have a class hash."):
+        assert_not_zero(class_hash)
     end
 
-    delegate_l1_handler(
-        contract_address=address,
+    library_call_l1_handler(
+        class_hash=class_hash,
         function_selector=selector,
         calldata_size=calldata_size,
         calldata=calldata,

@@ -6,6 +6,7 @@ import { expect } from "chai";
 describe("Proxy", function () {
   this.timeout(TIMEOUT);
 
+  let tokenClassHash: string;
   let tokenContractA: StarknetContract;
   let tokenContractB: StarknetContract;
   let proxyTokenContract: StarknetContract;
@@ -22,6 +23,7 @@ describe("Proxy", function () {
     owner = await starknet.deployAccount("OpenZeppelin");
     randomUser = await starknet.deployAccount("OpenZeppelin");
 
+    tokenClassHash = await TokenContractFactory.declare();
     tokenContractA = await TokenContractFactory.deploy();
     tokenContractB = await TokenContractFactory.deploy();
 
@@ -30,7 +32,7 @@ describe("Proxy", function () {
     });
 
     await owner.invoke(proxyTokenContract, "set_implementation", {
-      implementation_address: BigInt(tokenContractA.address),
+      implementation_hash: tokenClassHash,
     });
     proxiedTokenContract = TokenContractFactory.getContractAt(
       proxyTokenContract.address
@@ -66,7 +68,7 @@ describe("Proxy", function () {
   it("disallows random user to upgrade", async () => {
     try {
       await randomUser.invoke(proxyTokenContract, "set_implementation", {
-        implementation_address: BigInt(tokenContractB.address),
+        implementation_hash: tokenClassHash,
       });
     } catch (e: any) {
       expect(e.message).to.contain("Proxy: caller is not admin");
@@ -84,12 +86,12 @@ describe("Proxy", function () {
 
   it("allows owner to upgrade", async () => {
     await randomUser.invoke(proxyTokenContract, "set_implementation", {
-      implementation_address: BigInt(tokenContractB.address),
+      implementation_hash: tokenClassHash,
     });
     const { implementation } = await proxyTokenContract.call(
       "get_implementation",
       {}
     );
-    expect(implementation).to.equal(BigInt(tokenContractB.address));
+    expect(implementation).to.equal(BigInt(tokenClassHash));
   });
 });

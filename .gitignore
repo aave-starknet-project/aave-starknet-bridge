@@ -10,7 +10,7 @@ __pycache__
 .pytest_cache
 
 #Starknet plugin
-starknet-artifacts
+starknet-artifacts/contracts
 
 #NPM lock file
 package-lock.json

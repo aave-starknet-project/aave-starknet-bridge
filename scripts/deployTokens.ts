@@ -25,7 +25,7 @@ export async function deployStaticAToken(
 ): Promise<BigInt> {
   let proxyFactory: StarknetContractFactory;
   let staticATokenProxy: StarknetContract;
-  let staticATokenImpl: StarknetContract;
+  let staticATokenImplHash: string;
   let staticAToken: StarknetContract;
 
   console.log("deploying", name);
@@ -39,10 +39,10 @@ export async function deployStaticAToken(
     proxy_admin: BigInt(deployer.starknetContract.address),
   });
 
-  staticATokenImpl = await staticATokenFactory.deploy();
+  staticATokenImplHash = await staticATokenFactory.declare();
 
-  await deployer.invoke(staticATokenProxy, "initialize_proxy", {
-    implementation_address: BigInt(staticATokenImpl.address),
+  await deployer.invoke(staticATokenProxy, "set_implementation", {
+    implementation_hash: BigInt(staticATokenImplHash),
   });
 
   fs.writeFileSync(
@@ -50,7 +50,7 @@ export async function deployStaticAToken(
     JSON.stringify({
       token: name,
       proxy: staticATokenProxy.address,
-      implementation: staticATokenImpl.address,
+      implementation: staticATokenImplHash,
     })
   );
 
@@ -80,7 +80,7 @@ export async function deployL2rewAAVE(
   let proxyFactory: StarknetContractFactory;
   let rewAAVEFactory: StarknetContractFactory;
 
-  let rewAAVEImpl: StarknetContract;
+  let rewAAVEImplHash: string;
   let rewAAVEProxy: StarknetContract;
   let rewAAVE: StarknetContract;
 
@@ -93,20 +93,20 @@ export async function deployL2rewAAVE(
   });
 
   console.log("deploying rewAAVE token implementation ...");
-  rewAAVEImpl = await rewAAVEFactory.deploy();
+  rewAAVEImplHash = await rewAAVEFactory.declare();
 
   fs.writeFileSync(
     `deployment/${name}.json`,
     JSON.stringify({
       token: name,
       proxy: rewAAVEProxy.address,
-      implementation: rewAAVEImpl.address,
+      implementation_hash: rewAAVEImplHash,
     })
   );
 
   console.log("initializing rewAAVE token proxy...");
-  await deployer.invoke(rewAAVEProxy, "initialize_proxy", {
-    implementation_address: BigInt(rewAAVEImpl.address),
+  await deployer.invoke(rewAAVEProxy, "set_implementation", {
+    implementation_hash: BigInt(rewAAVEImplHash),
   });
 
   rewAAVE = rewAAVEFactory.getContractAt(rewAAVEProxy.address);

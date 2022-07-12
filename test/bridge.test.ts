@@ -68,20 +68,20 @@ describe("Bridge", async function () {
   let l2BridgeFactory: StarknetContractFactory;
 
   //// tokens
-  let l2StaticADaiImpl: StarknetContract;
+  let l2StaticADaiImplHash: string;
   let l2StaticADaiProxy: StarknetContract;
   let l2StaticADai: StarknetContract;
 
-  let l2StaticAUsdcImpl: StarknetContract;
+  let l2StaticAUsdcImplHash: string;
   let l2StaticAUsdcProxy: StarknetContract;
   let l2StaticAUsdc: StarknetContract;
 
-  let l2rewAAVEImpl: StarknetContract;
+  let l2rewAAVEImplHash: string;
   let l2rewAAVEProxy: StarknetContract;
   let l2rewAAVE: StarknetContract;
 
   //// token bridge
-  let l2BridgeImpl: StarknetContract;
+  let l2BridgeImplHash: string;
   let l2BridgeProxy: StarknetContract;
   let l2Bridge: StarknetContract;
 
@@ -130,7 +130,7 @@ describe("Bridge", async function () {
     l2user = await starknet.deployAccount("OpenZeppelin");
 
     l2BridgeFactory = await starknet.getContractFactory("bridge");
-    l2BridgeImpl = await l2BridgeFactory.deploy();
+    l2BridgeImplHash = await l2BridgeFactory.declare();
 
     l2ProxyFactory = await starknet.getContractFactory("l2/lib/proxy");
     l2BridgeProxy = await l2ProxyFactory.deploy({
@@ -146,13 +146,13 @@ describe("Bridge", async function () {
     const rewAaveContractFactory = await starknet.getContractFactory(
       "l2/tokens/rewAAVE"
     );
-    l2rewAAVEImpl = await rewAaveContractFactory.deploy();
+    l2rewAAVEImplHash = await rewAaveContractFactory.declare();
     l2rewAAVEProxy = await l2ProxyFactory.deploy({
       proxy_admin: BigInt(l2owner.starknetContract.address),
     });
 
-    await l2owner.invoke(l2rewAAVEProxy, "initialize_proxy", {
-      implementation_address: BigInt(l2rewAAVEImpl.address),
+    await l2owner.invoke(l2rewAAVEProxy, "set_implementation", {
+      implementation_hash: BigInt(l2rewAAVEImplHash),
     });
     l2rewAAVE = rewAaveContractFactory.getContractAt(l2rewAAVEProxy.address);
 
@@ -166,8 +166,8 @@ describe("Bridge", async function () {
     });
 
     l2TokenFactory = await starknet.getContractFactory("static_a_token");
-    l2StaticADaiImpl = await l2TokenFactory.deploy();
-    l2StaticAUsdcImpl = await l2TokenFactory.deploy();
+    l2StaticADaiImplHash = await l2TokenFactory.declare();
+    l2StaticAUsdcImplHash = await l2TokenFactory.declare();
 
     // L1 deployments
 
@@ -247,38 +247,38 @@ describe("Bridge", async function () {
 
   it("set L2 implementation contracts", async () => {
     {
-      await l2user.invoke(l2StaticADaiProxy, "initialize_proxy", {
-        implementation_address: BigInt(l2StaticADaiImpl.address),
+      await l2user.invoke(l2StaticADaiProxy, "set_implementation", {
+        implementation_hash: BigInt(l2StaticADaiImplHash),
       });
       const { implementation } = await l2StaticADaiProxy.call(
         "get_implementation",
         {}
       );
-      expect(implementation).to.equal(BigInt(l2StaticADaiImpl.address));
+      expect(implementation).to.equal(BigInt(l2StaticADaiImplHash));
       l2StaticADai = l2TokenFactory.getContractAt(l2StaticADaiProxy.address);
     }
 
     {
-      await l2user.invoke(l2StaticAUsdcProxy, "initialize_proxy", {
-        implementation_address: BigInt(l2StaticAUsdcImpl.address),
+      await l2user.invoke(l2StaticAUsdcProxy, "set_implementation", {
+        implementation_hash: BigInt(l2StaticAUsdcImplHash),
       });
       const { implementation } = await l2StaticAUsdcProxy.call(
         "get_implementation",
         {}
       );
-      expect(implementation).to.equal(BigInt(l2StaticAUsdcImpl.address));
+      expect(implementation).to.equal(BigInt(l2StaticAUsdcImplHash));
       l2StaticAUsdc = l2TokenFactory.getContractAt(l2StaticAUsdcProxy.address);
     }
 
     {
-      await l2user.invoke(l2BridgeProxy, "initialize_proxy", {
-        implementation_address: BigInt(l2BridgeImpl.address),
+      await l2user.invoke(l2BridgeProxy, "set_implementation", {
+        implementation_hash: BigInt(l2BridgeImplHash),
       });
       const { implementation } = await l2BridgeProxy.call(
         "get_implementation",
         {}
       );
-      expect(implementation).to.equal(BigInt(l2BridgeImpl.address));
+      expect(implementation).to.equal(BigInt(l2BridgeImplHash));
       l2Bridge = l2BridgeFactory.getContractAt(l2BridgeProxy.address);
     }
   });

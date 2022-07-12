@@ -1,6 +1,6 @@
 %lang starknet
 
-from starkware.cairo.common.uint256 import Uint256, uint256_add, uint256_sub
+from starkware.cairo.common.uint256 import Uint256
 
 from contracts.l2.lib.wad_ray_math import (
     Wad,

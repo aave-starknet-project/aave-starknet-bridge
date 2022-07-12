@@ -11,7 +11,7 @@
     "lint:check": "npx prettier --check . && find contracts/ -iname '*.cairo' -exec .venv/bin/cairo-format -c {} +",
     "lint:fix": "npx prettier --write . && find contracts/ -iname '*.cairo' -exec .venv/bin/cairo-format -i {} +",
     "compile:l1": "hardhat compile",
-    "compile:l2": "hardhat starknet-compile --cairo-path 'node_modules/@joriksch/oz-cairo/src'",
+    "compile:l2": "hardhat starknet-compile",
     "deploy:account": "yarn hardhat starknet-deploy-account --starknet-network l2_testnet --wallet OpenZeppelin",
     "deploy-bridge:testnet": "hardhat run ./scripts/deploy.ts --network l1_testnet",
     "prepare": "husky install"
@@ -21,10 +21,9 @@
   "dependencies": {
     "@aave/core-v3": "^1.13.1",
     "@aave/protocol-v2": "^1.0.1",
-    "@joriksch/oz-cairo": "^1.0.1",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
-    "@shardlabs/starknet-hardhat-plugin": "^0.5.4",
+    "@shardlabs/starknet-hardhat-plugin": "^0.6.0",
     "@toruslabs/starkware-crypto": "^1.0.0",
     "@types/chai": "^4.2.22",
     "@types/elliptic": "^6.4.14",

@@ -15,7 +15,7 @@ import { starknet, ethers } from "hardhat";
  */
 export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
   let proxiedBridge: StarknetContract;
-  let bridgeImplementation: StarknetContract;
+  let bridgeImplHash: string;
   let proxyFactoryL2: StarknetContractFactory;
   let proxyBridge: StarknetContract;
 
@@ -27,17 +27,17 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
     proxy_admin: proxy_admin,
   });
 
-  bridgeImplementation = await L2BridgeFactory.deploy();
+  bridgeImplHash = await L2BridgeFactory.declare();
 
-  await deployer.invoke(proxyBridge, "initialize_proxy", {
-    implementation_address: BigInt(bridgeImplementation.address),
+  await deployer.invoke(proxyBridge, "set_implementation", {
+    implementation_hash: BigInt(bridgeImplHash),
   });
 
   fs.writeFileSync(
     `deployment/L2Bridge.json`,
     JSON.stringify({
       proxy: proxyBridge.address,
-      implementation: bridgeImplementation.address,
+      implementation_hash: bridgeImplHash,
     })
   );
   proxiedBridge = L2BridgeFactory.getContractAt(proxyBridge.address);

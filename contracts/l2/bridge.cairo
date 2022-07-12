@@ -94,6 +94,8 @@ end
 
 # Getters.
 
+# @notice Returns the governor of the contract
+# @return Governor address
 @view
 func get_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     res : felt
@@ -102,6 +104,8 @@ func get_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
     return (res)
 end
 
+# @notice Returns the address of L1 bridge
+# @return Address of the L1 bridge
 @view
 func get_l1_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     res : felt
@@ -112,6 +116,8 @@ end
 
 # Internals
 
+# @notice Asserts whether an L2 token has been approved by the bridge
+# @param l2_token Address of the L2 token
 func is_valid_l1_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l2_token : felt
 ):
@@ -122,6 +128,7 @@ func is_valid_l1_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     return ()
 end
 
+# @notice Asserts whether the caller of the function is the governor
 func only_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (caller_address) = get_caller_address()
     let (governor_) = get_governor()
@@ -131,6 +138,8 @@ func only_governor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     return ()
 end
 
+# @notice Asserts whether the caller of the function is L1 bridge
+# @param from_address_ Caller address of an L1 handler function
 func only_l1_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     from_address_ : felt
 ):
@@ -141,6 +150,8 @@ func only_l1_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     return ()
 end
 
+# @notice Asserts whether an address is valid Ethereum address
+# @param l1_address L1 address to check
 func only_valid_l1_address{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l1_address : felt
 ):
@@ -152,6 +163,8 @@ func only_valid_l1_address{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
     return ()
 end
 
+# @notice Asserts whether the current contract is the owner of a token
+# @param token_address Address of the token to check
 func only_owned_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     token_address : felt
 ):
@@ -165,6 +178,8 @@ end
 
 # Externals
 
+# @notice Initializes the bridge by setting the governor address
+# @param governor_address Address of the future governor of the bridge
 @external
 func initialize_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     governor_address : felt
@@ -179,6 +194,8 @@ func initialize_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     return ()
 end
 
+# @notice Sets the address of L1 bridge
+# @param l1_bridge_address Address of L1 bridge
 @external
 func set_l1_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l1_bridge_address : felt
@@ -194,6 +211,8 @@ func set_l1_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     return ()
 end
 
+# @notice Sets the address of the reward token
+# @param reward_token Address of the reward token
 @external
 func set_reward_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     reward_token : felt
@@ -213,6 +232,9 @@ func set_reward_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
     return ()
 end
 
+# @notice Adds a pair (L1 token, L2 token) to the bridge's mapping
+# @param l1_token Address of the L1 token
+# @param l2_token Address of the L2 token
 @external
 func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l1_token : felt, l2_token : felt
@@ -235,6 +257,10 @@ func approve_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     return ()
 end
 
+# @notice Initiates withdrawal of static aTokens from L2 to L1 by burning L2 tokens and sending a message to L1
+# @param l2_token Address of the L2 token (static aToken)
+# @param l1_recipient Address of the L1 recipient of this withdrawal
+# @param amount Amount of L2 token to be withdrawn from L2 to L1
 @external
 func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l2_token : felt, l1_recipient : felt, amount : Uint256
@@ -279,6 +305,9 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     return ()
 end
 
+# @notice Initiates withdrawal of reward tokens from L2 to L1 by burning L2 tokens and sending a message to L1
+# @param l1_recipient Address of the L1 recipient of this withdrawal
+# @param amount Amount of reward tokens to be withdrawn from L2 to L1
 @external
 func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l1_recipient : felt, amount : Uint256
@@ -310,6 +339,17 @@ func bridge_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     return ()
 end
 
+# @notice Handler called when L1 bridge deposit function is called. Function that mints L2 static aTokens and updates its state (latest L1 update block number and L1 rewards index).
+# @param from_address L1 caller address of this function
+# @param l1_sender L1 caller address of L1 bridge deposit function
+# @param l2_recipient L2 address of bridged tokens' recipient
+# @param l2_token L2 address of the token
+# @param amount_low Amount of L2 token to be sent (low part i.e. first 128 bits of an uint256)
+# @param amount_high Amount of L2 token to be sent (high part i.e. last 128 bits of an uint256)
+# @param block_number_low L1 block number (low part)
+# @param block_number_high L1 block number (high part)
+# @param l1_rewards_index_low L1 rewards index (low part)
+# @param l1_rewards_index_high L1 rewards index (high part)
 @l1_handler
 func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     from_address : felt,
@@ -371,6 +411,9 @@ func handle_deposit{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     return ()
 end
 
+# @notice Mints rewards tokens to a given L2 recipient. Function is called by a static aToken contract.
+# @param recipient L2 address of tokens' recipient
+# @param amount Amount of reward tokens to be minted
 @external
 func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     recipient : felt, amount : Uint256
@@ -386,6 +429,14 @@ func mint_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
     return ()
 end
 
+# @notice Handler called when L1 bridge updateL2State function is called. Function that updates the state (latest L1 update block number and L1 rewards index) of a given static aToken.
+# @param from_address L1 caller address of this function
+# @param l1_sender L1 caller address of L1 bridge deposit function
+# @param l2_token L2 address of the token
+# @param block_number_low L1 block number (low part)
+# @param block_number_high L1 block number (high part)
+# @param l1_rewards_index_low L1 rewards index (low part)
+# @param l1_rewards_index_high L1 rewards index (high part)
 @l1_handler
 func handle_index_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     from_address : felt,

@@ -40,6 +40,8 @@ end
 func unclaimed_rewards(user : felt) -> (unclaimed : Wad):
 end
 
+# @notice Updates rewards index value for a given user.
+# @param user Address of the user
 func update_user_snapshot_rewards_index{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt):
@@ -48,6 +50,8 @@ func update_user_snapshot_rewards_index{
     return ()
 end
 
+# @notice Updates unclaimed amount of rewards and rewards index value for a given user.
+# @param user Address of the user
 func update_user{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(user : felt):
     alloc_locals
     let (balance) = ERC20.balance_of(user)
@@ -64,6 +68,9 @@ func update_user{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     return ()
 end
 
+# @notice Updates unclaimed amount of rewards and rewards index value for users involved in a transfer.
+# @param from_ Address of the sender
+# @param to Address of the recipient
 func incentivized_erc20_before_token_transfer{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(from_ : felt, to : felt):
@@ -87,6 +94,9 @@ func incentivized_erc20_before_token_transfer{
     return ()
 end
 
+# @notice Computes the pending amount of rewards for a given user.
+# @param user Address of the user
+# @return Amount of pending rewards in Wad
 func incentivized_erc20_get_pending_rewards{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt) -> (pending_rewards : Wad):
@@ -107,6 +117,9 @@ func incentivized_erc20_get_pending_rewards{
     return (pending_)
 end
 
+# @notice Returns the amount of rewards a user can claim.
+# @param user Address of the user
+# @return Amount of claimable rewards in Wad
 func incentivized_erc20_get_claimable_rewards{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt) -> (incentivized_erc20_rewards : Wad):
@@ -119,6 +132,9 @@ func incentivized_erc20_get_claimable_rewards{
     return (incentivized_erc20_rewards)
 end
 
+# @notice Returns the amount of rewards claimed by a user, and sets his amount of claimable rewards to zero.
+# @param user Address of the user
+# @return Amount of claimed rewards in Wad
 func incentivized_erc20_claim_rewards{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt) -> (rewards : Wad):
@@ -135,6 +151,9 @@ func incentivized_erc20_claim_rewards{
     end
 end
 
+# @notice Updates token's state with last block number and rewards index.
+# @param block_number L1 block number
+# @param new_rewards_index L1 rewards index in Wad
 func incentivized_erc20_push_rewards_index{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(block_number : Uint256, new_rewards_index : Wad):
@@ -158,12 +177,17 @@ func incentivized_erc20_push_rewards_index{
     end
 end
 
+# @notice Returns the rewards index stored at last interaction.
+# @return Rewards index in Wad
 func incentivized_erc20_get_rewards_index{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }() -> (res : Wad):
     return rewards_index.read()
 end
 
+# @notice Returns the rewards index stored at last interaction for a given user.
+# @param user Address of a user
+# @return Rewards index in Wad
 func incentivized_erc20_get_user_rewards_index{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt) -> (res : Wad):
@@ -171,6 +195,9 @@ func incentivized_erc20_get_user_rewards_index{
     return (res)
 end
 
+# @notice Returns the amount of rewards not claimed yet for a given user.
+# @param user Address of a user
+# @return Amount of rewards not claimed yet in Wad
 func incentivized_erc20_get_user_unclaimed_rewards{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(user : felt) -> (res : Wad):
@@ -178,12 +205,16 @@ func incentivized_erc20_get_user_unclaimed_rewards{
     return (res)
 end
 
+# @notice Returns the block number stored at last interaction.
+# @return Block number
 func incentivized_erc20_get_last_update{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }() -> (block_number : Uint256):
     return last_update.read()
 end
 
+# @notice Sets the address of L2 bridge
+# @param l2_bridge_ Address of the L2 bridge
 func incentivized_erc20_set_l2_bridge{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }(l2_bridge_ : felt):
@@ -194,6 +225,8 @@ func incentivized_erc20_set_l2_bridge{
     return ()
 end
 
+# @notice Returns the address of L2 bridge
+# @return Address of the L2 bridge
 func incentivized_erc20_get_l2_bridge{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }() -> (l2_bridge_ : felt):
@@ -201,6 +234,7 @@ func incentivized_erc20_get_l2_bridge{
     return (l2_bridge_)
 end
 
+# @notice Asserts whether the caller address if L2 bridge.
 func incentivized_erc20_only_bridge{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
 }():

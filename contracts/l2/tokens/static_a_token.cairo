@@ -31,6 +31,8 @@ namespace IBridge:
     end
 end
 
+# @notice Sets the address of L2 bridge
+# @param l2_bridge Address of the L2 bridge
 @external
 func set_l2_bridge{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     l2_bridge : felt
@@ -72,6 +74,8 @@ end
 # Getters
 #
 
+# @notice Returns the last L1 block number for which token's state has been updated.
+# @return The last block number the state has been updated.
 @view
 func get_last_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     block_number : Uint256
@@ -79,16 +83,22 @@ func get_last_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
     return incentivized_erc20_get_last_update()
 end
 
+# @notice Returns the token name.
+# @return The token name.
 @view
 func name{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (name : felt):
     return ERC20.name()
 end
 
+# @notice Returns the token symbol.
+# @return The token symbol.
 @view
 func symbol{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (symbol : felt):
     return ERC20.symbol()
 end
 
+# @notice Returns the total supply of the token.
+# @return The total supply.
 @view
 func totalSupply{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     totalSupply : Uint256
@@ -97,6 +107,8 @@ func totalSupply{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     return (totalSupply)
 end
 
+# @notice Returns the number of decimals the token uses.
+# @return The number of decimals.
 @view
 func decimals{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     decimals : felt
@@ -104,6 +116,9 @@ func decimals{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
     return ERC20.decimals()
 end
 
+# @notice Returns the balance of static aTokens for a given user
+# @param account Address we want to know the balance
+# @return Balance of tokens
 @view
 func balanceOf{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     account : felt
@@ -111,6 +126,10 @@ func balanceOf{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
     return ERC20.balance_of(account)
 end
 
+# @notice Returns the amount which spender is allowed to withdraw from owner.
+# @param owner Address of a token owner
+# @param spender Address of a user
+# @return Amount of tokens
 @view
 func allowance{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     owner : felt, spender : felt
@@ -118,6 +137,8 @@ func allowance{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
     return ERC20.allowance(owner, spender)
 end
 
+# @notice Returns last updated rewards index
+# @return Rewards index in Wad
 @view
 func get_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
     rewards_index : Wad
@@ -126,6 +147,9 @@ func get_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     return (res)
 end
 
+# @notice Returns last updated rewards index when a user interacted with the token
+# @param user Address of the user
+# @return Rewards index in Uint256
 @view
 func get_user_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     user : felt
@@ -134,6 +158,9 @@ func get_user_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ra
     return (res.wad)
 end
 
+# @notice Returns amount of reward tokens a user can claim
+# @param user Address of the user
+# @return Amount of rewards tokens the user can claim
 @view
 func get_user_claimable_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     user : felt
@@ -147,6 +174,9 @@ end
 # Externals
 #
 
+# @notice Returns amount of reward tokens a user can claim
+# @param user Address of the user
+# @return Amount of rewards tokens the user can claim
 @external
 func initialize_static_a_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     name : felt,
@@ -183,6 +213,10 @@ func initialize_static_a_token{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*,
     return ()
 end
 
+# @notice Transfers a given amount of tokens to a recipient.
+# @param recipient Address of the recipient
+# @param amount Amount of tokens to send
+# @return Boolean TRUE
 @external
 func transfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     recipient : felt, amount : Uint256
@@ -193,6 +227,11 @@ func transfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
     return (TRUE)
 end
 
+# @notice Transfers a given amount of tokens from a sender to a recipient.
+# @param sender Address of the sender
+# @param recipient Address of the recipient
+# @param amount Amount of tokens to send
+# @return Boolean TRUE
 @external
 func transferFrom{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     sender : felt, recipient : felt, amount : Uint256
@@ -202,6 +241,10 @@ func transferFrom{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
     return (TRUE)
 end
 
+# @notice Allows spender to withdraw from your account multiple times, up to a given amount.
+# @param spender Address of the spender
+# @param amount Amount of tokens to send
+# @return Boolean TRUE
 @external
 func approve{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     spender : felt, amount : Uint256
@@ -210,6 +253,10 @@ func approve{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     return (TRUE)
 end
 
+# @notice Increases the amount of tokens a spender can withdraw from your account.
+# @param spender Address of the spender
+# @param added_value Amount of tokens to add
+# @return Boolean TRUE
 @external
 func increaseAllowance{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     spender : felt, added_value : Uint256
@@ -218,6 +265,10 @@ func increaseAllowance{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     return (TRUE)
 end
 
+# @notice Decreases the amount of tokens a spender can withdraw from your account.
+# @param spender Address of the spender
+# @param subtracted_value Amount of tokens to substract
+# @return Boolean TRUE
 @external
 func decreaseAllowance{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     spender : felt, subtracted_value : Uint256
@@ -226,6 +277,9 @@ func decreaseAllowance{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     return (TRUE)
 end
 
+# @notice Increases the token balance of a recipient by a given amount.
+# @param recipient Address of the recipient
+# @param amount Amount of tokens to add
 @external
 func mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     recipient : felt, amount : Uint256
@@ -236,6 +290,9 @@ func mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     return ()
 end
 
+# @notice Decreases the token balance of a user by a given amount.
+# @param account Address of the user
+# @param amount Amount of tokens to substract
 @external
 func burn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     account : felt, amount : Uint256
@@ -246,6 +303,8 @@ func burn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     return ()
 end
 
+# @notice Claims the amount of rewards a user can get, and mints the user its rewards.
+# @param recipient Address of the user
 @external
 func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     recipient : felt
@@ -258,6 +317,9 @@ func claim_rewards{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
     return ()
 end
 
+# @notice Updates static aToken's state with last block number and rewards index.
+# @param block_number L1 block number
+# @param rewards_index L1 rewards index in Wad
 @external
 func push_rewards_index{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     block_number : Uint256, rewards_index : Wad

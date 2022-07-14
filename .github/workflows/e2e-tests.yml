@@ -26,6 +26,7 @@ jobs:
             "proxy.test.ts",
             "bridge.test.ts",
             "wad_ray_math.test.ts",
+            "deposit_cancellation.test.ts",
           ]
         python-version: ["3.7"] # Cairo was tested with this version
         node-version: ["16"]

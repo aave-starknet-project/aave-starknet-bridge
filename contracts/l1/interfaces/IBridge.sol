@@ -33,6 +33,22 @@ interface IBridge {
     event ApprovedBridge(address l1Token, uint256 l2Token);
     event L2StateUpdated(address indexed l1Token, uint256 rewardsIndex);
 
+    event StartedDepositCancellation(
+        uint256 indexed l2Recipient,
+        uint256 rewardsIndex,
+        uint256 blockNumber,
+        uint256 amount,
+        uint256 nonce
+    );
+    event CancelledDeposit(
+        uint256 indexed l2Recipient,
+        address l1Recipient,
+        uint256 rewardsIndex,
+        uint256 blockNumber,
+        uint256 amount,
+        uint256 nonce
+    );
+
     /**
      * @notice allows deposits of aTokens or their underlying assets on L2
      * @param l1AToken aToken address

@@ -458,4 +458,79 @@ contract Bridge is IBridge, VersionedInitializable {
         }
         revert(Errors.B_NOT_ENOUGH_REWARDS);
     }
+
+    function startDepositCancellation(
+        address l1Token,
+        uint256 amount,
+        uint256 l2Recipient,
+        uint256 rewardsIndex,
+        uint256 blockNumber,
+        uint256 nonce
+    ) external {
+        uint256[] memory payload = new uint256[](9);
+        payload[0] = uint256(uint160(msg.sender));
+        payload[1] = l2Recipient;
+        payload[2] = _aTokenData[l1Token].l2TokenAddress;
+        (payload[3], payload[4]) = Cairo.toSplitUint(amount);
+        (payload[5], payload[6]) = Cairo.toSplitUint(blockNumber);
+        (payload[7], payload[8]) = Cairo.toSplitUint(rewardsIndex);
+
+        _messagingContract.startL1ToL2MessageCancellation(
+            _l2Bridge,
+            Cairo.DEPOSIT_HANDLER,
+            payload,
+            nonce
+        );
+        emit StartedDepositCancellation(
+            l2Recipient,
+            rewardsIndex,
+            blockNumber,
+            amount,
+            nonce
+        );
+    }
+
+    function cancelDeposit(
+        address l1AToken,
+        uint256 amount,
+        uint256 l2Recipient,
+        uint256 rewardsIndex,
+        uint256 blockNumber,
+        uint256 nonce
+    ) external {
+        uint256[] memory payload = new uint256[](9);
+        payload[0] = uint256(uint160(msg.sender));
+        payload[1] = l2Recipient;
+        payload[2] = _aTokenData[l1AToken].l2TokenAddress;
+        (payload[3], payload[4]) = Cairo.toSplitUint(amount);
+        (payload[5], payload[6]) = Cairo.toSplitUint(blockNumber);
+        (payload[7], payload[8]) = Cairo.toSplitUint(rewardsIndex);
+
+        _messagingContract.cancelL1ToL2Message(
+            _l2Bridge,
+            Cairo.DEPOSIT_HANDLER,
+            payload,
+            nonce
+        );
+
+        address underlyingAsset = address(
+            _aTokenData[l1AToken].underlyingAsset
+        );
+        ILendingPool lendingPool = _aTokenData[l1AToken].lendingPool;
+        uint256 dynamicAmount = _staticToDynamicAmount(
+            amount,
+            underlyingAsset,
+            lendingPool
+        );
+
+        IERC20(l1AToken).transfer(msg.sender, dynamicAmount);
+        emit CancelledDeposit(
+            l2Recipient,
+            msg.sender,
+            rewardsIndex,
+            blockNumber,
+            dynamicAmount,
+            nonce
+        );
+    }
 }

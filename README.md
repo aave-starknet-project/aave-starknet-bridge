@@ -8,26 +8,27 @@
 
 ## Table of contents
 
-- [Introduction](#introduction)
-- [Architecture](#architecture)
-- [Contracts](#contracts)
-  - [Overview](#overview)
-  - [More about static_a_token on L2](#more-about-static_a_token-on-l2)
-  - [Proxies](#proxies)
-  - [Governance](#governance)
-- [How it works](#how-it-works)
-  - [Bridging aTokens from L1 to L2](#bridging-atokens-from-l1-to-l2)
-    - [Approve bridge tokens](#approve-bridge-tokens)
-    - [Transfer from L1 to L2](#transfer-from-l1-to-l2)
-    - [Transfer from L2 to L1](#transfer-from-l2-to-l1)
-  - [Synchronisation of rewards on L1 and L2](#synchronisation-of-rewards-on-l1-and-l2)
-  - [Claiming rewards on L2](#claiming-rewards-on-l2)
-  - [Bridging rewards from L2 to L1](#bridging-rewards-from-l2-to-l1)
-- [Installation](#installation)
-  - [Environment](#environment)
-  - [Build the cairo files](#build-cairo-files)
-  - [Start testnets](#start-testnets)
-  - [Run tests](#run-tests)
+- [Aave Starknet Bridge](#aave-starknet-bridge)
+  - [Table of contents](#table-of-contents)
+  - [Introduction](#introduction)
+  - [Architecture](#architecture)
+  - [Contracts](#contracts)
+    - [Overview](#overview)
+    - [More about static_a_token on L2](#more-about-static_a_token-on-l2)
+    - [Proxies](#proxies)
+    - [Governance](#governance)
+  - [How it works](#how-it-works)
+    - [Bridging aTokens from L1 to L2](#bridging-atokens-from-l1-to-l2)
+    - [Synchronisation of rewards index on L1 and L2](#synchronisation-of-rewards-index-on-l1-and-l2)
+    - [Claiming rewards on L2](#claiming-rewards-on-l2)
+    - [Bridging rewards from L2 to L1](#bridging-rewards-from-l2-to-l1)
+    - [ATokens deposit cancellation](#atokens-deposit-cancellation)
+  - [Installation](#installation)
+    - [Environment](#environment)
+    - [Build Cairo files](#build-cairo-files)
+    - [Start testnets](#start-testnets)
+    - [Run tests](#run-tests)
+    - [Deployment](#deployment)
 
 ## Introduction
 
@@ -136,6 +137,15 @@ Calling `bridge_rewards` on L2 token bridge results in:
 2. L1 bridge receives the bridging message and claims the rewards amount to
    self by calling `claimRewards` on Aave `IncentivesController` contract.
 3. Rewards are then transferred to L1 recipient.
+
+### ATokens deposit cancellation
+If L1 -> L2 message consumption is unsuccessful, the user would lose custody over his aTokens forever.
+
+That's why we have added support for the L1->L2 message cancellation on our L1 bridge contract, where users can cancel deposits of their aTokens by following the steps below:
+
+1. The user calls `startDepositCancellation` on L1 bridge by providing the `message payload` and `nonce` of the `deposit` message.
+
+2. After the `messageCancellationDelay` period has passed (defined on [StarknetMessaging](https://github.com/starkware-libs/starkgate-contracts/blob/c08863a1f08226c09f1d0748124192e848d73db9/src/starkware/starknet/solidity/StarknetMessaging.sol) contract), the user can finalize the aTokens deposit cancellation by calling `cancelDeposit` on L1 bridge.
 
 ## Installation
 

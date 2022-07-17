@@ -69,11 +69,7 @@ contract Bridge is IBridge, VersionedInitializable {
         address incentivesController,
         address[] calldata l1Tokens,
         uint256[] calldata l2Tokens
-    ) external virtual initializer {
-        require(
-            Cairo.isValidL2Address(l2Bridge),
-            Errors.B_L2_ADDRESS_OUT_OF_RANGE
-        );
+    ) external virtual onlyValidL2Address(l2Bridge) initializer {
         require(
             address(incentivesController) != address(0),
             Errors.B_INVALID_INCENTIVES_CONTROLLER_ADDRESS

@@ -41,6 +41,20 @@ contract Bridge is IBridge, VersionedInitializable {
     }
 
     /**
+     * @notice Returns bridge's available rewards
+     * @dev Function is invoked before consuming L2->L1 message to ensure bridge has enough rewards
+     * @return Rewards currently available on the bridge: claimed rewards + pending rewards
+     **/
+    function getAvailableRewards() public view returns (uint256) {
+        uint256 claimable = _incentivesController.getRewardsBalance(
+            _approvedL1Tokens,
+            address(this)
+        );
+        uint256 claimed = _rewardToken.balanceOf(address(this));
+        return claimable + claimed;
+    }
+
+    /**
      * @notice Initializes the Bridge
      * @dev Function is invoked by the proxy contract when the bridge contract is added
      * @param l2Bridge L2 bridge address
@@ -55,11 +69,7 @@ contract Bridge is IBridge, VersionedInitializable {
         address incentivesController,
         address[] calldata l1Tokens,
         uint256[] calldata l2Tokens
-    ) external virtual initializer {
-        require(
-            Cairo.isValidL2Address(l2Bridge),
-            Errors.B_L2_ADDRESS_OUT_OF_RANGE
-        );
+    ) external virtual onlyValidL2Address(l2Bridge) initializer {
         require(
             address(incentivesController) != address(0),
             Errors.B_INVALID_INCENTIVES_CONTROLLER_ADDRESS
@@ -216,6 +226,8 @@ contract Bridge is IBridge, VersionedInitializable {
     ) external override {
         require(recipient != address(0), Errors.B_INVALID_ADDRESS);
         require(amount > 0, Errors.B_INSUFFICIENT_AMOUNT);
+        //check if enough rewards are available on the bridge before consuming the message from l2
+        require(getAvailableRewards() >= amount, Errors.B_NOT_ENOUGH_REWARDS);
         _consumeBridgeRewardMessage(l2sender, recipient, amount);
         _transferRewards(recipient, amount);
         emit RewardsTransferred(l2sender, recipient, amount);
@@ -441,5 +453,80 @@ contract Bridge is IBridge, VersionedInitializable {
             return;
         }
         revert(Errors.B_NOT_ENOUGH_REWARDS);
+    }
+
+    function startDepositCancellation(
+        address l1Token,
+        uint256 amount,
+        uint256 l2Recipient,
+        uint256 rewardsIndex,
+        uint256 blockNumber,
+        uint256 nonce
+    ) external {
+        uint256[] memory payload = new uint256[](9);
+        payload[0] = uint256(uint160(msg.sender));
+        payload[1] = l2Recipient;
+        payload[2] = _aTokenData[l1Token].l2TokenAddress;
+        (payload[3], payload[4]) = Cairo.toSplitUint(amount);
+        (payload[5], payload[6]) = Cairo.toSplitUint(blockNumber);
+        (payload[7], payload[8]) = Cairo.toSplitUint(rewardsIndex);
+
+        _messagingContract.startL1ToL2MessageCancellation(
+            _l2Bridge,
+            Cairo.DEPOSIT_HANDLER,
+            payload,
+            nonce
+        );
+        emit StartedDepositCancellation(
+            l2Recipient,
+            rewardsIndex,
+            blockNumber,
+            amount,
+            nonce
+        );
+    }
+
+    function cancelDeposit(
+        address l1AToken,
+        uint256 amount,
+        uint256 l2Recipient,
+        uint256 rewardsIndex,
+        uint256 blockNumber,
+        uint256 nonce
+    ) external {
+        uint256[] memory payload = new uint256[](9);
+        payload[0] = uint256(uint160(msg.sender));
+        payload[1] = l2Recipient;
+        payload[2] = _aTokenData[l1AToken].l2TokenAddress;
+        (payload[3], payload[4]) = Cairo.toSplitUint(amount);
+        (payload[5], payload[6]) = Cairo.toSplitUint(blockNumber);
+        (payload[7], payload[8]) = Cairo.toSplitUint(rewardsIndex);
+
+        _messagingContract.cancelL1ToL2Message(
+            _l2Bridge,
+            Cairo.DEPOSIT_HANDLER,
+            payload,
+            nonce
+        );
+
+        address underlyingAsset = address(
+            _aTokenData[l1AToken].underlyingAsset
+        );
+        ILendingPool lendingPool = _aTokenData[l1AToken].lendingPool;
+        uint256 dynamicAmount = _staticToDynamicAmount(
+            amount,
+            underlyingAsset,
+            lendingPool
+        );
+
+        IERC20(l1AToken).transfer(msg.sender, dynamicAmount);
+        emit CancelledDeposit(
+            l2Recipient,
+            msg.sender,
+            rewardsIndex,
+            blockNumber,
+            dynamicAmount,
+            nonce
+        );
     }
 }

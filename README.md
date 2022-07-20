@@ -4,8 +4,7 @@
 [![Check](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/code-check.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/code-check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/blob/main/LICENSE.md)
 
-:warning: This codebase is still in an experimental phase, has not been
-audited, might contain bugs and should not be used in production.
+:warning: This codebase is still in an experimental phase, has not been audited, might contain bugs and should not be used in production.
 
 ## Table of contents
 
@@ -16,11 +15,11 @@ audited, might contain bugs and should not be used in production.
   - [More about static_a_token on L2](#more-about-static_a_token-on-l2)
   - [Proxies](#proxies)
   - [Governance](#governance)
-- [How does it work?](#how-does-it-work)
+- [How it works](#how-it-works)
   - [Bridging aTokens from L1 to L2](#bridging-atokens-from-l1-to-l2)
     - [Approve bridge tokens](#approve-bridge-tokens)
-    - [Transfer from L1 to L2](#transfer-l1-to-l2)
-    - [Transfer from L2 to L1](#transfer-l2-to-l1)
+    - [Transfer from L1 to L2](#transfer-from-l1-to-l2)
+    - [Transfer from L2 to L1](#transfer-from-l2-to-l1)
   - [Synchronisation of rewards on L1 and L2](#synchronisation-of-rewards-on-l1-and-l2)
   - [Claiming rewards on L2](#claiming-rewards-on-l2)
   - [Bridging rewards from L2 to L1](#bridging-rewards-from-l2-to-l1)
@@ -32,22 +31,13 @@ audited, might contain bugs and should not be used in production.
 
 ## Introduction
 
-For Aave, one of the main current and future goals is growth of liquidity and
-user base. As seen on side-chains with low transaction cost like Polygon or
-Avalanche, there is high demand to use the Aave protocol with small amounts to
-earn high yield. That's why we brought to you an initial phase of the Aave <>
-Starknet integration allowing deposit/withdrawal on Aave Ethereum by
-exclusively transacting on Starknet.
+This bridge project is the first step of Aave in Starknet ecosystem. The bridge allows users to deposit or withdraw their [aTokens](https://docs.aave.com/developers/tokens/atoken), and only `aTokens`, on Ethereum side, then mints or burns them wrapped aTokens named `static_a_tokens` on Starknet side. `static_a_tokens` are equivalent to `aTokens` except that the former grow in value when the latter grow in balance.
 
-The bridge allows users to deposit and withdraw their [aTokens](https://docs.aave.com/developers/tokens/atoken), and only `aTokens`, on StarkNet and get
-`static_a_tokens` - wrappers converting balance-increasing `aTokens` into
-exchange-rate-increasing `static_a_tokens`. We assume that L1 tokens approved by the bridge are pre-validated tokens, and that they are not deflationary.
+Holding L1 aTokens lets you earn more tokens via two different mechanisms: (i) the amount of aTokens you hold increases over time and (ii) holding aTokens allows you to claim an accruing amount of Aave reward tokens. This bridge offers both mechanisms thanks to `static_a_tokens` on L2, and the equivalent of L1 Aave reward token on L2.
 
-The bridge is also shaped for liquidity providers who are able to assume the
-Ethereum gas cost of deposits and withdrawals as they transact large enough
-amounts. They will deposit on Aave Ethereum, bridge the `static_a_tokens` to
-Starknet and make them available for users there to buy and hold, accruing this
-way yield from L1.
+The bridge is also shaped for liquidity providers who are able to assume the Ethereum gas cost of deposits and withdrawals as they transact large enough amounts. They will deposit on Aave Ethereum, bridge the `static_a_tokens` to Starknet and make them available for users there to buy and hold, thus accruing yield from L1.
+
+We assume that L1 tokens approved by the bridge are pre-validated tokens, and that they are not deflationary.
 
 ## Architecture
 
@@ -57,120 +47,95 @@ way yield from L1.
 
 ### Overview
 
-`L1`
+**L1**
 
-- `Bridge` - handles rewards update, deposit & withdrawal of
-  `static_a_tokens`, their corresponding `aTokens` and their underlying
-  assets
-- `Proxy` - A proxy implementation
+- `Bridge` - handles deposit of `aTokens` on L1, withdrawal of `static_a_tokens` from L2, and update of L2 rewards index. L1 deposits and withdrawals can be done with `aToken` or with their underlying asset.
 
-`L2`
+**L2**
 
-- `static_a_token` - exchange-rate-increasing wrapper of `aTokens` on
-  Starknet
-- `incentivized_erc20` - tracks users' claimable rewards and current reward index for
-  each `static_a_token`
-- `rewAAVE` - ERC20 representing the rewards on L2
+- `static_a_token` - exchange-rate-increasing wrapper of `aTokens` on L2.
+- `incentivized_erc20` - ERC20-compliant token, tracks claimable rewards and stores the last updated rewards index for each `static_a_token` holder.
+- `rewAAVE` - ERC20 representing Aave reward token on L2.
 - `bridge` - bridge responsible for:
-  - minting and burning `static_a_tokens` on message from L1
-  - bridging `rewAAVE` tokens back to L1
-  - updating `rewards_index` for each `static_a_token` on message from L1
-- `proxy` - generic implementation of a proxy in cairo
+  - minting and burning `static_a_tokens` on message from L1.
+  - bridging `rewAAVE` tokens back to L1.
+  - updating `rewards_index` for each `static_a_token` on message from L1.
+- `proxy` - generic implementation of a proxy in cairo.
 
 ### More about static_a_token on L2
 
-Natively, Aave tokens grow in balance, not in value. To be able to create this
-kind of model, it is important to wrap them before bridging, converting them in
-a token that grows in value, not in balance.
+These `static_a_tokens` are a starting point for almost any cross-chain liquidity development to minimize “active” communication between chains. By design, a holder of those tokens - on Ethereum or after bridging somewhere else - will be passively accumulating yield from Aave on Ethereum.
 
-`static_a_tokens` are an implementation of the wrapped `aTokens` that will
-continuously increase in value on Starknet because they are backed by the
-increasing `aTokens` amounts locked in the bridge contract on Ethereum.
-`static_a_tokens` can then be bridged back to `aTokens`.
+More precisely, `static_a_tokens` are wrapped `aTokens` that grow in value while `aTokens` grow in balance. Such behavior is possible because `static_a_tokens` are backed by increasing amounts of `aTokens` locked in the L1 part of the bridge. `static_a_tokens` living on L2 can be bridged back to `aTokens`.
 
 ### Proxies
 
-All calls made to the following contracts will be handled by a proxy who
-delegates the calls to the available implementation of these contracts.
+Each of the following contracts is deployed behind a proxy:
 
 - `bridge` on L2
-- `static_a_token`s on L2
-- `Bridge` on L1
+- `static_a_token` on L2
 - `rewAAVE` token on L2
+- `Bridge` on L1
 
 ### Governance
 
-- `static_a_token`s are controlled by L2 `bridge`.
+- `static_a_token` deployed contracts are controlled by L2 `bridge`.
 - `rewAAVE` token is owned by L2 `bridge`.
 
-## How does it work?
+## How it works
 
 ### Bridging aTokens from L1 to L2
 
+<a name="approve-bridge-tokens"></a>
 **Approve bridge tokens**
 
-L1 aTokens are approved on the bridge at `initiliaze` where `_approveBridgeTokens` is called internally to approve the provided array of aTokens in an array along with their corresponding static_a_tokens on L2. :warning: Gas limit concerns should apply here!
+L1 aTokens and their corresponding L2 static_a_tokens are approved on L1 bridge in `initialize` function. The function `_approveBridgeTokens` is called internally to approve an array of aTokens with their corresponding static_a_tokens on L2.
 
+<a name="transfer-from-l1-to-l2"></a>
 **Transfer from L1 to L2**
 
-Users can either bridge their `aToken` (let's say aDai) or deposit the
-underlying asset (i.e Dai). Users will have to approve the bridge to spend the
-underlying `asset` tokens or `aTokens`, depending on the provided value for
-`fromUnderlyingAsset` argument when depositing.
+Users can either deposit their `aTokens` (let's say aDai) or deposit the corresponding underlying asset (i.e Dai). Users first have to approve the bridge to spend the tokens - `aTokens` or the underlying `asset`. Calling `deposit` function, the following actions happen:
 
-Calling `deposit` allows users deposit `aTokens` or their underlying `asset`:
+- If the user deposits underlying `asset`:
 
-If depositing underlying `asset`:
+  1. `asset` tokens will be transferred from the user account to L1 bridge.
+  2. The bridge will convert `asset` tokens to aTokens - by depositing in Aave's lending pool.
+  3. A message will be sent to L2 bridge with the amount of `static_a_token` to be minted, L1 token address, L2 recipient address, L1 block number and L1 rewards index.
+  4. L2 bridge will mint to L2 recipient the given amount of corresponding `static_a_tokens`.
+     &nbsp;
 
-- The `asset` token will be transferred from the user account to the L1 bridge.
-- The bridge will then deposit the `asset` token in the aToken.
-- A message will be sent to the L2 bridge with the amount of `static_a_token`
-  to be transferred, the L1 token address, the recipient address, the block number and the rewards index.
-- The token bridge on L2 will then be minting the corresponding
-  `static_a_token` of the L1 token to the user.
+- If the user deposits `aToken`:
 
-If depositing `aTokens`:
+  1. `aTokens` will be transferred from the user account to L1 bridge.
+  2. A message will be sent to L2 bridge with the amount of `static_a_token` to be minted, L1 token address, L2 recipient address, L1 block number and L1 rewards index.
+  3. L2 bridge will mint to L2 recipient the given amount of corresponding `static_a_tokens`.
 
-- The `aTokens` will be transferred from the user account to the L1 bridge.
-- A message will be sent to the L2 bridge with the amount to be transferred,
-  the L1 token address and the recipient address as parameters.
-- The token bridge on L2 will then be minting the corresponding `static_a_token`
-  of the L1 token to the user.
+<a name="transfer-from-l2-to-l1"></a>
+**Transfer from L2 to L1**
 
-**Transfer L2 to L1**
+To bridge their `static_a_tokens` back to L1, users should initiate a withdrawal on the L2 bridge. Calling `initiate_withdraw` results in the following:
 
-To bridge their `aTokens` back to L1, users need to initiate a withdrawal on the L2 token bridge.
+1. The amount of `static_a_tokens` to withdraw will be burned by L2 bridge.
+2. A message will be sent to L1 with L1 aToken address, L1 recipient, L2 rewards index and the amount.
+3. L1 bridge will then transfer `aTokens` to the L1 recipient.
+4. L1 bridge will also check for any difference in the L1/L2 rewards index and transfer any unclaimed rewards to L1 recipient.
 
-Calling `initiate_withdraw` will result in the following:
+### Synchronisation of rewards index on L1 and L2
 
-- The amount to withdraw will be burned by the bridge
-- A message will be sent to L1 with the L1 token address, the L1 recipient, the
-  L2 rewards index and the amount
-- The L1 bridge will then transfer the `aTokens` to the L1 recipient
-- The L1 bridge also checks for any difference in the L1/L2 rewards index and
-  transfers any unclaimed rewards to the L1 user
-
-### Synchronisation of rewards on L1 and L2
-
-Starknet users will continue to enjoy the same rewards as on L1 after bridging
-their assets. To achieve that we continuously update the `rewards_index` of all
-`static_a_token`s to match the value of their respective `aTokens` on L1, by
-tracking the reward index on departure of the `static_a_token` and sending the
-rewards accrued during the bridging process to the recipients address.
+Starknet users will keep enjoying the same rewards as on L1 after bridging their assets. To do so, L1 rewards index is stored in the state of `static_a_tokens`. The index is updated every time a user deposits or withdraw the corresponding `aToken`, and can also be updated in a permissionless manner by calling the function `updateL2State` in L1 bridge. Rewards on L1 are sent to L1 recipient either when withdrawing `static_a_tokens` from L2 or when calling and then bridging rewards on L2 as described below.
 
 ### Claiming rewards on L2
 
-To claim rewards users need to call `claim_rewards` on static_a_token contract
-which calls the bridge in return to mint the due `rewAAVE` tokens to the user.
+To claim rewards, an L2 user should call `claim_rewards` on `static_a_token` contract which calls L2 bridge in return. L2 bridge then mints due `rewAAVE` tokens to the L2 user.
 
 ### Bridging rewards from L2 to L1
 
 Calling `bridge_rewards` on L2 token bridge results in:
 
-- The bridged amount of `rewAAVE` tokens will be burned.
-- The L1 bridge receives the bridging message and claims the rewards amount to
-  self by calling `claimRewards` on the `IncentivesController` contract.
-- The rewards are then transferred to the L1 recipient.
+1. The bridged amount of `rewAAVE` tokens will be burned.
+2. L1 bridge receives the bridging message and claims the rewards amount to
+   self by calling `claimRewards` on Aave `IncentivesController` contract.
+3. Rewards are then transferred to L1 recipient.
 
 ## Installation
 
@@ -182,7 +147,7 @@ Our codebase relies on Node 16. To install it, you can first install [nvm](https
 
 ```bash
 nvm install 16
-nvm use
+nvm use 16
 ```
 
 **Install Python 3.7.12**
@@ -213,8 +178,7 @@ yarn install
 
 **Install Python dependencies**
 
-Let’s create a virtual environment to isolate your project’s
-requirements from your global Python environment.
+Let’s create a virtual environment to isolate your project’s requirements from your global Python environment.
 
 ```bash
 python -m venv .venv
@@ -265,9 +229,7 @@ yarn testnet:l1
 
 ### Run tests
 
-The project is tested using [hardhat](https://hardhat.org/), the [starknet
-hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin) and
-[starknet-devnet](https://github.com/Shard-Labs/starknet-devnet). We created a Docker Compose file to run tests easily: we start L1 and L2 test networks in two separate containers and run the tests from a third one. To run all tests, simply run the following commands:
+The project is tested using [hardhat](https://hardhat.org/), the [starknet hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin) and [starknet-devnet](https://github.com/Shard-Labs/starknet-devnet). We created a Docker Compose file to run tests easily: we start L1 and L2 test networks in two separate containers and run the tests from a third one. To run all tests, simply run the following commands:
 
 ```
 docker compose up --build

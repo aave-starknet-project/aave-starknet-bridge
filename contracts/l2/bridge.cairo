@@ -73,7 +73,9 @@ func bridged_rewards(caller : felt, l1_recipient : felt, amount : Uint256):
 end
 
 @event
-func rewards_index_updated(l2_token : felt, block_number : Uint256, l1_rewards_index : Wad):
+func rewards_index_updated(
+    l2_token : felt, l1_sender : felt, block_number : Uint256, l1_rewards_index : Wad
+):
 end
 
 @event
@@ -468,6 +470,6 @@ func handle_index_update{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range
     Istatic_a_token.push_rewards_index(
         contract_address=l2_token, block_number=block_number, rewards_index=l1_rewards_index
     )
-    rewards_index_updated.emit(l2_token, block_number, l1_rewards_index)
+    rewards_index_updated.emit(l2_token, l1_sender, block_number, l1_rewards_index)
     return ()
 end

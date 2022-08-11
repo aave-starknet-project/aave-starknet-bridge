@@ -70,9 +70,9 @@ interface IBridge {
      * @notice allows withdraw of aTokens or their underlying assets from L2
      * @param l1AToken aToken address
      * @param l2sender sender address
-     * @param recipient l1 recipient
+     * @param recipient on l1
      * @param staticAmount amount to be withdraw
-     * @param toUnderlyingAsset if set to true will withdraw underlying asset tokens from pool and transfer them to recipient
+     * @param toUnderlyingAsset if set to 1 will withdraw underlying asset tokens from pool and transfer them to recipient
      **/
     function withdraw(
         address l1AToken,

@@ -114,6 +114,7 @@ library Errors {
     string public constant B_TOKEN_ALREADY_APPROVED = "86";
     string public constant B_INVALID_ADDRESS = "87";
     string public constant B_NOT_ENOUGH_REWARDS = "88";
+    string public constant B_ABOVE_CEILING = "89";
     enum CollateralManagerErrors {
         NO_ERROR,
         NO_COLLATERAL_AVAILABLE,

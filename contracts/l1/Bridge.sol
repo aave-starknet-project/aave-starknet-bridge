@@ -6,7 +6,6 @@ import {IERC20} from "@aave/core-v3/contracts/dependencies/openzeppelin/contract
 import {IScaledBalanceToken} from "@aave/core-v3/contracts/interfaces/IScaledBalanceToken.sol";
 import {VersionedInitializable} from "@aave/core-v3/contracts/protocol/libraries/aave-upgradeability/VersionedInitializable.sol";
 import {GPv2SafeERC20} from "@aave/core-v3/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol";
-
 import "./libraries/helpers/Cairo.sol";
 import {Errors} from "./libraries/helpers/Errors.sol";
 import {IStarknetMessaging} from "./interfaces/IStarknetMessaging.sol";
@@ -68,7 +67,8 @@ contract Bridge is IBridge, VersionedInitializable {
         address messagingContract,
         address incentivesController,
         address[] calldata l1Tokens,
-        uint256[] calldata l2Tokens
+        uint256[] calldata l2Tokens,
+        uint256[] calldata ceilings
     ) external virtual onlyValidL2Address(l2Bridge) initializer {
         require(
             address(incentivesController) != address(0),
@@ -79,7 +79,7 @@ contract Bridge is IBridge, VersionedInitializable {
         _incentivesController = IAaveIncentivesController(incentivesController);
         _rewardToken = IERC20(_incentivesController.REWARD_TOKEN());
 
-        _approveBridgeTokens(l1Tokens, l2Tokens);
+        _approveBridgeTokens(l1Tokens, l2Tokens, ceilings);
     }
 
     function deposit(
@@ -89,6 +89,12 @@ contract Bridge is IBridge, VersionedInitializable {
         uint16 referralCode,
         bool fromUnderlyingAsset
     ) external override onlyValidL2Address(l2Recipient) returns (uint256) {
+        require(
+            IScaledBalanceToken(l1AToken).scaledBalanceOf(address(this)) +
+                amount <=
+                _aTokenData[l1AToken].ceiling,
+            Errors.B_ABOVE_CEILING
+        );
         IERC20 underlyingAsset = _aTokenData[l1AToken].underlyingAsset;
         ILendingPool lendingPool = _aTokenData[l1AToken].lendingPool;
         require(
@@ -243,14 +249,15 @@ contract Bridge is IBridge, VersionedInitializable {
      **/
     function _approveBridgeTokens(
         address[] calldata l1Tokens,
-        uint256[] calldata l2Tokens
+        uint256[] calldata l2Tokens,
+        uint256[] calldata ceilings
     ) internal {
         require(
             l1Tokens.length == l2Tokens.length,
             Errors.B_MISMATCHING_ARRAYS_LENGTH
         );
         for (uint256 i = 0; i < l1Tokens.length; i++) {
-            _approveToken(l1Tokens[i], l2Tokens[i]);
+            _approveToken(l1Tokens[i], l2Tokens[i], ceilings[i]);
         }
     }
 
@@ -260,10 +267,11 @@ contract Bridge is IBridge, VersionedInitializable {
      * @param l1AToken token address
      * @param l2Token token address
      **/
-    function _approveToken(address l1AToken, uint256 l2Token)
-        internal
-        onlyValidL2Address(l2Token)
-    {
+    function _approveToken(
+        address l1AToken,
+        uint256 l2Token,
+        uint256 ceiling
+    ) internal onlyValidL2Address(l2Token) {
         require(l1AToken != address(0), Errors.B_INVALID_ADDRESS);
 
         require(
@@ -286,7 +294,8 @@ contract Bridge is IBridge, VersionedInitializable {
         _aTokenData[l1AToken] = ATokenData(
             l2Token,
             underlyingAsset,
-            lendingPool
+            lendingPool,
+            ceiling
         );
         _approvedL1Tokens.push(l1AToken);
         emit ApprovedBridge(l1AToken, l2Token);

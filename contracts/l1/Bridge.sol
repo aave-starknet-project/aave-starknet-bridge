@@ -160,12 +160,14 @@ contract Bridge is IBridge, VersionedInitializable {
     ) external override {
         require(recipient != address(0), Errors.B_INVALID_ADDRESS);
         require(staticAmount > 0, Errors.B_INSUFFICIENT_AMOUNT);
+
         _consumeMessage(
             l1AToken,
             l2sender,
             recipient,
             staticAmount,
-            l2RewardsIndex
+            l2RewardsIndex,
+            toUnderlyingAsset ? 1 : 0
         );
 
         address underlyingAsset = address(
@@ -348,15 +350,17 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 l2sender,
         address recipient,
         uint256 amount,
-        uint256 l2RewardsIndex
+        uint256 l2RewardsIndex,
+        uint256 toUnderlyingAsset
     ) internal {
-        uint256[] memory payload = new uint256[](8);
+        uint256[] memory payload = new uint256[](9);
         payload[0] = Cairo.WITHDRAW_MESSAGE;
         payload[1] = uint256(uint160(l1Token));
         payload[2] = l2sender;
         payload[3] = uint256(uint160(recipient));
         (payload[4], payload[5]) = Cairo.toSplitUint(amount);
         (payload[6], payload[7]) = Cairo.toSplitUint(l2RewardsIndex);
+        payload[8] = toUnderlyingAsset;
 
         // Consume the message from the StarkNet core contract.
         // This will revert the (Ethereum) transaction if the message does not exist.

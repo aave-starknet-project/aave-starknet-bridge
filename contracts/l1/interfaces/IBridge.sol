@@ -9,6 +9,7 @@ interface IBridge {
         uint256 l2TokenAddress;
         IERC20 underlyingAsset;
         ILendingPool lendingPool;
+        uint256 ceiling;
     }
 
     event Deposit(

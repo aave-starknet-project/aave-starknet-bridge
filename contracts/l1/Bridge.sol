@@ -156,16 +156,16 @@ contract Bridge is IBridge, VersionedInitializable {
         address recipient,
         uint256 staticAmount,
         uint256 l2RewardsIndex,
-        bool toUnderlyingAsset
+        uint256 toUnderlyingAsset
     ) external override {
-        require(recipient != address(0), Errors.B_INVALID_ADDRESS);
         require(staticAmount > 0, Errors.B_INSUFFICIENT_AMOUNT);
         _consumeMessage(
             l1AToken,
             l2sender,
             recipient,
             staticAmount,
-            l2RewardsIndex
+            l2RewardsIndex,
+            toUnderlyingAsset
         );
 
         address underlyingAsset = address(
@@ -178,7 +178,7 @@ contract Bridge is IBridge, VersionedInitializable {
             lendingPool
         );
 
-        if (toUnderlyingAsset) {
+        if (toUnderlyingAsset == 1) {
             lendingPool.withdraw(underlyingAsset, amount, recipient);
         } else {
             IERC20(l1AToken).transfer(recipient, amount);
@@ -230,7 +230,6 @@ contract Bridge is IBridge, VersionedInitializable {
         address recipient,
         uint256 amount
     ) external override {
-        require(recipient != address(0), Errors.B_INVALID_ADDRESS);
         require(amount > 0, Errors.B_INSUFFICIENT_AMOUNT);
         //check if enough rewards are available on the bridge before consuming the message from l2
         require(getAvailableRewards() >= amount, Errors.B_NOT_ENOUGH_REWARDS);
@@ -348,15 +347,17 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 l2sender,
         address recipient,
         uint256 amount,
-        uint256 l2RewardsIndex
+        uint256 l2RewardsIndex,
+        uint256 toUnderlyingAsset
     ) internal {
-        uint256[] memory payload = new uint256[](8);
+        uint256[] memory payload = new uint256[](9);
         payload[0] = Cairo.TRANSFER_FROM_STARKNET;
         payload[1] = uint256(uint160(l1Token));
         payload[2] = l2sender;
         payload[3] = uint256(uint160(recipient));
         (payload[4], payload[5]) = Cairo.toSplitUint(amount);
         (payload[6], payload[7]) = Cairo.toSplitUint(l2RewardsIndex);
+        payload[8] = toUnderlyingAsset;
 
         // Consume the message from the StarkNet core contract.
         // This will revert the (Ethereum) transaction if the message does not exist.

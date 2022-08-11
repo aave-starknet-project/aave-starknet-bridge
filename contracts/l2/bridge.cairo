@@ -197,7 +197,7 @@ end
 
 @external
 func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    l2_token : felt, l1_recipient : felt, amount : Uint256
+    l2_token : felt, l1_recipient : felt, amount : Uint256, to_underlying_asset :felt
 ):
     assert_not_zero(l2_token)
 
@@ -215,6 +215,11 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
 
     # call burn on l2_token contract.
     let (caller_address) = get_caller_address()
+    
+    # check input
+    with_attr error_message("incorrect flag: value should be either 0 or 1"):
+            assert to_underlying_asset * to_underlying_asset = to_underlying_asset
+    end
 
     # prepare l1 message
     let (message_payload : felt*) = alloc()
@@ -226,12 +231,13 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     assert message_payload[5] = amount.high
     assert message_payload[6] = current_rewards_index.wad.low
     assert message_payload[7] = current_rewards_index.wad.high
+    assert message_payload[8] = to_underlying_asset
 
     # burn static_a_tokens
     IERC20.burn(contract_address=l2_token, account=caller_address, amount=amount)
 
     # send witdraw message to l1
-    send_message_to_l1(to_address=to_address, payload_size=8, payload=message_payload)
+    send_message_to_l1(to_address=to_address, payload_size=9, payload=message_payload)
 
     withdraw_initiated.emit(
         l2_token, l1_recipient, amount, caller_address, current_rewards_index.wad

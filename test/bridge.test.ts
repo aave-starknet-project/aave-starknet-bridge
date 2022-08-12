@@ -326,7 +326,7 @@ describe("Bridge", async function () {
 
   it("set L1 token bridge as implementation contract", async () => {
     let ABI = [
-      "function initialize(uint256 l2Bridge, address messagingContract, address incentivesController, address[] calldata l1Tokens, uint256[] calldata l2Tokens) ",
+      "function initialize(uint256 l2Bridge, address messagingContract, address incentivesController, address[] calldata l1Tokens, uint256[] calldata l2Tokens, uint256[] calldata ceilings) ",
     ];
     let iface = new ethers.utils.Interface(ABI);
 
@@ -336,6 +336,7 @@ describe("Bridge", async function () {
       INCENTIVES_CONTROLLER,
       [aDai.address, aUsdc.address],
       [l2StaticADai.address, l2StaticAUsdc.address],
+      [MAX_UINT256, MAX_UINT256],
     ]);
     await l1BridgeProxy["initialize(address,address,bytes)"](
       l1BridgeImpl.address,
@@ -645,11 +646,13 @@ describe("Bridge", async function () {
       l2_token: BigInt(l2StaticADai.address),
       l1_recipient: BigInt(l1user.address),
       amount: { high: 0n, low: 27n * DAI_UNIT },
+      to_underlying_asset: 0n,
     });
     await l2user.invoke(l2Bridge, "initiate_withdraw", {
       l2_token: BigInt(l2StaticAUsdc.address),
       l1_recipient: BigInt(l1user.address),
       amount: { high: 0n, low: 37n * USDC_UNIT },
+      to_underlying_asset: 0n,
     });
 
     // flush L2 messages to be consumed by L1
@@ -741,11 +744,13 @@ describe("Bridge", async function () {
       l2_token: BigInt(l2StaticADai.address),
       l1_recipient: BigInt(l1user.address),
       amount: { high: 0n, low: 27n * DAI_UNIT },
+      to_underlying_asset: 1n,
     });
     await l2user.invoke(l2Bridge, "initiate_withdraw", {
       l2_token: BigInt(l2StaticAUsdc.address),
       l1_recipient: BigInt(l1user.address),
       amount: { high: 0n, low: 27n * USDC_UNIT },
+      to_underlying_asset: 1n,
     });
 
     // flush L2 messages to be consumed by L1
@@ -806,6 +811,7 @@ describe("Bridge", async function () {
       l2_token: BigInt(l2StaticAUsdc.address),
       l1_recipient: BigInt(l1user.address),
       amount: { high: 0n, low: 5n },
+      to_underlying_asset: 1n,
     });
 
     // flush L2 messages to be consumed by L1

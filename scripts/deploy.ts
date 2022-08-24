@@ -1,6 +1,7 @@
 import {
   allowlistedATokensAddresses,
   allowlistedStaticATokensData,
+  ceilings,
 } from "./allowlistedTokens";
 import { Account } from "hardhat/types";
 import fs from "fs";
@@ -86,7 +87,8 @@ async function deployAll() {
       INCENTIVES_CONTROLLER,
       l1deployer.address, // @TBD: proxy admin
       allowlistedATokensAddresses, // l1 aTokens to be approved
-      staticATokensAddresses // l2 static_a_tokens to be approved
+      staticATokensAddresses, // l2 static_a_tokens to be approved
+      ceilings // Array containing a ceiling for each aToken
     );
     console.log("setting l1 bridge address on l2 bridge...");
     if (l1Bridge) {

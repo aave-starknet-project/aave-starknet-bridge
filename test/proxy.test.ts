@@ -6,9 +6,8 @@ import { expect } from "chai";
 describe("Proxy", function () {
   this.timeout(TIMEOUT);
 
-  let tokenClassHash: string;
-  let tokenContractA: StarknetContract;
-  let tokenContractB: StarknetContract;
+  let tokenAClassHash: string;
+  let tokenBClassHash: string;
   let proxyTokenContract: StarknetContract;
   let proxiedTokenContract: StarknetContract;
   let owner: Account;
@@ -23,16 +22,15 @@ describe("Proxy", function () {
     owner = await starknet.deployAccount("OpenZeppelin");
     randomUser = await starknet.deployAccount("OpenZeppelin");
 
-    tokenClassHash = await TokenContractFactory.declare();
-    tokenContractA = await TokenContractFactory.deploy();
-    tokenContractB = await TokenContractFactory.deploy();
+    tokenAClassHash = await TokenContractFactory.declare();
+    tokenBClassHash = await TokenContractFactory.declare();
 
     proxyTokenContract = await ProxyFactory.deploy({
       proxy_admin: owner.starknetContract.address,
     });
 
     await owner.invoke(proxyTokenContract, "set_implementation", {
-      implementation_hash: tokenClassHash,
+      implementation_hash: tokenAClassHash,
     });
     proxiedTokenContract = TokenContractFactory.getContractAt(
       proxyTokenContract.address
@@ -68,7 +66,7 @@ describe("Proxy", function () {
   it("disallows random user to upgrade", async () => {
     try {
       await randomUser.invoke(proxyTokenContract, "set_implementation", {
-        implementation_hash: tokenClassHash,
+        implementation_hash: tokenBClassHash,
       });
     } catch (e: any) {
       expect(e.message).to.contain("Proxy: caller is not admin");
@@ -86,12 +84,12 @@ describe("Proxy", function () {
 
   it("allows owner to upgrade", async () => {
     await randomUser.invoke(proxyTokenContract, "set_implementation", {
-      implementation_hash: tokenClassHash,
+      implementation_hash: tokenBClassHash,
     });
     const { implementation } = await proxyTokenContract.call(
       "get_implementation",
       {}
     );
-    expect(implementation).to.equal(BigInt(tokenClassHash));
+    expect(implementation).to.equal(BigInt(tokenBClassHash));
   });
 });

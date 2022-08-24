@@ -66,7 +66,8 @@ export async function deployL1Bridge(
   incentivesController: string,
   proxyAdmin: string,
   l1Tokens: string[],
-  l2Tokens: BigInt[]
+  l2Tokens: BigInt[],
+  ceilings: BigInt[]
 ) {
   let bridgeFactory: ContractFactory;
   let bridgeImpl: Contract;
@@ -88,7 +89,7 @@ export async function deployL1Bridge(
     await bridgeImpl.deployed();
 
     let ABI = [
-      "function initialize(uint256 l2Bridge, address messagingContract, address incentivesController, address[] calldata l1Tokens, uint256[] calldata l2Tokens) ",
+      "function initialize(uint256 l2Bridge, address messagingContract, address incentivesController, address[] calldata l1Tokens, uint256[] calldata l2Tokens, uint256 calldata ceilings) ",
     ];
     let iface = new ethers.utils.Interface(ABI);
 
@@ -98,6 +99,7 @@ export async function deployL1Bridge(
       incentivesController,
       l1Tokens,
       l2Tokens,
+      ceilings,
     ]);
 
     await bridgeProxy["initialize(address,address,bytes)"](

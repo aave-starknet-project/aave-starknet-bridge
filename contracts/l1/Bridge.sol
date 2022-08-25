@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0.
 pragma solidity 0.8.10;
 
-import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
-import {IERC20} from "@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IScaledBalanceToken} from "@aave/core-v3/contracts/interfaces/IScaledBalanceToken.sol";
-import {VersionedInitializable} from "@aave/core-v3/contracts/protocol/libraries/aave-upgradeability/VersionedInitializable.sol";
-import {GPv2SafeERC20} from "@aave/core-v3/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol";
-import "./libraries/helpers/Cairo.sol";
-import {Errors} from "./libraries/helpers/Errors.sol";
 import {IStarknetMessaging} from "./interfaces/IStarknetMessaging.sol";
 import {RayMathNoRounding} from "./libraries/math/RayMathNoRounding.sol";
 import {IAaveIncentivesController} from "./interfaces/IAaveIncentivesController.sol";
 import {IATokenWithPool} from "./interfaces/IATokenWithPool.sol";
 import {ILendingPool} from "./interfaces/ILendingPool.sol";
 import {IBridge} from "./interfaces/IBridge.sol";
+import {IERC20} from "@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IScaledBalanceToken} from "@aave/core-v3/contracts/interfaces/IScaledBalanceToken.sol";
+import {VersionedInitializable} from "@aave/core-v3/contracts/protocol/libraries/aave-upgradeability/VersionedInitializable.sol";
+import {Cairo} from "./libraries/helpers/Cairo.sol";
+import {Errors} from "./libraries/helpers/Errors.sol";
+import {GPv2SafeERC20} from "@aave/core-v3/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol";
+import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
 
 contract Bridge is IBridge, VersionedInitializable {
     using WadRayMath for uint256;
@@ -39,11 +39,7 @@ contract Bridge is IBridge, VersionedInitializable {
         _;
     }
 
-    /**
-     * @notice Returns bridge's available rewards
-     * @dev Function is invoked before consuming L2->L1 message to ensure bridge has enough rewards
-     * @return Rewards currently available on the bridge: claimed rewards + pending rewards
-     **/
+    /// @inheritdoc IBridge
     function getAvailableRewards() public view returns (uint256) {
         uint256 claimable = _incentivesController.getRewardsBalance(
             _approvedL1Tokens,
@@ -61,6 +57,7 @@ contract Bridge is IBridge, VersionedInitializable {
      * @param incentivesController Address of Aave IncentivesController
      * @param l1Tokens Array of l1 tokens
      * @param l2Tokens Array of l2 tokens
+     * @param ceilings Array of max amount that can be bridged for each aToken without taking into account the interest growth
      **/
     function initialize(
         uint256 l2Bridge,
@@ -82,6 +79,7 @@ contract Bridge is IBridge, VersionedInitializable {
         _approveBridgeTokens(l1Tokens, l2Tokens, ceilings);
     }
 
+    /// @inheritdoc IBridge
     function deposit(
         address l1AToken,
         uint256 l2Recipient,
@@ -150,6 +148,7 @@ contract Bridge is IBridge, VersionedInitializable {
         return staticAmount;
     }
 
+    /// @inheritdoc IBridge
     function withdraw(
         address l1AToken,
         uint256 l2sender,
@@ -183,7 +182,7 @@ contract Bridge is IBridge, VersionedInitializable {
         if (toUnderlyingAsset) {
             lendingPool.withdraw(underlyingAsset, amount, recipient);
         } else {
-            IERC20(l1AToken).transfer(recipient, amount);
+            IERC20(l1AToken).safeTransfer(recipient, amount);
         }
 
         emit Withdrawal(l1AToken, l2sender, recipient, amount);
@@ -214,6 +213,7 @@ contract Bridge is IBridge, VersionedInitializable {
         }
     }
 
+    /// @inheritdoc IBridge
     function updateL2State(address l1AToken) external override {
         uint256 rewardsIndex = _getCurrentRewardsIndex(l1AToken);
 
@@ -227,6 +227,7 @@ contract Bridge is IBridge, VersionedInitializable {
         emit L2StateUpdated(l1AToken, rewardsIndex);
     }
 
+    /// @inheritdoc IBridge
     function receiveRewards(
         uint256 l2sender,
         address recipient,
@@ -532,7 +533,7 @@ contract Bridge is IBridge, VersionedInitializable {
             lendingPool
         );
 
-        IERC20(l1AToken).transfer(msg.sender, dynamicAmount);
+        IERC20(l1AToken).safeTransfer(msg.sender, dynamicAmount);
         emit CancelledDeposit(
             l2Recipient,
             msg.sender,

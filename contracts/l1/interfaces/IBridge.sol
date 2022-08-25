@@ -84,6 +84,13 @@ interface IBridge {
     ) external;
 
     /**
+     * @notice Returns bridge's available rewards
+     * @dev Function is invoked before consuming L2->L1 message to ensure bridge has enough rewards
+     * @return Rewards currently available on the bridge: claimed rewards + pending rewards
+     **/
+    function getAvailableRewards() external returns (uint256);
+
+    /**
      * @notice allows l1 user to receive the bridged rewards tokens from l2
      * @param l2sender sender on l2
      * @param recipient on l1

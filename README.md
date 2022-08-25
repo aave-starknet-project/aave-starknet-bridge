@@ -147,6 +147,11 @@ That's why we have added support for the L1->L2 message cancellation on our L1 b
 
 2. After the `messageCancellationDelay` period has passed (defined on [StarknetMessaging](https://github.com/starkware-libs/starkgate-contracts/blob/c08863a1f08226c09f1d0748124192e848d73db9/src/starkware/starknet/solidity/StarknetMessaging.sol) contract), the user can finalize the aTokens deposit cancellation by calling `cancelDeposit` on L1 bridge.
 
+### Bridge Ceiling
+The amount of bridged aTokens is restricted to a certain amount set at the moment of deployment. We provide an array `ceilings` with a ceiling for each aToken to be approved on the L1 bridge, and we make sure that the bridge will only hold a scaled balance (without taking into account the interest growth) inferior or equal to the decided ceiling for each aToken.   
+
+
+
 ## Installation
 
 ### Environment

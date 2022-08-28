@@ -5,6 +5,12 @@ import "./IStarknetMessagingEvents.sol";
 
 interface IStarknetMessaging is IStarknetMessagingEvents {
     /**
+      Returns current nonce
+      
+    */
+    function l1ToL2MessageNonce() external returns (uint256);
+
+    /**
       Sends a message to an L2 contract.
       Returns the hash of the message.
     */

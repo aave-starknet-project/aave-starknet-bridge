@@ -18,7 +18,8 @@ interface IBridge {
         uint256 indexed amount,
         uint256 l2Recipient,
         uint256 blockNumber,
-        uint256 rewardsIndex
+        uint256 rewardsIndex,
+        uint256 l2MsgNonce
     );
     event Withdrawal(
         address indexed token,

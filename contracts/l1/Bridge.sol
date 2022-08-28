@@ -127,7 +127,7 @@ contract Bridge is IBridge, VersionedInitializable {
             address(underlyingAsset),
             lendingPool
         );
-
+        uint256 l2MsgNonce = _messagingContract.l1ToL2MessageNonce();
         _sendDepositMessage(
             l1AToken,
             msg.sender,
@@ -142,7 +142,8 @@ contract Bridge is IBridge, VersionedInitializable {
             staticAmount,
             l2Recipient,
             block.number,
-            rewardsIndex
+            rewardsIndex,
+            l2MsgNonce
         );
 
         return staticAmount;

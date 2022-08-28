@@ -534,7 +534,21 @@ contract Bridge is IBridge, VersionedInitializable {
             lendingPool
         );
 
+        //transfer aTokens back to depositor
         IERC20(l1AToken).safeTransfer(msg.sender, dynamicAmount);
+
+        //claim any accrued rewards for the depositor during the cancellation period
+        uint256 currentRewardsIndex = _getCurrentRewardsIndex(l1AToken);
+        uint256 rewardsAmount = _computeRewardsDiff(
+            amount,
+            rewardsIndex,
+            currentRewardsIndex
+        );
+
+        if (rewardsAmount > 0) {
+            _transferRewards(msg.sender, rewardsAmount);
+        }
+
         emit CancelledDeposit(
             l2Recipient,
             msg.sender,

@@ -277,6 +277,7 @@ describe("AToken deposit cancellation", async function () {
   it("cancel aDai deposit", async () => {
     await aDai.connect(l1user).approve(l1Bridge.address, MAX_UINT256);
     const l1userBalanceBeforeDeposit = await aDai.balanceOf(l1user.address);
+
     txDai = await l1Bridge
       .connect(l1user)
       .deposit(
@@ -286,16 +287,18 @@ describe("AToken deposit cancellation", async function () {
         0,
         false
       );
-    const receipt = await txDai.wait();
 
+    const receipt = await txDai.wait();
+    expect(await aDai.balanceOf(l1Bridge.address)).to.be.equal(10n * DAI_UNIT);
     const depositEvent = receipt.events
       .filter((x: any) => (x.event = "Deposit"))
       .at(-1);
 
+    expect(depositEvent.args).to.have.lengthOf(7);
     let deposit_amount = depositEvent.args[2];
     let current_rewards_index = depositEvent.args[5];
     let blockNumber = depositEvent.args[4];
-    let nonce = 0;
+    let nonce = depositEvent.args[6];
 
     await l1Bridge
       .connect(l1user)
@@ -326,5 +329,7 @@ describe("AToken deposit cancellation", async function () {
     expect(l1userBalanceAfterCancellation).to.be.gte(
       l1userBalanceBeforeDeposit
     );
+
+    expect(await aDai.balanceOf(l1Bridge.address)).to.be.equal(0);
   });
 });

@@ -14,16 +14,19 @@ describe("Proxy", function () {
   let randomUser: Account;
 
   before(async () => {
-    const TokenContractFactory = await starknet.getContractFactory(
+    const TokenAContractFactory = await starknet.getContractFactory(
       "static_a_token"
+    );
+    const TokenBContractFactory = await starknet.getContractFactory(
+      "mock_static_a_token"
     );
     const ProxyFactory = await starknet.getContractFactory("proxy");
 
     owner = await starknet.deployAccount("OpenZeppelin");
     randomUser = await starknet.deployAccount("OpenZeppelin");
 
-    tokenAClassHash = await TokenContractFactory.declare();
-    tokenBClassHash = await TokenContractFactory.declare();
+    tokenAClassHash = await TokenAContractFactory.declare();
+    tokenBClassHash = await TokenBContractFactory.declare();
 
     proxyTokenContract = await ProxyFactory.deploy({
       proxy_admin: owner.starknetContract.address,
@@ -32,7 +35,7 @@ describe("Proxy", function () {
     await owner.invoke(proxyTokenContract, "set_implementation", {
       implementation_hash: tokenAClassHash,
     });
-    proxiedTokenContract = TokenContractFactory.getContractAt(
+    proxiedTokenContract = TokenAContractFactory.getContractAt(
       proxyTokenContract.address
     );
   });
@@ -82,7 +85,7 @@ describe("Proxy", function () {
     expect(admin).to.equal(BigInt(randomUser.starknetContract.address));
   });
 
-  it("allows owner to upgrade", async () => {
+  it("allows owner to upgrade to new implementation and initialize it ", async () => {
     await randomUser.invoke(proxyTokenContract, "set_implementation", {
       implementation_hash: tokenBClassHash,
     });
@@ -90,6 +93,26 @@ describe("Proxy", function () {
       "get_implementation",
       {}
     );
+
     expect(implementation).to.equal(BigInt(tokenBClassHash));
+
+    await owner.invoke(proxiedTokenContract, "initialize_static_a_token", {
+      name: 600n,
+      symbol: 600n,
+      decimals: 4n,
+      initial_supply: { high: 0n, low: 0n },
+      recipient: BigInt(owner.starknetContract.address),
+      owner: BigInt(owner.starknetContract.address),
+      l2_bridge: BigInt(owner.starknetContract.address),
+    });
+
+    const { name } = await proxiedTokenContract.call("name");
+    expect(name).to.equal(600n);
+
+    const { symbol } = await proxiedTokenContract.call("symbol");
+    expect(symbol).to.equal(600n);
+
+    const { decimals } = await proxiedTokenContract.call("decimals");
+    expect(decimals).to.equal(4n);
   });
 });

@@ -32,10 +32,11 @@ chai.use(solidity);
 const MAX_UINT256 = hre.ethers.constants.MaxInt256;
 
 // Amount of dai and usdc to transfer to the user. Issued twice for aDai and aUsdc
-const DAI_UNIT = 1000n * BigInt(10 ** 18);
-const USDC_UNIT = 1000n * BigInt(10 ** 6);
+const DAI_UNIT = BigInt(10 ** 18);
+const USDC_UNIT = BigInt(10 ** 6);
 const daiAmount = 300n * DAI_UNIT;
 const usdcAmount = 300n * USDC_UNIT;
+
 describe("Bridge", async function () {
   this.timeout(TIMEOUT);
 

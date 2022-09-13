@@ -8,26 +8,26 @@
 
 ## Table of contents
 
-- [Introduction](#introduction)
-- [Architecture](#architecture)
-- [Contracts](#contracts)
-  - [Overview](#overview)
-  - [More about static_a_token on L2](#more-about-static_a_token-on-l2)
-  - [Proxies](#proxies)
-  - [Governance](#governance)
-- [How it works](#how-it-works)
-  - [Bridging aTokens from L1 to L2](#bridging-atokens-from-l1-to-l2)
-    - [Approve bridge tokens](#approve-bridge-tokens)
-    - [Transfer from L1 to L2](#transfer-from-l1-to-l2)
-    - [Transfer from L2 to L1](#transfer-from-l2-to-l1)
-  - [Synchronisation of rewards on L1 and L2](#synchronisation-of-rewards-on-l1-and-l2)
-  - [Claiming rewards on L2](#claiming-rewards-on-l2)
-  - [Bridging rewards from L2 to L1](#bridging-rewards-from-l2-to-l1)
-- [Installation](#installation)
-  - [Environment](#environment)
-  - [Build the cairo files](#build-cairo-files)
-  - [Start testnets](#start-testnets)
-  - [Run tests](#run-tests)
+- [Aave Starknet Bridge](#aave-starknet-bridge)
+  - [Table of contents](#table-of-contents)
+  - [Introduction](#introduction)
+  - [Architecture](#architecture)
+  - [Contracts](#contracts)
+    - [Overview](#overview)
+    - [More about static_a_token on L2](#more-about-static_a_token-on-l2)
+    - [Proxies](#proxies)
+    - [Governance](#governance)
+  - [How it works](#how-it-works)
+    - [Bridging aTokens from L1 to L2](#bridging-atokens-from-l1-to-l2)
+    - [Synchronisation of rewards index on L1 and L2](#synchronisation-of-rewards-index-on-l1-and-l2)
+    - [Claiming rewards on L2](#claiming-rewards-on-l2)
+    - [Bridging rewards from L2 to L1](#bridging-rewards-from-l2-to-l1)
+  - [Installation](#installation)
+    - [Environment](#environment)
+    - [Build Cairo files](#build-cairo-files)
+    - [Start testnets](#start-testnets)
+    - [Run tests](#run-tests)
+    - [Deployment](#deployment)
 
 ## Introduction
 
@@ -155,8 +155,8 @@ nvm use 16
 Our codebase relies on Python 3.7.12. To install it, you can first install [pyenv](https://github.com/pyenv/pyenv) and then run the following commands:
 
 ```bash
-pyenv install 3.7.12
-pyenv local 3.7.12
+pyenv install 3.9.0
+pyenv local 3.9.0
 ```
 
 **Install GMP (needed for Cairo)**

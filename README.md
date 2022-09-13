@@ -165,13 +165,13 @@ nvm install 16
 nvm use 16
 ```
 
-**Install Python 3.7.13**
+**Install Python 3.9.0**
 
-Our codebase relies on Python 3.7.13. To install it, you can first install [pyenv](https://github.com/pyenv/pyenv) and then run the following commands:
+Our codebase relies on Python 3.9.0. To install it, you can first install [pyenv](https://github.com/pyenv/pyenv) and then run the following commands:
 
 ```bash
-pyenv install 3.7.13
-pyenv local 3.7.13
+pyenv install 3.9.0
+pyenv local 3.9.0
 ```
 
 **Install GMP (needed for Cairo)**

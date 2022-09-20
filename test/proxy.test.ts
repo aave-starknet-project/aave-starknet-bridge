@@ -25,8 +25,8 @@ describe("Proxy", function () {
     owner = await starknet.deployAccount("OpenZeppelin");
     randomUser = await starknet.deployAccount("OpenZeppelin");
 
-    tokenAClassHash = await TokenAContractFactory.declare();
-    tokenBClassHash = await TokenBContractFactory.declare();
+    tokenAClassHash = await owner.declare(TokenAContractFactory);
+    tokenBClassHash = await owner.declare(TokenBContractFactory);
 
     proxyTokenContract = await ProxyFactory.deploy({
       proxy_admin: owner.starknetContract.address,

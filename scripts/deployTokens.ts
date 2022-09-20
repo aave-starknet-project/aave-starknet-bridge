@@ -39,7 +39,7 @@ export async function deployStaticAToken(
     proxy_admin: BigInt(deployer.starknetContract.address),
   });
 
-  staticATokenImplHash = await staticATokenFactory.declare();
+  staticATokenImplHash = await deployer.declare(staticATokenFactory);
 
   await deployer.invoke(staticATokenProxy, "set_implementation", {
     implementation_hash: BigInt(staticATokenImplHash),
@@ -93,7 +93,7 @@ export async function deployL2rewAAVE(
   });
 
   console.log("deploying rewAAVE token implementation ...");
-  rewAAVEImplHash = await rewAAVEFactory.declare();
+  rewAAVEImplHash = await deployer.declare(rewAAVEFactory);
 
   fs.writeFileSync(
     `deployment/${name}.json`,

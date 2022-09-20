@@ -27,7 +27,7 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
     proxy_admin: proxy_admin,
   });
 
-  bridgeImplHash = await L2BridgeFactory.declare();
+  bridgeImplHash = await deployer.declare(L2BridgeFactory);
 
   await deployer.invoke(proxyBridge, "set_implementation", {
     implementation_hash: BigInt(bridgeImplHash),

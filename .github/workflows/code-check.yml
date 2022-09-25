@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9"] # Cairo was tested with this version
+        python-version: ["3.9.0"] # Cairo was tested with this version
         node-version: ["16"]
     steps:
       - uses: actions/checkout@v3

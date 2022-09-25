@@ -11,9 +11,13 @@ import { starknet, ethers } from "hardhat";
 /**
  * deploys and initializes static_a_token on L2
  * @param deployer the deployer starknet account
- * @param proxy_admin address of the proxy owner
+ * @param proxyAdmin address of the proxy owner
  */
-export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
+export async function deployL2Bridge(
+  deployer: Account,
+  proxyAdmin: bigint,
+  maxFee: number
+) {
   let proxiedBridge: StarknetContract;
   let bridgeImplHash: string;
   let proxyFactoryL2: StarknetContractFactory;
@@ -24,14 +28,19 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
 
   console.log("deploying L2 proxy bridge...");
   proxyBridge = await proxyFactoryL2.deploy({
-    proxy_admin: proxy_admin,
+    proxy_admin: proxyAdmin,
   });
 
-  bridgeImplHash = await deployer.declare(L2BridgeFactory);
+  bridgeImplHash = await deployer.declare(L2BridgeFactory, { maxFee: maxFee });
 
-  await deployer.invoke(proxyBridge, "set_implementation", {
-    implementation_hash: BigInt(bridgeImplHash),
-  });
+  await deployer.invoke(
+    proxyBridge,
+    "set_implementation",
+    {
+      implementation_hash: BigInt(bridgeImplHash),
+    },
+    { maxFee: maxFee }
+  );
 
   fs.writeFileSync(
     `deployment/L2Bridge.json`,
@@ -43,9 +52,14 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
   proxiedBridge = L2BridgeFactory.getContractAt(proxyBridge.address);
 
   console.log("initializing L2 bridge...");
-  await deployer.invoke(proxiedBridge, "initialize_bridge", {
-    governor_address: proxy_admin,
-  });
+  await deployer.invoke(
+    proxiedBridge,
+    "initialize_bridge",
+    {
+      governor_address: proxyAdmin,
+    },
+    { maxFee: maxFee }
+  );
 
   return proxiedBridge;
 }

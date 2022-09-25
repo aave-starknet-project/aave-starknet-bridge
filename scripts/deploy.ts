@@ -13,6 +13,8 @@ import {
   INCENTIVES_CONTROLLER,
 } from "../constants/addresses";
 
+const maxFee = 1e18;
+
 async function deployAll() {
   try {
     let l2deployer: Account;
@@ -21,8 +23,6 @@ async function deployAll() {
 
     [l1deployer] = await ethers.getSigners();
     l2deployer = await starknet.deployAccount("OpenZeppelin");
-
-    staticATokensAddresses = [];
 
     if (!fs.existsSync("./deployment")) {
       fs.mkdirSync("./deployment");
@@ -39,7 +39,8 @@ async function deployAll() {
     //deploy L2 token bridge
     const l2Bridge = await deployL2Bridge(
       l2deployer,
-      BigInt(l2deployer.starknetContract.address)
+      BigInt(l2deployer.starknetContract.address),
+      maxFee
     );
 
     //deploy rewAAVE token on L2
@@ -49,20 +50,27 @@ async function deployAll() {
       "rewAAVE",
       18n,
       { high: 0n, low: 0n },
-      BigInt(l2Bridge.address)
+      BigInt(l2Bridge.address),
+      maxFee
     );
 
     console.log("setting reward token on L2 token bridge...");
 
     //set rewAAVE on L2 token bridge
-    await l2deployer.invoke(l2Bridge, "set_reward_token", {
-      reward_token: BigInt(l2rewAAVE.address),
-    });
+    await l2deployer.invoke(
+      l2Bridge,
+      "set_reward_token",
+      {
+        reward_token: BigInt(l2rewAAVE.address),
+      },
+      { maxFee: maxFee }
+    );
 
     if (!fs.existsSync("./deployment/staticATokens")) {
       fs.mkdirSync("./deployment/staticATokens");
     }
 
+    staticATokensAddresses = [];
     console.log("Deploying static_a_tokens...");
     for (let i = 0; i < allowlistedATokensAddresses.length; i++) {
       await deployStaticAToken(
@@ -72,7 +80,8 @@ async function deployAll() {
         allowlistedStaticATokensData[i].decimals,
         { high: 0n, low: 0n }, //total supply of all staticATokens defaulted to zero
         BigInt(l2deployer.starknetContract.address), //proxy admin
-        BigInt(l2Bridge.address)
+        BigInt(l2Bridge.address),
+        maxFee
       ).then((deployedTokenProxyAddress) => {
         staticATokensAddresses.push(deployedTokenProxyAddress);
       });
@@ -90,9 +99,14 @@ async function deployAll() {
     );
     console.log("setting l1 bridge address on l2 bridge...");
     if (l1Bridge) {
-      await l2deployer.invoke(l2Bridge, "set_l1_bridge", {
-        l1_bridge_address: BigInt(l1Bridge.address),
-      });
+      await l2deployer.invoke(
+        l2Bridge,
+        "set_l1_bridge",
+        {
+          l1_bridge_address: BigInt(l1Bridge.address),
+        },
+        { maxFee: maxFee }
+      );
     }
     console.log("deployed successfully");
 

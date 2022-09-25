@@ -21,7 +21,8 @@ export async function deployStaticAToken(
   decimals: bigint,
   initial_supply: { low: bigint; high: bigint },
   owner: bigint,
-  l2_bridge: bigint
+  l2_bridge: bigint,
+  maxFee: number
 ): Promise<BigInt> {
   let proxyFactory: StarknetContractFactory;
   let staticATokenProxy: StarknetContract;
@@ -39,11 +40,18 @@ export async function deployStaticAToken(
     proxy_admin: BigInt(deployer.starknetContract.address),
   });
 
-  staticATokenImplHash = await deployer.declare(staticATokenFactory);
-
-  await deployer.invoke(staticATokenProxy, "set_implementation", {
-    implementation_hash: BigInt(staticATokenImplHash),
+  staticATokenImplHash = await deployer.declare(staticATokenFactory, {
+    maxFee: maxFee,
   });
+
+  await deployer.invoke(
+    staticATokenProxy,
+    "set_implementation",
+    {
+      implementation_hash: BigInt(staticATokenImplHash),
+    },
+    { maxFee: maxFee }
+  );
 
   fs.writeFileSync(
     `deployment/staticATokens/${name}.json`,
@@ -56,15 +64,20 @@ export async function deployStaticAToken(
 
   staticAToken = staticATokenFactory.getContractAt(staticATokenProxy.address);
 
-  await deployer.invoke(staticAToken, "initialize_static_a_token", {
-    name: stringToBigInt(name),
-    symbol: stringToBigInt(symbol),
-    decimals: decimals,
-    initial_supply: initial_supply,
-    recipient: BigInt(deployer.starknetContract.address),
-    owner: owner,
-    l2_bridge: l2_bridge,
-  });
+  await deployer.invoke(
+    staticAToken,
+    "initialize_static_a_token",
+    {
+      name: stringToBigInt(name),
+      symbol: stringToBigInt(symbol),
+      decimals: decimals,
+      initial_supply: initial_supply,
+      recipient: BigInt(deployer.starknetContract.address),
+      owner: owner,
+      l2_bridge: l2_bridge,
+    },
+    { maxFee: maxFee }
+  );
 
   return BigInt(staticATokenProxy.address);
 }
@@ -75,7 +88,8 @@ export async function deployL2rewAAVE(
   symbol: string,
   decimals: bigint,
   initial_supply: { low: bigint; high: bigint },
-  owner: bigint
+  owner: bigint,
+  maxFee: number
 ) {
   let proxyFactory: StarknetContractFactory;
   let rewAAVEFactory: StarknetContractFactory;
@@ -93,7 +107,7 @@ export async function deployL2rewAAVE(
   });
 
   console.log("deploying rewAAVE token implementation ...");
-  rewAAVEImplHash = await deployer.declare(rewAAVEFactory);
+  rewAAVEImplHash = await deployer.declare(rewAAVEFactory, { maxFee: maxFee });
 
   fs.writeFileSync(
     `deployment/${name}.json`,
@@ -105,20 +119,30 @@ export async function deployL2rewAAVE(
   );
 
   console.log("initializing rewAAVE token proxy...");
-  await deployer.invoke(rewAAVEProxy, "set_implementation", {
-    implementation_hash: BigInt(rewAAVEImplHash),
-  });
+  await deployer.invoke(
+    rewAAVEProxy,
+    "set_implementation",
+    {
+      implementation_hash: BigInt(rewAAVEImplHash),
+    },
+    { maxFee: maxFee }
+  );
 
   rewAAVE = rewAAVEFactory.getContractAt(rewAAVEProxy.address);
 
-  await deployer.invoke(rewAAVE, "initialize_rewAAVE", {
-    name: stringToBigInt(name),
-    symbol: stringToBigInt(symbol),
-    decimals: decimals,
-    initial_supply: initial_supply,
-    recipient: BigInt(deployer.starknetContract.address),
-    owner: owner,
-  });
+  await deployer.invoke(
+    rewAAVE,
+    "initialize_rewAAVE",
+    {
+      name: stringToBigInt(name),
+      symbol: stringToBigInt(symbol),
+      decimals: decimals,
+      initial_supply: initial_supply,
+      recipient: BigInt(deployer.starknetContract.address),
+      owner: owner,
+    },
+    { maxFee: maxFee }
+  );
   return rewAAVEProxy;
 }
 

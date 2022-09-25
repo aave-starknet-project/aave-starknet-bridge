@@ -13,6 +13,7 @@
     "compile:l1": "hardhat compile",
     "compile:l2": "hardhat starknet-compile",
     "deploy:account": "yarn hardhat starknet-deploy-account --starknet-network l2_testnet --wallet OpenZeppelin",
+    "deploy-bridge:goerli": "hardhat run ./scripts/deploy.ts --network goerli",
     "deploy-bridge:testnet": "hardhat run ./scripts/deploy.ts --network l1_testnet",
     "prepare": "husky install"
   },
@@ -23,7 +24,8 @@
     "@aave/protocol-v2": "^1.0.1",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
-    "@shardlabs/starknet-hardhat-plugin": "^0.6.6-alpha.3",
+    "@nomiclabs/hardhat-etherscan": "^3.1.0",
+    "@shardlabs/starknet-hardhat-plugin": "^0.6.6",
     "@toruslabs/starkware-crypto": "^1.0.0",
     "@types/chai": "^4.2.22",
     "@types/elliptic": "^6.4.14",

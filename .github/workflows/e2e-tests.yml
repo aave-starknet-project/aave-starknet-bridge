@@ -9,6 +9,7 @@ on:
 env:
   ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
   PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+  ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
   BLOCK_NUMBER: "14633843"
   DAI_WHALE: "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0"
   USDC_WHALE: "0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503"
@@ -28,7 +29,7 @@ jobs:
             "wad_ray_math.test.ts",
             "deposit_cancellation.test.ts",
           ]
-        python-version: ["3.9"] # Cairo was tested with this version
+        python-version: ["3.9.0"] # Cairo was tested with this version
         node-version: ["16"]
     steps:
       - uses: actions/checkout@v3

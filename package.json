@@ -1,6 +1,6 @@
 {
   "name": "aave-starknet-phase1",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Bridging staticATokens to Starknet to allow for cheap reward collection and token transfer.",
   "main": "index.js",
   "scripts": {
@@ -15,6 +15,7 @@
     "deploy:account": "yarn hardhat starknet-deploy-account --starknet-network l2_testnet --wallet OpenZeppelin",
     "deploy-bridge:goerli": "hardhat run ./scripts/deploy.ts --network goerli",
     "deploy-bridge:testnet": "hardhat run ./scripts/deploy.ts --network l1_testnet",
+    "deploy-bridge:alphaMainnet": "hardhat run ./scripts/deploy.ts --network mainnet",
     "prepare": "husky install"
   },
   "author": "AAVE",

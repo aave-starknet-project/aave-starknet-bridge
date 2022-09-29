@@ -1,4 +1,8 @@
 import {
+  TRANSPARENT_PROXY_FACTORY,
+  TRANSPARENT_PROXY_FACTORY_GOERLI,
+} from "./../constants/addresses";
+import {
   StarknetContract,
   StarknetContractFactory,
   Account,
@@ -7,6 +11,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import fs from "fs";
 import { Contract, ContractFactory } from "ethers";
 import { starknet, ethers } from "hardhat";
+import { getEventTopic } from "../test/utils";
 
 /**
  * deploys and initializes static_a_token on L2
@@ -84,22 +89,19 @@ export async function deployL1Bridge(
 ) {
   let bridgeFactory: ContractFactory;
   let bridgeImpl: Contract;
-  let bridgeProxy: Contract;
-  let proxyFactory: ContractFactory;
   let bridge: Contract;
 
   try {
     bridgeFactory = await ethers.getContractFactory("Bridge", signer);
 
-    proxyFactory = await ethers.getContractFactory(
-      "InitializableAdminUpgradeabilityProxy",
-      signer
-    );
-    bridgeProxy = await proxyFactory.deploy();
-    await bridgeProxy.deployed();
-
+    console.log("Deploying Bridge contract implementation...");
     bridgeImpl = await bridgeFactory.deploy();
     await bridgeImpl.deployed();
+
+    console.log(
+      "To verify Bridge implementation contract: npx hardhat verify --network mainnet ",
+      bridgeImpl.address
+    );
 
     let ABI = [
       "function initialize(uint256 l2Bridge, address messagingContract, address incentivesController, address[] calldata l1Tokens, uint256[] calldata l2Tokens) ",
@@ -107,26 +109,41 @@ export async function deployL1Bridge(
     let iface = new ethers.utils.Interface(ABI);
 
     let encodedInitializedParams = iface.encodeFunctionData("initialize", [
-      l2BridgeAddress,
+      BigInt(l2BridgeAddress),
       starknetMessagingAddress,
       incentivesController,
       l1Tokens,
       l2Tokens,
     ]);
 
-    await bridgeProxy["initialize(address,address,bytes)"](
+    const proxyFactory = await ethers.getContractAt(
+      "ITransparentProxyFactory",
+      TRANSPARENT_PROXY_FACTORY,
+      signer
+    );
+
+    console.log("Creating Bridge Proxy...");
+    const tx = await proxyFactory.create(
       bridgeImpl.address,
       proxyAdmin,
       encodedInitializedParams
     );
 
-    bridge = await ethers.getContractAt("Bridge", bridgeProxy.address, signer);
+    const receipt = await tx.wait();
+    const proxyAddress = getEventTopic(receipt, "ProxyCreated", 0);
+
+    console.log("Bridge proxy created at:", proxyAddress);
+    console.log(
+      "To verify deployed Bridge proxy contract: npx hardhat verify --network mainnet",
+      proxyAddress
+    );
+    bridge = await ethers.getContractAt("Bridge", proxyAddress, signer);
 
     fs.writeFileSync(
       "deployment/L1Bridge.json",
       JSON.stringify({
         implementation: bridgeImpl.address,
-        proxy: bridgeProxy.address,
+        proxy: proxyAddress,
         starknetMessagingAddress: starknetMessagingAddress,
         l2Bridge: l2BridgeAddress,
       })

@@ -5,6 +5,7 @@ import {
   Account,
 } from "hardhat/types";
 import fs from "fs";
+import { encodeShortString } from "../test/utils";
 
 /**
  * deploys and initializes static_a_token on L2
@@ -40,6 +41,8 @@ export async function deployStaticAToken(
     proxy_admin: BigInt(deployer.starknetContract.address),
   });
 
+  console.log("declaring", name, " class hash");
+
   staticATokenImplHash = await deployer.declare(staticATokenFactory, {
     maxFee: maxFee,
   });
@@ -68,8 +71,8 @@ export async function deployStaticAToken(
     staticAToken,
     "initialize_static_a_token",
     {
-      name: stringToBigInt(name),
-      symbol: stringToBigInt(symbol),
+      name: encodeShortString(name),
+      symbol: encodeShortString(symbol),
       decimals: decimals,
       initial_supply: initial_supply,
       recipient: BigInt(deployer.starknetContract.address),
@@ -106,7 +109,7 @@ export async function deployL2rewAAVE(
     proxy_admin: BigInt(deployer.starknetContract.address),
   });
 
-  console.log("deploying rewAAVE token implementation ...");
+  console.log("declaring rewAAVE token class hash ...");
   rewAAVEImplHash = await deployer.declare(rewAAVEFactory, { maxFee: maxFee });
 
   fs.writeFileSync(
@@ -134,8 +137,8 @@ export async function deployL2rewAAVE(
     rewAAVE,
     "initialize_rewAAVE",
     {
-      name: stringToBigInt(name),
-      symbol: stringToBigInt(symbol),
+      name: encodeShortString(name),
+      symbol: encodeShortString(symbol),
       decimals: decimals,
       initial_supply: initial_supply,
       recipient: BigInt(deployer.starknetContract.address),
@@ -144,12 +147,4 @@ export async function deployL2rewAAVE(
     { maxFee: maxFee }
   );
   return rewAAVEProxy;
-}
-
-function stringToBigInt(str: string) {
-  var result = "";
-  for (var i = 0; i < str.length; i++) {
-    result += str.charCodeAt(i).toString(16);
-  }
-  return BigInt(parseInt(result, 16));
 }

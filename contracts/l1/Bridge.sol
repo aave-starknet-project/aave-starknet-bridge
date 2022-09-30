@@ -257,7 +257,8 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256[] calldata ceilings
     ) internal {
         require(
-            l1Tokens.length == l2Tokens.length,
+            l1Tokens.length == l2Tokens.length &&
+                l1Tokens.length == ceilings.length,
             Errors.B_MISMATCHING_ARRAYS_LENGTH
         );
         for (uint256 i = 0; i < l1Tokens.length; i++) {

@@ -1,8 +1,6 @@
 import {
-  INCENTIVES_CONTROLLER_GOERLI,
-  STARKNET_MESSAGING_CONTRACT_GOERLI,
-  STARKNET_MESSAGING_CONTRACT,
-  INCENTIVES_CONTROLLER,
+  STARKNET_MESSAGING_CONTRACT_MAINNET,
+  INCENTIVES_CONTROLLER_MAINNET,
 } from "./../constants/addresses";
 import {
   allowlistedATokensAddresses,
@@ -30,7 +28,9 @@ async function deployAll() {
     let staticATokensAddresses: BigInt[];
 
     if (!L2_DEPLOYER_PRIVATE_KEY || !L2_DEPLOYER_ADDRESS) {
-      throw new Error("Please set your private keys in your .env file");
+      throw new Error(
+        "Please set your L2 deployer private key & address in your .env file"
+      );
     }
 
     l2deployer = await starknet.getAccountFromAddress(
@@ -122,8 +122,8 @@ async function deployAll() {
     const l1Bridge = await deployL1Bridge(
       l1deployer,
       l2Bridge.address,
-      STARKNET_MESSAGING_CONTRACT,
-      INCENTIVES_CONTROLLER,
+      STARKNET_MESSAGING_CONTRACT_MAINNET,
+      INCENTIVES_CONTROLLER_MAINNET,
       l1deployer.address, // proxy admin
       allowlistedATokensAddresses, // l1 aTokens to be approved
       staticATokensAddresses // l2 staticAtokens to be approved

@@ -1,7 +1,4 @@
-import {
-  TRANSPARENT_PROXY_FACTORY,
-  TRANSPARENT_PROXY_FACTORY_GOERLI,
-} from "./../constants/addresses";
+import { TRANSPARENT_PROXY_FACTORY_MAINNET } from "./../constants/addresses";
 import {
   StarknetContract,
   StarknetContractFactory,
@@ -118,7 +115,7 @@ export async function deployL1Bridge(
 
     const proxyFactory = await ethers.getContractAt(
       "ITransparentProxyFactory",
-      TRANSPARENT_PROXY_FACTORY,
+      TRANSPARENT_PROXY_FACTORY_MAINNET,
       signer
     );
 

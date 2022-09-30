@@ -32,7 +32,7 @@ interface IBridge {
         address recipient,
         uint256 amount
     );
-    event ApprovedBridge(address l1Token, uint256 l2Token);
+    event ApprovedBridge(address l1Token, uint256 l2Token, uint256 ceiling);
     event L2StateUpdated(address indexed l1Token, uint256 rewardsIndex);
 
     event StartedDepositCancellation(

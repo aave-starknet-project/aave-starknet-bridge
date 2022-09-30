@@ -303,7 +303,7 @@ contract Bridge is IBridge, VersionedInitializable {
             ceiling
         );
         _approvedL1Tokens.push(l1AToken);
-        emit ApprovedBridge(l1AToken, l2Token);
+        emit ApprovedBridge(l1AToken, l2Token, ceiling);
     }
 
     function _sendDepositMessage(

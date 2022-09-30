@@ -478,7 +478,7 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 rewardsIndex,
         uint256 blockNumber,
         uint256 nonce
-    ) external {
+    ) external onlyValidL2Address(l2Recipient) {
         uint256[] memory payload = new uint256[](9);
         payload[0] = uint256(uint160(msg.sender));
         payload[1] = l2Recipient;
@@ -509,7 +509,7 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 rewardsIndex,
         uint256 blockNumber,
         uint256 nonce
-    ) external {
+    ) external onlyValidL2Address(l2Recipient) {
         uint256[] memory payload = new uint256[](9);
         payload[0] = uint256(uint160(msg.sender));
         payload[1] = l2Recipient;

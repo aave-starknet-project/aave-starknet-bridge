@@ -31,7 +31,7 @@ jobs:
         python-version: ["3.9.0"] # Cairo was tested with this version
         node-version: ["16"]
     env:
-      CI: true
+      L2_NETWORK: "l2_testnet"
     steps:
       - uses: actions/checkout@v3
 

@@ -63,10 +63,28 @@ async function deployAll() {
       })
     );
 
+    console.log("Deploying L2 governance relay...");
+    let futureL1GovRelayAddress = await getAddressOfNextDeployedContract(
+      l1deployer
+    );
+    l2GovRelay = await deployL2GovernanceRelay(futureL1GovRelayAddress);
+
+    console.log("Deploying L1 governance relay...");
+
+    l1GovRelay = await deployL1GovernanceRelay(
+      l1deployer,
+      STARKNET_MESSAGING_CONTRACT_MAINNET,
+      l2GovRelay.address
+    );
+    console.log(
+      "To verify L1 governance relay contract: npx hardhat verify --network mainnet ",
+      l1GovRelay.address
+    );
+
     //deploy L2 token bridge
     const l2Bridge = await deployL2Bridge(
       l2deployer,
-      BigInt(l2deployer.starknetContract.address),
+      BigInt(l2GovRelay.address),
       maxFee
     );
 
@@ -123,24 +141,6 @@ async function deployAll() {
       l1deployer.address, // proxy admin
       allowlistedATokensAddresses, // l1 aTokens to be approved
       staticATokensAddresses // l2 staticAtokens to be approved
-    );
-
-    console.log("Deploying L2 governance relay...");
-    let futureL1GovRelayAddress = await getAddressOfNextDeployedContract(
-      l1deployer
-    );
-    l2GovRelay = await deployL2GovernanceRelay(futureL1GovRelayAddress);
-
-    console.log("Deploying L1 governance relay...");
-
-    l1GovRelay = await deployL1GovernanceRelay(
-      l1deployer,
-      STARKNET_MESSAGING_CONTRACT_MAINNET,
-      l2GovRelay.address
-    );
-    console.log(
-      "To verify L1 governance relay contract: npx hardhat verify --network mainnet ",
-      l1GovRelay.address
     );
 
     console.log("setting l1 bridge address on l2 bridge...");

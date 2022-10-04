@@ -1,4 +1,8 @@
 import {
+  STARKNET_MESSAGING_CONTRACT_MAINNET,
+  INCENTIVES_CONTROLLER_MAINNET,
+} from "./../constants/addresses";
+import {
   allowlistedATokensAddresses,
   allowlistedStaticATokensData,
   ceilings,
@@ -9,10 +13,12 @@ import { deployStaticAToken, deployL2rewAAVE } from "./deployTokens";
 import { deployL1Bridge, deployL2Bridge } from "./deployBridge";
 import { starknet, ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import {
-  STARKNET_MESSAGING_CONTRACT,
-  INCENTIVES_CONTROLLER,
-} from "../constants/addresses";
+import { config as dotenvConfig } from "dotenv";
+import { resolve } from "path";
+
+dotenvConfig({ path: resolve(__dirname, "./.env") });
+
+const { L2_DEPLOYER_PRIVATE_KEY, L2_DEPLOYER_ADDRESS } = process.env;
 
 const maxFee = 1e18;
 
@@ -22,8 +28,19 @@ async function deployAll() {
     let l1deployer: SignerWithAddress;
     let staticATokensAddresses: BigInt[];
 
+    if (!L2_DEPLOYER_PRIVATE_KEY || !L2_DEPLOYER_ADDRESS) {
+      throw new Error(
+        "Please set your L2 deployer private key & address in your .env file"
+      );
+    }
+
+    l2deployer = await starknet.getAccountFromAddress(
+      L2_DEPLOYER_ADDRESS,
+      L2_DEPLOYER_PRIVATE_KEY,
+      "OpenZeppelin"
+    );
+
     [l1deployer] = await ethers.getSigners();
-    l2deployer = await starknet.deployAccount("OpenZeppelin");
 
     if (!fs.existsSync("./deployment")) {
       fs.mkdirSync("./deployment");
@@ -88,17 +105,32 @@ async function deployAll() {
       });
     }
 
+    console.log("Approving bridges on L2....");
+
+    for (let i = 0; i < allowlistedATokensAddresses.length; i++) {
+      await l2deployer.invoke(
+        l2Bridge,
+        "approve_bridge",
+        {
+          l1_token: allowlistedATokensAddresses[i],
+          l2_token: staticATokensAddresses[i],
+        },
+        { maxFee: maxFee }
+      );
+    }
+
     console.log("Deploying L1 token bridge...");
     const l1Bridge = await deployL1Bridge(
       l1deployer,
       l2Bridge.address,
-      STARKNET_MESSAGING_CONTRACT,
-      INCENTIVES_CONTROLLER,
-      l1deployer.address, // @TBD: proxy admin
+      STARKNET_MESSAGING_CONTRACT_MAINNET,
+      INCENTIVES_CONTROLLER_MAINNET,
+      l1deployer.address, // proxy admin
       allowlistedATokensAddresses, // l1 aTokens to be approved
       staticATokensAddresses, // l2 static_a_tokens to be approved
       ceilings // Array containing a ceiling for each aToken
     );
+
     console.log("setting l1 bridge address on l2 bridge...");
     if (l1Bridge) {
       await l2deployer.invoke(

@@ -2,7 +2,7 @@ import {
   A_DAI,
   A_USDC,
   STKAAVE_WHALE,
-  INCENTIVES_CONTROLLER,
+  INCENTIVES_CONTROLLER_MAINNET,
   LENDING_POOL,
   DAI_WHALE,
   USDC_WHALE,
@@ -177,7 +177,7 @@ describe("Bridge", async function () {
     pool = await ethers.getContractAt("LendingPool", LENDING_POOL);
     incentives = await ethers.getContractAt(
       "IncentivesControllerMock",
-      INCENTIVES_CONTROLLER
+      INCENTIVES_CONTROLLER_MAINNET
     );
 
     aDai = await ethers.getContractAt("AToken", A_DAI);
@@ -333,7 +333,7 @@ describe("Bridge", async function () {
     let encodedInitializedParams = iface.encodeFunctionData("initialize", [
       l2BridgeProxy.address,
       mockStarknetMessagingAddress,
-      INCENTIVES_CONTROLLER,
+      INCENTIVES_CONTROLLER_MAINNET,
       [aDai.address, aUsdc.address],
       [l2StaticADai.address, l2StaticAUsdc.address],
     ]);

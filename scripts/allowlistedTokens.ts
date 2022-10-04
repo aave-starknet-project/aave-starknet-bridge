@@ -5,6 +5,6 @@ export const allowlistedStaticATokensData = [
 ];
 //Stores addresesses of allowlisted aTokens to be approved on the l1 bridge at initialization
 export const allowlistedATokensAddresses = [
-  "0xafa88d6c6cd4f16e9fe2827178c59f37bd387b59", //aDai token on Goerli
-  "0x935c0f6019b05c787573b5e6176681282a3f3e05", //aUsdc token on Goerli
+  "0x028171bCA77440897B824Ca71D1c56caC55b68A3", //aDai token on mainnet
+  "0xBcca60bB61934080951369a648Fb03DF4F96263C", //aUsdc token on mainnet
 ];

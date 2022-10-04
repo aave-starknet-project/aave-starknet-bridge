@@ -53,7 +53,7 @@ const config: HardhatUserConfig = {
   },
   starknet: {
     venv: ".venv",
-    network: "l2_testnet",
+    network: process.env.CI ? "l2_testnet" : process.env.STARKNET_NETWORK,
     wallets: {
       OpenZeppelin: {
         accountName: "OpenZeppelin",

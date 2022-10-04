@@ -1,4 +1,6 @@
 import { expect } from "chai";
+import { Signer } from "ethers";
+import { getContractAddress } from "ethers/lib/utils";
 
 /**
  * Receives a hex address, converts it to bigint, converts it back to hex.
@@ -52,4 +54,14 @@ export function getEventTopic(receipt: any, eventName: string, index: number) {
   return receipt.events.find((event: any) => event.event === eventName).args[
     index
   ];
+}
+
+export async function getAddressOfNextDeployedContract(
+  signer: Signer,
+  offset: number = 0
+): Promise<string> {
+  return getContractAddress({
+    from: await signer.getAddress(),
+    nonce: (await signer.getTransactionCount()) + offset,
+  });
 }

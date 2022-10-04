@@ -6,7 +6,7 @@ import {
 } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import fs from "fs";
-import { Contract, ContractFactory } from "ethers";
+import { Contract, ContractFactory, Signer } from "ethers";
 import { starknet, ethers } from "hardhat";
 import { getEventTopic } from "../test/utils";
 
@@ -150,4 +150,66 @@ export async function deployL1Bridge(
   } catch (error) {
     console.log(error);
   }
+}
+
+/**
+ * deploys and initializes the l2 governance relay
+ * @param l1GovRelay address
+
+ */
+export async function deployL2GovernanceRelay(l1GovRelay: string) {
+  let l2GovRelayFactory: StarknetContractFactory;
+  let l2GovRelay: StarknetContract;
+
+  l2GovRelayFactory = await starknet.getContractFactory("l2_governance_relay");
+
+  l2GovRelay = await l2GovRelayFactory.deploy({
+    l1_governance_relay: BigInt(l1GovRelay),
+  });
+
+  return l2GovRelay;
+}
+
+/**
+ * deploys and initializes the l2 governance relay
+ * @param signer
+ * @param starknetMessagingContract address
+ * @param l2GovRelay address
+ */
+export async function deployL1GovernanceRelay(
+  signer: SignerWithAddress,
+  starknetMessagingContract: string,
+  l2GovRelay: string
+) {
+  let l1GovRelayeFactory: ContractFactory;
+  let l1GovRelay: Contract;
+
+  l1GovRelayeFactory = await ethers.getContractFactory(
+    "L1GovernanceRelay",
+    signer
+  );
+
+  console.log("Deploying L1GovernanceRelay contract ...");
+  l1GovRelay = await l1GovRelayeFactory.deploy(
+    starknetMessagingContract,
+    l2GovRelay
+  );
+
+  return l1GovRelay;
+}
+
+/**
+ * deploys a given spell contract
+ * @param l1GovRelay address
+
+ */
+export async function deploySpellContract(path: string) {
+  let spell: StarknetContract;
+  let spellFactory: StarknetContractFactory;
+
+  spellFactory = await starknet.getContractFactory(path);
+
+  spell = await spellFactory.deploy();
+
+  return spell;
 }

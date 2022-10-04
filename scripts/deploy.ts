@@ -1,3 +1,4 @@
+import { Contract } from "ethers";
 import {
   STARKNET_MESSAGING_CONTRACT_MAINNET,
   INCENTIVES_CONTROLLER_MAINNET,
@@ -6,14 +7,21 @@ import {
   allowlistedATokensAddresses,
   allowlistedStaticATokensData,
 } from "./allowlistedTokens";
-import { Account } from "hardhat/types";
+import { Account, StarknetContract } from "hardhat/types";
 import fs from "fs";
 import { deployStaticAToken, deployL2rewAAVE } from "./deployTokens";
-import { deployL1Bridge, deployL2Bridge } from "./deployBridge";
+import {
+  deployL1Bridge,
+  deployL1GovernanceRelay,
+  deployL2Bridge,
+  deployL2GovernanceRelay,
+  deploySpellContract,
+} from "./deployBridge";
 import { starknet, ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { config as dotenvConfig } from "dotenv";
 import { resolve } from "path";
+import { getAddressOfNextDeployedContract } from "../test/utils";
 
 dotenvConfig({ path: resolve(__dirname, "./.env") });
 
@@ -26,6 +34,8 @@ async function deployAll() {
     let l2deployer: Account;
     let l1deployer: SignerWithAddress;
     let staticATokensAddresses: BigInt[];
+    let l2GovRelay: StarknetContract;
+    let l1GovRelay: Contract;
 
     if (!L2_DEPLOYER_PRIVATE_KEY || !L2_DEPLOYER_ADDRESS) {
       throw new Error(
@@ -104,20 +114,6 @@ async function deployAll() {
       });
     }
 
-    console.log("Approving bridges on L2....");
-
-    for (let i = 0; i < allowlistedATokensAddresses.length; i++) {
-      await l2deployer.invoke(
-        l2Bridge,
-        "approve_bridge",
-        {
-          l1_token: allowlistedATokensAddresses[i],
-          l2_token: staticATokensAddresses[i],
-        },
-        { maxFee: maxFee }
-      );
-    }
-
     console.log("Deploying L1 token bridge...");
     const l1Bridge = await deployL1Bridge(
       l1deployer,
@@ -127,6 +123,24 @@ async function deployAll() {
       l1deployer.address, // proxy admin
       allowlistedATokensAddresses, // l1 aTokens to be approved
       staticATokensAddresses // l2 staticAtokens to be approved
+    );
+
+    console.log("Deploying L2 governance relay...");
+    let futureL1GovRelayAddress = await getAddressOfNextDeployedContract(
+      l1deployer
+    );
+    l2GovRelay = await deployL2GovernanceRelay(futureL1GovRelayAddress);
+
+    console.log("Deploying L1 governance relay...");
+
+    l1GovRelay = await deployL1GovernanceRelay(
+      l1deployer,
+      STARKNET_MESSAGING_CONTRACT_MAINNET,
+      l2GovRelay.address
+    );
+    console.log(
+      "To verify L1 governance relay contract: npx hardhat verify --network mainnet ",
+      l1GovRelay.address
     );
 
     console.log("setting l1 bridge address on l2 bridge...");
@@ -140,7 +154,14 @@ async function deployAll() {
         { maxFee: maxFee }
       );
     }
-    console.log("deployed successfully");
+
+    console.log("Relay initialization spell to L2...");
+
+    let spell = await deploySpellContract("initialize_bridge");
+
+    await l1GovRelay.relay(BigInt(spell.address));
+
+    console.log("deployed successfully!");
 
     process.exit();
   } catch (error) {

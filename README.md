@@ -17,6 +17,8 @@
     - [More about static_a_token on L2](#more-about-static_a_token-on-l2)
     - [Proxies](#proxies)
     - [Governance](#governance)
+      - [Control](#control)
+      - [Governance relayers](#governance-relayers)
   - [How it works](#how-it-works)
     - [Bridging aTokens from L1 to L2](#bridging-atokens-from-l1-to-l2)
     - [Synchronisation of rewards index on L1 and L2](#synchronisation-of-rewards-index-on-l1-and-l2)
@@ -79,8 +81,18 @@ Each of the following contracts is deployed behind a proxy:
 
 ### Governance
 
+<a name="control"></a>
+**Control**
+
 - `static_a_token` deployed contracts are controlled by L2 `bridge`.
-- `rewAAVE` token is owned by L2 `bridge`.
+- `rewAAVE` token is controlled by L2 `bridge`.
+
+<a name="governance-relayers"></a>
+**Governance relayers**
+
+- We rely on L1 -> L2 governance relayers to execute on L2 actions that have been decided on L1. In practice, we use two contracts from [StarkNet DAI Bridge](https://github.com/makerdao/starknet-dai-bridge):
+  - `contracts/l1/governance/L1GovernanceRelay.sol`: It contains a single function named `relay` that sends a message to execute a function `relay` of the contract `l2_governance_relay` with an input address.
+  - `contracts/l2/governance/l2_governance_relay.cairo`: It contains a single L1 handler named `relay` as well that takes an address as argument, checks the origin of the call and executes the function `delegate_execute` of the contract that correspond to the input address.
 
 ## How it works
 

@@ -52,7 +52,7 @@ describe("Governance", async function () {
   let originalBytecode = JSON.stringify(spellBytecode, null, 2);
 
   let userBalance: any;
-  let ownerResponse: any;
+  let tokenOwner: any;
 
   before(async function () {
     // load L1 <--> L2 messaging contract
@@ -141,8 +141,8 @@ describe("Governance", async function () {
       },
     });
 
-    ownerResponse = await l2rewAAVE.call("owner", {});
-    expect(ownerResponse).to.deep.equal({
+    tokenOwner = await l2rewAAVE.call("owner", {});
+    expect(tokenOwner).to.deep.equal({
       owner: 0n,
     });
   });
@@ -164,7 +164,7 @@ describe("Governance", async function () {
     );
   });
 
-  it("Check that spell worked correctly", async () => {
+  it("Check that spell was executed correctly", async () => {
     userBalance = await l2rewAAVE.call("balanceOf", {
       account: BigInt(l2user.address),
     });
@@ -175,8 +175,8 @@ describe("Governance", async function () {
       },
     });
 
-    ownerResponse = await l2rewAAVE.call("owner", {});
-    expect(ownerResponse).to.deep.equal({
+    tokenOwner = await l2rewAAVE.call("owner", {});
+    expect(tokenOwner).to.deep.equal({
       owner: BigInt(l2owner.address),
     });
   });

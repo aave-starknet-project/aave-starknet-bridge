@@ -27,7 +27,7 @@ jobs:
             "proxy.test.ts",
             "bridge.test.ts",
             "wad_ray_math.test.ts",
-            "governance-simple.test.ts",
+            "governance-relay.test.ts",
           ]
         python-version: ["3.9.0"] # Cairo was tested with this version
         node-version: ["16"]

@@ -43,7 +43,8 @@ We assume that L1 tokens approved by the bridge are pre-validated tokens, and th
 
 ## Architecture
 
-![aave_bridge](https://user-images.githubusercontent.com/37840702/167398308-3b7145f0-20e3-4f35-8b0b-17d52285595a.png)
+![starknet-aave-bridge](https://user-images.githubusercontent.com/37840702/194031453-c6d3cada-a80d-49e0-bda6-1842ecd97b94.png)
+
 
 ## Contracts
 

@@ -91,8 +91,8 @@ Each of the following contracts is deployed behind a proxy:
 **Governance relayers**
 
 - We rely on L1 -> L2 governance relayers to execute on L2 actions that have been decided on L1. In practice, we use two L1 contracts from Aave and one L2 contract from [StarkNet DAI Bridge](https://github.com/makerdao/starknet-dai-bridge):
-  - `contracts/l1/governance/Executor.sol`: It corresponds to [Aave Short Executor](https://docs.aave.com/developers/v/2.0/protocol-governance/governance#short-time-lock-executor) whose goal is to execute payload that have been previously accepted by the DAO after a vote. One first need to queue the transaction to execute, and execute it after waiting enough time.
-  - `contracts/l1/governance/CrosschainForwarderStarknet.sol`: It contains a single function named `execute` that sends a message to execute a function `relay` of the contract `l2_governance_relay` with an input address.
+  - `contracts/l1/governance/Executor.sol`: It corresponds to [Aave Short Executor](https://docs.aave.com/developers/v/2.0/protocol-governance/governance#short-time-lock-executor) whose goal is to execute payload that have been previously accepted by the DAO after a vote. One first need to queue the transaction to execute, and execute it after waiting enough time. Its code has been taken from Etherscan: [link](https://etherscan.io/address/0xee56e2b3d491590b5b31738cc34d5232f378a8d5#code).
+  - `contracts/l1/governance/CrosschainForwarderStarknet.sol`: It contains a single function named `execute` that sends a message to execute a function `relay` of the contract `l2_governance_relay` with an input address. It has been adapted from [the one used for Polygon](https://github.com/bgd-labs/aave-v3-crosschain-listing-template/blob/master/src/contracts/polygon/CrosschainForwarderPolygon.sol).
   - `contracts/l2/governance/l2_governance_relay.cairo`: It contains a single L1 handler named `relay` as well that takes an address as argument, checks the origin of the call and executes the function `delegate_execute` of the contract that correspond to the input address.
 
 ## How it works

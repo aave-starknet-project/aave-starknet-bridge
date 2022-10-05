@@ -45,7 +45,6 @@ We assume that L1 tokens approved by the bridge are pre-validated tokens, and th
 
 ![starknet-aave-bridge](https://user-images.githubusercontent.com/37840702/194031453-c6d3cada-a80d-49e0-bda6-1842ecd97b94.png)
 
-
 ## Contracts
 
 ### Overview
@@ -91,8 +90,9 @@ Each of the following contracts is deployed behind a proxy:
 <a name="governance-relayers"></a>
 **Governance relayers**
 
-- We rely on L1 -> L2 governance relayers to execute on L2 actions that have been decided on L1. In practice, we use two contracts from [StarkNet DAI Bridge](https://github.com/makerdao/starknet-dai-bridge):
-  - `contracts/l1/governance/L1GovernanceRelay.sol`: It contains a single function named `relay` that sends a message to execute a function `relay` of the contract `l2_governance_relay` with an input address.
+- We rely on L1 -> L2 governance relayers to execute on L2 actions that have been decided on L1. In practice, we use two L1 contracts from Aave and one L2 contract from [StarkNet DAI Bridge](https://github.com/makerdao/starknet-dai-bridge):
+  - `contracts/l1/governance/Executor.sol`: It corresponds to [Aave Short Executor](https://docs.aave.com/developers/v/2.0/protocol-governance/governance#short-time-lock-executor) whose goal is to execute payload that have been previously accepted by the DAO after a vote. One first need to queue the transaction to execute, and execute it after waiting enough time.
+  - `contracts/l1/governance/CrosschainForwarderStarknet.sol`: It contains a single function named `execute` that sends a message to execute a function `relay` of the contract `l2_governance_relay` with an input address.
   - `contracts/l2/governance/l2_governance_relay.cairo`: It contains a single L1 handler named `relay` as well that takes an address as argument, checks the origin of the call and executes the function `delegate_execute` of the contract that correspond to the input address.
 
 ## How it works

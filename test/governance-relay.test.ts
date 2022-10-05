@@ -29,11 +29,12 @@ describe("Governance", async function () {
     "http://localhost:8545";
 
   let starknetMessagingAddress: string;
-  let futureL1GovRelayAddress: string;
+  let futurel1ExecutorAddress: string;
 
   let l2GovRelayFactory: StarknetContractFactory;
   let l2SpellFactory: StarknetContractFactory;
-  let l1GovRelayFactory: ContractFactory;
+  let l1ExecutorFactory: ContractFactory;
+  let l1ForwarderStarknetFactory: ContractFactory;
 
   let l1deployer: SignerWithAddress;
   let l2owner: Account;
@@ -41,7 +42,8 @@ describe("Governance", async function () {
 
   let l2GovRelay: StarknetContract;
   let l2Spell: StarknetContract;
-  let l1GovRelay: Contract;
+  let l1Executor: Contract;
+  let l1ForwarderStarknet: Contract;
 
   let l2rewAAVE: StarknetContract;
 
@@ -53,6 +55,7 @@ describe("Governance", async function () {
 
   let userBalance: any;
   let tokenOwner: any;
+  let provider: any;
 
   before(async function () {
     // load L1 <--> L2 messaging contract
@@ -60,6 +63,8 @@ describe("Governance", async function () {
     starknetMessagingAddress = (
       await starknet.devnet.loadL1MessagingContract(networkUrl)
     ).address;
+
+    provider = new ethers.providers.JsonRpcProvider(networkUrl);
 
     // accounts
     [l1deployer] = await ethers.getSigners();
@@ -71,11 +76,11 @@ describe("Governance", async function () {
     l2GovRelayFactory = await starknet.getContractFactory(
       "l2/governance/l2_governance_relay"
     );
-    futureL1GovRelayAddress = await getAddressOfNextDeployedContract(
+    futurel1ExecutorAddress = await getAddressOfNextDeployedContract(
       l1deployer
     );
     l2GovRelay = await l2GovRelayFactory.deploy({
-      l1_governance_relay: futureL1GovRelayAddress,
+      l1_governance_relay: futurel1ExecutorAddress,
     });
     const l2rewAaveContractFactory = await starknet.getContractFactory(
       "l2/tokens/rewAAVE"
@@ -84,11 +89,24 @@ describe("Governance", async function () {
 
     // L1 deployments
 
-    l1GovRelayFactory = await ethers.getContractFactory(
-      "L1GovernanceRelay",
+    l1ExecutorFactory = await ethers.getContractFactory("Executor", l1deployer);
+    l1Executor = await l1ExecutorFactory.deploy(
+      l1deployer.address,
+      10_000,
+      100_000,
+      0,
+      50_000,
+      1,
+      10_000,
+      10_000,
+      1
+    );
+
+    l1ForwarderStarknetFactory = await ethers.getContractFactory(
+      "CrosschainForwarderStarknet",
       l1deployer
     );
-    l1GovRelay = await l1GovRelayFactory.deploy(
+    l1ForwarderStarknet = await l1ForwarderStarknetFactory.deploy(
       starknetMessagingAddress,
       BigInt(l2GovRelay.address)
     );
@@ -148,7 +166,33 @@ describe("Governance", async function () {
   });
 
   it("Send message from L1 to execute the spell", async () => {
-    await l1GovRelay.relay(BigInt(l2Spell.address));
+    const executionTime = (await provider.getBlock()).timestamp + 15_000;
+
+    // build calldata
+    let ABI = ["function execute(uint256 spell)"];
+    let iface = new ethers.utils.Interface(ABI);
+    const calldata = iface.encodeFunctionData("execute", [l2Spell.address]);
+
+    await l1Executor.queueTransaction(
+      l1ForwarderStarknet.address,
+      0,
+      "",
+      calldata,
+      executionTime,
+      true
+    );
+
+    await provider.send("evm_increaseTime", [100_000]);
+    await provider.send("evm_mine");
+
+    await l1Executor.executeTransaction(
+      l1ForwarderStarknet.address,
+      0,
+      "",
+      calldata,
+      executionTime,
+      true
+    );
 
     const flushL1Response = await starknet.devnet.flush();
     const flushL1Messages = flushL1Response.consumed_messages.from_l1;
@@ -156,7 +200,7 @@ describe("Governance", async function () {
     expect(flushL1Messages).to.have.a.lengthOf(1);
     expectAddressEquality(
       flushL1Messages[0].args.from_address,
-      l1GovRelay.address
+      l1Executor.address
     );
     expectAddressEquality(
       flushL1Messages[0].args.to_address,

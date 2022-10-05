@@ -8,6 +8,8 @@ namespace IBridge {
     }
     func set_reward_token(token: felt) {
     }
+    func set_l1_bridge(l1_bridge_address: felt) {
+    }
 }
 
 @external
@@ -18,6 +20,11 @@ func delegate_execute{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_chec
         36229391819238658882307452945781703754148534690914245953925729426,
     );
 
+   // set l1 bridge address
+    IBridge.set_l1_bridge(
+        616038737919804257622296331779828103514405540562094387886677307231715823174,
+        09622939181934005888230745294578333754148534690914245953925099449,
+    );
     // approve aDai<->staticADai bridge
     IBridge.approve_bridge(
         61603873791980425762229633177982810351440554056209438788667730723171582317,

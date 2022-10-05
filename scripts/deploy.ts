@@ -12,7 +12,7 @@ import fs from "fs";
 import { deployStaticAToken, deployL2rewAAVE } from "./deployTokens";
 import {
   deployL1Bridge,
-  deployL1GovernanceRelay,
+  deployL1ForwarderStarknet,
   deployL2Bridge,
   deployL2GovernanceRelay,
   deploySpellContract,
@@ -35,7 +35,7 @@ async function deployAll() {
     let l1deployer: SignerWithAddress;
     let staticATokensAddresses: BigInt[];
     let l2GovRelay: StarknetContract;
-    let l1GovRelay: Contract;
+    let l1ForwarderStarknet: Contract;
 
     if (!L2_DEPLOYER_PRIVATE_KEY || !L2_DEPLOYER_ADDRESS) {
       throw new Error(
@@ -64,51 +64,42 @@ async function deployAll() {
     );
 
     console.log("Deploying L2 governance relay...");
-    let futureL1GovRelayAddress = await getAddressOfNextDeployedContract(
-      l1deployer
+    let futureL1StarknetForwarderAddress =
+      await getAddressOfNextDeployedContract(l1deployer);
+    l2GovRelay = await deployL2GovernanceRelay(
+      futureL1StarknetForwarderAddress
     );
-    l2GovRelay = await deployL2GovernanceRelay(futureL1GovRelayAddress);
 
     console.log("Deploying L1 governance relay...");
 
-    l1GovRelay = await deployL1GovernanceRelay(
+    l1ForwarderStarknet = await deployL1ForwarderStarknet(
       l1deployer,
       STARKNET_MESSAGING_CONTRACT_MAINNET,
       l2GovRelay.address
     );
     console.log(
-      "To verify L1 governance relay contract: npx hardhat verify --network mainnet ",
-      l1GovRelay.address
+      "To verify L1 ForwarderStarknet contract: npx hardhat verify --network mainnet ",
+      l1ForwarderStarknet.address
     );
 
     //deploy L2 token bridge
     const l2Bridge = await deployL2Bridge(
       l2deployer,
+      BigInt(l2deployer.starknetContract.address),
       BigInt(l2GovRelay.address),
       maxFee
     );
 
     //deploy rewAAVE token on L2
-    const l2rewAAVE = await deployL2rewAAVE(
+    await deployL2rewAAVE(
       l2deployer,
       "rewAAVE Token",
       "rewAAVE",
       18n,
       { high: 0n, low: 0n },
       BigInt(l2Bridge.address),
+      BigInt(l2GovRelay.address),
       maxFee
-    );
-
-    console.log("setting reward token on L2 token bridge...");
-
-    //set rewAAVE on L2 token bridge
-    await l2deployer.invoke(
-      l2Bridge,
-      "set_reward_token",
-      {
-        reward_token: BigInt(l2rewAAVE.address),
-      },
-      { maxFee: maxFee }
     );
 
     if (!fs.existsSync("./deployment/staticATokens")) {
@@ -126,6 +117,7 @@ async function deployAll() {
         { high: 0n, low: 0n }, //total supply of all staticATokens defaulted to zero
         BigInt(l2deployer.starknetContract.address), //proxy admin
         BigInt(l2Bridge.address),
+        BigInt(l2GovRelay.address),
         maxFee
       ).then((deployedTokenProxyAddress) => {
         staticATokensAddresses.push(deployedTokenProxyAddress);
@@ -133,7 +125,7 @@ async function deployAll() {
     }
 
     console.log("Deploying L1 token bridge...");
-    const l1Bridge = await deployL1Bridge(
+    await deployL1Bridge(
       l1deployer,
       l2Bridge.address,
       STARKNET_MESSAGING_CONTRACT_MAINNET,
@@ -143,23 +135,15 @@ async function deployAll() {
       staticATokensAddresses // l2 staticAtokens to be approved
     );
 
-    console.log("setting l1 bridge address on l2 bridge...");
-    if (l1Bridge) {
-      await l2deployer.invoke(
-        l2Bridge,
-        "set_l1_bridge",
-        {
-          l1_bridge_address: BigInt(l1Bridge.address),
-        },
-        { maxFee: maxFee }
-      );
-    }
-
     console.log("Relay initialization spell to L2...");
 
     let spell = await deploySpellContract("initialize_bridge");
 
-    await l1GovRelay.relay(BigInt(spell.address));
+    // build calldata
+    let ABI = ["function execute(uint256 spell)"];
+    let iface = new ethers.utils.Interface(ABI);
+    const calldata = iface.encodeFunctionData("execute", [spell.address]);
+    console.log("execute function calldata:", calldata);
 
     console.log("deployed successfully!");
 

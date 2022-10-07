@@ -22,7 +22,8 @@ export async function deployStaticAToken(
   decimals: bigint,
   initial_supply: { low: bigint; high: bigint },
   owner: bigint,
-  l2_bridge: bigint,
+  l2Bridge: bigint,
+  l2GovRelay: bigint,
   maxFee: number
 ): Promise<BigInt> {
   let proxyFactory: StarknetContractFactory;
@@ -55,6 +56,16 @@ export async function deployStaticAToken(
     },
     { maxFee: maxFee }
   );
+  console.log("updating proxy admin to the l2 governance relay contract");
+
+  await deployer.invoke(
+    staticATokenProxy,
+    "change_proxy_admin",
+    {
+      new_admin: l2GovRelay,
+    },
+    { maxFee: maxFee }
+  );
 
   fs.writeFileSync(
     `deployment/staticATokens/${name}.json`,
@@ -77,7 +88,7 @@ export async function deployStaticAToken(
       initial_supply: initial_supply,
       recipient: BigInt(deployer.starknetContract.address),
       owner: owner,
-      l2_bridge: l2_bridge,
+      l2_bridge: l2Bridge,
     },
     { maxFee: maxFee }
   );
@@ -92,6 +103,7 @@ export async function deployL2rewAAVE(
   decimals: bigint,
   initial_supply: { low: bigint; high: bigint },
   owner: bigint,
+  l2GovRelay: bigint,
   maxFee: number
 ) {
   let proxyFactory: StarknetContractFactory;
@@ -127,6 +139,17 @@ export async function deployL2rewAAVE(
     "set_implementation",
     {
       implementation_hash: BigInt(rewAAVEImplHash),
+    },
+    { maxFee: maxFee }
+  );
+
+  console.log("updating proxy admin to the l2 governance relay contract");
+
+  await deployer.invoke(
+    rewAAVEProxy,
+    "change_proxy_admin",
+    {
+      new_admin: l2GovRelay,
     },
     { maxFee: maxFee }
   );

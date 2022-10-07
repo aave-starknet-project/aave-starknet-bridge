@@ -18,6 +18,7 @@ import { getEventTopic } from "../test/utils";
 export async function deployL2Bridge(
   deployer: Account,
   proxyAdmin: bigint,
+  l2GovRelay: bigint,
   maxFee: number
 ) {
   let proxiedBridge: StarknetContract;
@@ -43,6 +44,16 @@ export async function deployL2Bridge(
     },
     { maxFee: maxFee }
   );
+  console.log("updating proxy admin to the l2 governance relay contract");
+
+  await deployer.invoke(
+    proxyBridge,
+    "change_proxy_admin",
+    {
+      new_admin: l2GovRelay,
+    },
+    { maxFee: maxFee }
+  );
 
   fs.writeFileSync(
     `deployment/L2Bridge.json`,
@@ -58,7 +69,7 @@ export async function deployL2Bridge(
     proxiedBridge,
     "initialize_bridge",
     {
-      governor_address: proxyAdmin,
+      governor_address: l2GovRelay,
     },
     { maxFee: maxFee }
   );
@@ -169,41 +180,51 @@ export async function deployL2GovernanceRelay(l1GovRelay: string) {
     l1_governance_relay: BigInt(l1GovRelay),
   });
 
+  fs.writeFileSync(
+    "deployment/L2GovRelay.json",
+    JSON.stringify({
+      l2GovRelay: l2GovRelay.address,
+    })
+  );
   return l2GovRelay;
 }
 
 /**
- * deploys and initializes the l2 governance relay
+ * deploys and initializes the L1 Forwarder Starknet
  * @param signer
  * @param starknetMessagingContract address
  * @param l2GovRelay address
  */
-export async function deployL1GovernanceRelay(
+export async function deployL1ForwarderStarknet(
   signer: SignerWithAddress,
   starknetMessagingContract: string,
   l2GovRelay: string
 ) {
-  let l1GovRelayeFactory: ContractFactory;
-  let l1GovRelay: Contract;
+  let l1ForwarderStarknetFactory: ContractFactory;
+  let l1ForwarderStarknet: Contract;
 
-  l1GovRelayeFactory = await ethers.getContractFactory(
-    "L1GovernanceRelay",
+  l1ForwarderStarknetFactory = await ethers.getContractFactory(
+    "CrosschainForwarderStarknet",
     signer
   );
 
-  console.log("Deploying L1GovernanceRelay contract ...");
-  l1GovRelay = await l1GovRelayeFactory.deploy(
+  console.log("Deploying l1ForwarderStarknet contract ...");
+  l1ForwarderStarknet = await l1ForwarderStarknetFactory.deploy(
     starknetMessagingContract,
     l2GovRelay
   );
 
-  return l1GovRelay;
+  fs.writeFileSync(
+    "deployment/L1ForwarderStarknet.json",
+    JSON.stringify({
+      l1ForwarderStarknet: l1ForwarderStarknet.address,
+    })
+  );
+  return l1ForwarderStarknet;
 }
 
 /**
  * deploys a given spell contract
- * @param l1GovRelay address
-
  */
 export async function deploySpellContract(path: string) {
   let spell: StarknetContract;
@@ -212,6 +233,13 @@ export async function deploySpellContract(path: string) {
   spellFactory = await starknet.getContractFactory(path);
 
   spell = await spellFactory.deploy();
+
+  fs.writeFileSync(
+    `deployment/spells/${path}.json`,
+    JSON.stringify({
+      spellContract: spell.address,
+    })
+  );
 
   return spell;
 }

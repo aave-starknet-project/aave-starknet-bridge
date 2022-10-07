@@ -257,7 +257,8 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256[] calldata ceilings
     ) internal {
         require(
-            l1Tokens.length == l2Tokens.length,
+            l1Tokens.length == l2Tokens.length &&
+                l1Tokens.length == ceilings.length,
             Errors.B_MISMATCHING_ARRAYS_LENGTH
         );
         for (uint256 i = 0; i < l1Tokens.length; i++) {
@@ -302,7 +303,7 @@ contract Bridge is IBridge, VersionedInitializable {
             ceiling
         );
         _approvedL1Tokens.push(l1AToken);
-        emit ApprovedBridge(l1AToken, l2Token);
+        emit ApprovedBridge(l1AToken, l2Token, ceiling);
     }
 
     function _sendDepositMessage(
@@ -477,7 +478,7 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 rewardsIndex,
         uint256 blockNumber,
         uint256 nonce
-    ) external {
+    ) external onlyValidL2Address(l2Recipient) {
         uint256[] memory payload = new uint256[](9);
         payload[0] = uint256(uint160(msg.sender));
         payload[1] = l2Recipient;
@@ -508,7 +509,7 @@ contract Bridge is IBridge, VersionedInitializable {
         uint256 rewardsIndex,
         uint256 blockNumber,
         uint256 nonce
-    ) external {
+    ) external onlyValidL2Address(l2Recipient) {
         uint256[] memory payload = new uint256[](9);
         payload[0] = uint256(uint160(msg.sender));
         payload[1] = l2Recipient;
@@ -547,6 +548,7 @@ contract Bridge is IBridge, VersionedInitializable {
 
         if (rewardsAmount > 0) {
             _transferRewards(msg.sender, rewardsAmount);
+            emit RewardsTransferred(_l2Bridge, msg.sender, rewardsAmount);
         }
 
         emit CancelledDeposit(

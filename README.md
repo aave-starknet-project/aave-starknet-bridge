@@ -43,8 +43,9 @@ The bridge is also shaped for liquidity providers who are able to assume the Eth
 We assume that L1 tokens approved by the bridge are pre-validated tokens, and that they are not deflationary.
 
 ## Architecture
+![aave_bridge](https://user-images.githubusercontent.com/37840702/194517164-1318dd83-8d7b-4dda-95da-4c6d802e0d0b.png)
 
-![starknet-aave-bridge](https://user-images.githubusercontent.com/37840702/194031453-c6d3cada-a80d-49e0-bda6-1842ecd97b94.png)
+
 
 ## Contracts
 

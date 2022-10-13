@@ -1,7 +1,7 @@
 import {
   A_DAI,
   STKAAVE_WHALE,
-  INCENTIVES_CONTROLLER,
+  INCENTIVES_CONTROLLER_MAINNET,
   LENDING_POOL,
   DAI_WHALE,
   EMISSION_MANAGER,
@@ -27,7 +27,7 @@ chai.use(solidity);
 const MAX_UINT256 = hre.ethers.constants.MaxInt256;
 
 // Amount of dai and usdc to transfer to the user. Issued twice for aDai and aUsdc
-const DAI_UNIT = 1000n * BigInt(10 ** 18);
+const DAI_UNIT = BigInt(10 ** 18);
 const daiAmount = 300n * DAI_UNIT;
 
 describe("AToken deposit cancellation", async function () {
@@ -102,7 +102,7 @@ describe("AToken deposit cancellation", async function () {
     l2user = await starknet.deployAccount("OpenZeppelin");
 
     l2BridgeFactory = await starknet.getContractFactory("bridge");
-    l2BridgeImplHash = await l2BridgeFactory.declare();
+    l2BridgeImplHash = await l2user.declare(l2BridgeFactory);
 
     l2ProxyFactory = await starknet.getContractFactory("l2/lib/proxy");
     l2BridgeProxy = await l2ProxyFactory.deploy({
@@ -115,7 +115,7 @@ describe("AToken deposit cancellation", async function () {
     const rewAaveContractFactory = await starknet.getContractFactory(
       "l2/tokens/rewAAVE"
     );
-    l2rewAAVEImplHash = await rewAaveContractFactory.declare();
+    l2rewAAVEImplHash = await l2user.declare(rewAaveContractFactory);
     l2rewAAVEProxy = await l2ProxyFactory.deploy({
       proxy_admin: BigInt(l2owner.starknetContract.address),
     });
@@ -135,7 +135,7 @@ describe("AToken deposit cancellation", async function () {
     });
 
     l2TokenFactory = await starknet.getContractFactory("static_a_token");
-    l2StaticADaiImplHash = await l2TokenFactory.declare();
+    l2StaticADaiImplHash = await l2user.declare(l2TokenFactory);
 
     // L1 deployments
 
@@ -144,7 +144,7 @@ describe("AToken deposit cancellation", async function () {
     pool = await ethers.getContractAt("LendingPool", LENDING_POOL);
     incentives = await ethers.getContractAt(
       "IncentivesControllerMock",
-      INCENTIVES_CONTROLLER
+      INCENTIVES_CONTROLLER_MAINNET
     );
 
     aDai = await ethers.getContractAt("AToken", A_DAI);
@@ -238,7 +238,7 @@ describe("AToken deposit cancellation", async function () {
     let encodedInitializedParams = iface.encodeFunctionData("initialize", [
       l2BridgeProxy.address,
       mockStarknetMessagingAddress,
-      INCENTIVES_CONTROLLER,
+      INCENTIVES_CONTROLLER_MAINNET,
       [aDai.address],
       [l2StaticADai.address],
       [MAX_UINT256],

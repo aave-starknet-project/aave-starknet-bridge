@@ -264,9 +264,9 @@ func approve_bridge{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_
 // @param l1_recipient Address of the L1 recipient of this withdrawal
 // @param amount Amount of L2 token to be withdrawn from L2 to L1
 @external
-func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    l2_token : felt, l1_recipient : felt, amount : Uint256, to_underlying_asset :felt
-){
+func initiate_withdraw{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    l2_token: felt, l1_recipient: felt, amount: Uint256, to_underlying_asset: felt
+) {
     assert_not_zero(l2_token);
 
     let (to_address) = get_l1_bridge();
@@ -283,14 +283,14 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
 
     // call burn on l2_token contract.
     let (caller_address) = get_caller_address();
-    
+
     // check input
     with_attr error_message("incorrect flag: value should be either 0 or 1") {
         assert to_underlying_asset * to_underlying_asset = to_underlying_asset;
     }
 
     // prepare l1 message
-    let (message_payload : felt*) = alloc();
+    let (message_payload: felt*) = alloc();
     assert message_payload[0] = WITHDRAW_MESSAGE;
     assert message_payload[1] = l1_token;
     assert message_payload[2] = caller_address;
@@ -301,10 +301,10 @@ func initiate_withdraw{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     assert message_payload[7] = current_rewards_index.wad.high;
     assert message_payload[8] = to_underlying_asset;
 
-    # burn static_a_tokens
+    // burn static_a_tokens
     IERC20.burn(contract_address=l2_token, account=caller_address, amount=amount);
 
-    # send witdraw message to l1
+    // send witdraw message to l1
     send_message_to_l1(to_address=to_address, payload_size=9, payload=message_payload);
 
     withdraw_initiated.emit(

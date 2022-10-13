@@ -17,6 +17,7 @@ const {
   HOSTNAME_L1,
   HOSTNAME_L2,
   ETHERSCAN_API_KEY,
+  L2_NETWORK,
 } = process.env;
 
 if (!PRIVATE_KEY || !ALCHEMY_KEY || !ETHERSCAN_API_KEY) {
@@ -53,7 +54,7 @@ const config: HardhatUserConfig = {
   },
   starknet: {
     venv: ".venv",
-    network: process.env.L2_NETWORK,
+    network: L2_NETWORK,
     wallets: {
       OpenZeppelin: {
         accountName: "OpenZeppelin",
@@ -65,7 +66,7 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      goerli: ETHERSCAN_API_KEY,
+      mainnet: ETHERSCAN_API_KEY,
     },
   },
   networks: {

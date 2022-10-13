@@ -30,11 +30,25 @@ export async function deployL2Bridge(
   proxyFactoryL2 = await starknet.getContractFactory("proxy");
 
   console.log("deploying L2 proxy bridge...");
-  proxyBridge = await proxyFactoryL2.deploy({
-    proxy_admin: proxyAdmin,
-  });
+  /* proxyBridge = await proxyFactoryL2.deploy(
+    {
+      proxy_admin: proxyAdmin,
+    },
+    {
+      token:
+        process.env.STARKNET_DEPLOYMENT_TOKEN,
+    }
+  ); */
+  proxyBridge = proxyFactoryL2.getContractAt(
+    "0x062bed29d0aa05c651f4465df72cc5b85bcedd8019f2dc06786fb32578ddc647"
+  );
+  console.log(proxyBridge.address, "the address of proxy");
 
-  bridgeImplHash = await deployer.declare(L2BridgeFactory, { maxFee: maxFee });
+  bridgeImplHash = await deployer.declare(L2BridgeFactory, {
+    maxFee: maxFee,
+    token: process.env.STARKNET_DEPLOYMENT_TOKEN,
+  });
+  console.log("bridge class hash: ", bridgeImplHash);
 
   await deployer.invoke(
     proxyBridge,
@@ -46,14 +60,14 @@ export async function deployL2Bridge(
   );
   console.log("updating proxy admin to the l2 governance relay contract");
 
-  await deployer.invoke(
+  /* await deployer.invoke(
     proxyBridge,
     "change_proxy_admin",
     {
       new_admin: l2GovRelay,
     },
     { maxFee: maxFee }
-  );
+  ); */
 
   fs.writeFileSync(
     `deployment/L2Bridge.json`,
@@ -121,9 +135,9 @@ export async function deployL1Bridge(
       BigInt(l2BridgeAddress),
       starknetMessagingAddress,
       incentivesController,
-      l1Tokens,
-      l2Tokens,
-      ceilings,
+      [],
+      [],
+      [],
     ]);
 
     const proxyFactory = await ethers.getContractAt(
@@ -176,9 +190,14 @@ export async function deployL2GovernanceRelay(l1GovRelay: string) {
 
   l2GovRelayFactory = await starknet.getContractFactory("l2_governance_relay");
 
-  l2GovRelay = await l2GovRelayFactory.deploy({
-    l1_governance_relay: BigInt(l1GovRelay),
-  });
+  l2GovRelay = await l2GovRelayFactory.deploy(
+    {
+      l1_governance_relay: BigInt(l1GovRelay),
+    },
+    {
+      token: process.env.STARKNET_DEPLOYMENT_TOKEN,
+    }
+  );
 
   fs.writeFileSync(
     "deployment/L2GovRelay.json",
@@ -232,7 +251,9 @@ export async function deploySpellContract(path: string) {
 
   spellFactory = await starknet.getContractFactory(path);
 
-  spell = await spellFactory.deploy();
+  spell = await spellFactory.deploy(undefined, {
+    token: process.env.STARKNET_DEPLOYMENT_TOKEN,
+  });
 
   fs.writeFileSync(
     `deployment/spells/${path}.json`,

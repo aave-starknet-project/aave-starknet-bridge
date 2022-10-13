@@ -28,7 +28,7 @@ dotenvConfig({ path: resolve(__dirname, "./.env") });
 
 const { L2_DEPLOYER_PRIVATE_KEY, L2_DEPLOYER_ADDRESS } = process.env;
 
-const maxFee = 1e18;
+const maxFee = 5e16;
 
 async function deployAll() {
   try {
@@ -51,6 +51,7 @@ async function deployAll() {
     );
 
     [l1deployer] = await ethers.getSigners();
+    //console.log(l1deployer);
 
     if (!fs.existsSync("./deployment")) {
       fs.mkdirSync("./deployment");
@@ -64,9 +65,13 @@ async function deployAll() {
       })
     );
 
-    console.log("Deploying L2 governance relay...");
-    let futureL1StarknetForwarderAddress =
+    //console.log("Deploying L2 governance relay...");
+    /* let futureL1StarknetForwarderAddress =
       await getAddressOfNextDeployedContract(l1deployer);
+    console.log(
+      "future l1 forwarder address:",
+      futureL1StarknetForwarderAddress
+    );
     l2GovRelay = await deployL2GovernanceRelay(
       futureL1StarknetForwarderAddress
     );
@@ -81,27 +86,35 @@ async function deployAll() {
     console.log(
       "To verify L1 ForwarderStarknet contract: npx hardhat verify --network mainnet ",
       l1ForwarderStarknet.address
+    ); */
+    const l2GovRelayFactory = await starknet.getContractFactory(
+      "l2_governance_relay"
+    );
+    l2GovRelay = l2GovRelayFactory.getContractAt(
+      "0x03706b046b94e766a0dc2b17a5b5f134a12a127e252f14764d200113e56e9f0e"
     );
 
     //deploy L2 token bridge
-    const l2Bridge = await deployL2Bridge(
+    /* const l2Bridge = await deployL2Bridge(
       l2deployer,
       BigInt(l2deployer.starknetContract.address),
       BigInt(l2GovRelay.address),
       maxFee
-    );
+    ); */
 
     //deploy rewAAVE token on L2
-    await deployL2rewAAVE(
+    /* await deployL2rewAAVE(
       l2deployer,
       "rewAAVE Token",
       "rewAAVE",
       18n,
       { high: 0n, low: 0n },
-      BigInt(l2Bridge.address),
+      BigInt(
+        "0x038b2aec1d2bf798e948597306b02f3500e3ed8ea9a683c506cc12eb5e2d07e5"
+      ),
       BigInt(l2GovRelay.address),
       maxFee
-    );
+    ); */
 
     if (!fs.existsSync("./deployment/staticATokens")) {
       fs.mkdirSync("./deployment/staticATokens");
@@ -109,7 +122,7 @@ async function deployAll() {
 
     staticATokensAddresses = [];
     console.log("Deploying static_a_tokens...");
-    for (let i = 0; i < allowlistedATokensAddresses.length; i++) {
+    /* for (let i = 0; i < allowlistedATokensAddresses.length; i++) {
       await deployStaticAToken(
         l2deployer,
         allowlistedStaticATokensData[i].name,
@@ -123,12 +136,12 @@ async function deployAll() {
       ).then((deployedTokenProxyAddress) => {
         staticATokensAddresses.push(deployedTokenProxyAddress);
       });
-    }
+    } */
 
     console.log("Deploying L1 token bridge...");
     await deployL1Bridge(
       l1deployer,
-      l2Bridge.address,
+      "0x062bed29d0aa05c651f4465df72cc5b85bcedd8019f2dc06786fb32578ddc647", //Bridge proxy on Alpha mainnet
       STARKNET_MESSAGING_CONTRACT_MAINNET,
       INCENTIVES_CONTROLLER_MAINNET,
       l1deployer.address, // proxy admin
@@ -137,7 +150,7 @@ async function deployAll() {
       ceilings // Array containing a ceiling for each aToken
     );
 
-    console.log("Relay initialization spell to L2...");
+    /*  console.log("Relay initialization spell to L2...");
 
     let spell = await deploySpellContract("initialize_bridge");
 
@@ -145,7 +158,7 @@ async function deployAll() {
     let ABI = ["function execute(uint256 spell)"];
     let iface = new ethers.utils.Interface(ABI);
     const calldata = iface.encodeFunctionData("execute", [spell.address]);
-    console.log("execute function calldata:", calldata);
+    console.log("execute function calldata:", calldata); */
 
     console.log("deployed successfully!");
 

@@ -9,4 +9,4 @@ export const allowlistedATokensAddresses = [
   "0xBcca60bB61934080951369a648Fb03DF4F96263C", //aUsdc token on mainnet
 ];
 //Stores the max balance of each aToken on the l1 bridge (needs to be updated)
-export const ceilings = [BigInt(10 ** 18)];
+export const ceilings = [];

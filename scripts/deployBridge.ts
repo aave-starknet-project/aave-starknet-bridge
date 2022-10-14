@@ -1,4 +1,8 @@
-import { TRANSPARENT_PROXY_FACTORY_MAINNET } from "./../constants/addresses";
+import {
+  BRIDGE_IMPLEMENTATION_MAINNET,
+  L2_BRIDGE_MAINNET,
+  TRANSPARENT_PROXY_FACTORY_MAINNET,
+} from "./../constants/addresses";
 import {
   StarknetContract,
   StarknetContractFactory,
@@ -30,18 +34,17 @@ export async function deployL2Bridge(
   proxyFactoryL2 = await starknet.getContractFactory("proxy");
 
   console.log("deploying L2 proxy bridge...");
-  /* proxyBridge = await proxyFactoryL2.deploy(
+  proxyBridge = await proxyFactoryL2.deploy(
     {
       proxy_admin: proxyAdmin,
     },
     {
-      token:
-        process.env.STARKNET_DEPLOYMENT_TOKEN,
+      token: process.env.STARKNET_DEPLOYMENT_TOKEN,
     }
-  ); */
-  proxyBridge = proxyFactoryL2.getContractAt(
-    "0x062bed29d0aa05c651f4465df72cc5b85bcedd8019f2dc06786fb32578ddc647"
   );
+  // proxyBridge = proxyFactoryL2.getContractAt(
+  //   L2_BRIDGE_MAINNET
+  // );
   console.log(proxyBridge.address, "the address of proxy");
 
   bridgeImplHash = await deployer.declare(L2BridgeFactory, {
@@ -60,14 +63,14 @@ export async function deployL2Bridge(
   );
   console.log("updating proxy admin to the l2 governance relay contract");
 
-  /* await deployer.invoke(
+  await deployer.invoke(
     proxyBridge,
     "change_proxy_admin",
     {
       new_admin: l2GovRelay,
     },
     { maxFee: maxFee }
-  ); */
+  );
 
   fs.writeFileSync(
     `deployment/L2Bridge.json`,
@@ -126,19 +129,20 @@ export async function deployL1Bridge(
       bridgeImpl.address
     );
 
-    let ABI = [
-      "function initialize(uint256 l2Bridge, address messagingContract, address incentivesController, address[] calldata l1Tokens, uint256[] calldata l2Tokens, uint256 calldata ceilings) ",
-    ];
-    let iface = new ethers.utils.Interface(ABI);
+    // let ABI = [
+    //   "function initialize(uint256 l2Bridge, address messagingContract, address incentivesController, address[] calldata l1Tokens, uint256[] calldata l2Tokens, uint256 calldata ceilings) ",
+    // ];
+    // let iface = new ethers.utils.Interface(ABI);
 
-    let encodedInitializedParams = iface.encodeFunctionData("initialize", [
-      BigInt(l2BridgeAddress),
-      starknetMessagingAddress,
-      incentivesController,
-      [],
-      [],
-      [],
-    ]);
+    // let encodedInitializedParams = iface.encodeFunctionData("initialize", [
+    //   BigInt(l2BridgeAddress),
+    //   starknetMessagingAddress,
+    //   incentivesController,
+    //   l1Tokens,
+    //   l2Tokens,
+    //   ceilings,
+    // ]);
+    let encodedInitializedParams = [] as any;
 
     const proxyFactory = await ethers.getContractAt(
       "ITransparentProxyFactory",
@@ -147,8 +151,10 @@ export async function deployL1Bridge(
     );
 
     console.log("Creating Bridge Proxy...");
+    const bridgeImplAddress = bridgeImpl.address;
+    // const bridgeImplAddress = BRIDGE_IMPLEMENTATION_MAINNET;
     const tx = await proxyFactory.create(
-      bridgeImpl.address,
+      bridgeImplAddress,
       proxyAdmin,
       encodedInitializedParams
     );
@@ -166,7 +172,7 @@ export async function deployL1Bridge(
     fs.writeFileSync(
       "deployment/L1Bridge.json",
       JSON.stringify({
-        implementation: bridgeImpl.address,
+        implementation: bridgeImplAddress,
         proxy: proxyAddress,
         starknetMessagingAddress: starknetMessagingAddress,
         l2Bridge: l2BridgeAddress,

@@ -2,6 +2,9 @@ import { Contract } from "ethers";
 import {
   STARKNET_MESSAGING_CONTRACT_MAINNET,
   INCENTIVES_CONTROLLER_MAINNET,
+  L2_GOVERNANCE_RELAY_MAINNET,
+  AAVE_SHORT_EXECUTOR_MAINNET,
+  L2_BRIDGE_MAINNET,
 } from "./../constants/addresses";
 import {
   allowlistedATokensAddresses,
@@ -22,7 +25,6 @@ import { starknet, ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { config as dotenvConfig } from "dotenv";
 import { resolve } from "path";
-import { getAddressOfNextDeployedContract } from "../test/utils";
 
 dotenvConfig({ path: resolve(__dirname, "./.env") });
 
@@ -51,7 +53,6 @@ async function deployAll() {
     );
 
     [l1deployer] = await ethers.getSigners();
-    //console.log(l1deployer);
 
     if (!fs.existsSync("./deployment")) {
       fs.mkdirSync("./deployment");
@@ -65,19 +66,12 @@ async function deployAll() {
       })
     );
 
-    //console.log("Deploying L2 governance relay...");
-    /* let futureL1StarknetForwarderAddress =
-      await getAddressOfNextDeployedContract(l1deployer);
-    console.log(
-      "future l1 forwarder address:",
-      futureL1StarknetForwarderAddress
-    );
-    l2GovRelay = await deployL2GovernanceRelay(
-      futureL1StarknetForwarderAddress
-    );
+    console.log("Deploying L2 governance relay...");
+    l2GovRelay = await deployL2GovernanceRelay(AAVE_SHORT_EXECUTOR_MAINNET);
+    console.log("Address of L2 governance relayer is: ");
+    console.log(l2GovRelay.address);
 
-    console.log("Deploying L1 governance relay...");
-
+    console.log("Deploying L1 starknet forwarder...");
     l1ForwarderStarknet = await deployL1ForwarderStarknet(
       l1deployer,
       STARKNET_MESSAGING_CONTRACT_MAINNET,
@@ -86,35 +80,33 @@ async function deployAll() {
     console.log(
       "To verify L1 ForwarderStarknet contract: npx hardhat verify --network mainnet ",
       l1ForwarderStarknet.address
-    ); */
-    const l2GovRelayFactory = await starknet.getContractFactory(
-      "l2_governance_relay"
     );
-    l2GovRelay = l2GovRelayFactory.getContractAt(
-      "0x03706b046b94e766a0dc2b17a5b5f134a12a127e252f14764d200113e56e9f0e"
-    );
+    // const l2GovRelayFactory = await starknet.getContractFactory(
+    //   "l2_governance_relay"
+    // );
+    // l2GovRelay = l2GovRelayFactory.getContractAt(
+    //   L2_GOVERNANCE_RELAY_MAINNET
+    // );
 
     //deploy L2 token bridge
-    /* const l2Bridge = await deployL2Bridge(
+    const l2Bridge = await deployL2Bridge(
       l2deployer,
       BigInt(l2deployer.starknetContract.address),
       BigInt(l2GovRelay.address),
       maxFee
-    ); */
+    );
 
     //deploy rewAAVE token on L2
-    /* await deployL2rewAAVE(
+    await deployL2rewAAVE(
       l2deployer,
       "rewAAVE Token",
       "rewAAVE",
       18n,
       { high: 0n, low: 0n },
-      BigInt(
-        "0x038b2aec1d2bf798e948597306b02f3500e3ed8ea9a683c506cc12eb5e2d07e5"
-      ),
+      BigInt(l2Bridge.address),
       BigInt(l2GovRelay.address),
       maxFee
-    ); */
+    );
 
     if (!fs.existsSync("./deployment/staticATokens")) {
       fs.mkdirSync("./deployment/staticATokens");
@@ -139,9 +131,11 @@ async function deployAll() {
     } */
 
     console.log("Deploying L1 token bridge...");
+    const l2BridgeAddress = l2Bridge.address;
+    // const l2BridgeAddress = L2_BRIDGE_MAINNET;
     await deployL1Bridge(
       l1deployer,
-      "0x062bed29d0aa05c651f4465df72cc5b85bcedd8019f2dc06786fb32578ddc647", //Bridge proxy on Alpha mainnet
+      l2BridgeAddress, //Bridge proxy on Alpha mainnet
       STARKNET_MESSAGING_CONTRACT_MAINNET,
       INCENTIVES_CONTROLLER_MAINNET,
       l1deployer.address, // proxy admin

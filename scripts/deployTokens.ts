@@ -6,6 +6,7 @@ import {
 } from "hardhat/types";
 import fs from "fs";
 import { encodeShortString } from "../test/utils";
+import { L2_REWAAVE_MAINNET } from "../constants/addresses";
 
 /**
  * deploys and initializes static_a_token on L2
@@ -117,13 +118,12 @@ export async function deployL2rewAAVE(
   proxyFactory = await starknet.getContractFactory("proxy");
 
   console.log("deploying rewAAVE token proxy ...");
-  /*  rewAAVEProxy = await proxyFactory.deploy({
+  rewAAVEProxy = await proxyFactory.deploy({
     proxy_admin: BigInt(deployer.starknetContract.address),
-  }); */
-
-  rewAAVEProxy = proxyFactory.getContractAt(
-    "0x04c8fe1a3b6050f6e060b7d39db91722311d1c3f675c5b3c9f6898120af4263c"
-  );
+  });
+  // rewAAVEProxy = proxyFactory.getContractAt(
+  //   L2_REWAAVE_MAINNET
+  // );
   console.log("declaring rewAAVE token class hash ...");
   rewAAVEImplHash = await deployer.declare(rewAAVEFactory, {
     maxFee: maxFee,
@@ -151,14 +151,14 @@ export async function deployL2rewAAVE(
 
   console.log("updating proxy admin to the l2 governance relay contract");
 
-  /*  await deployer.invoke(
+  await deployer.invoke(
     rewAAVEProxy,
     "change_proxy_admin",
     {
       new_admin: l2GovRelay,
     },
     { maxFee: maxFee }
-  ); */
+  );
 
   rewAAVE = rewAAVEFactory.getContractAt(rewAAVEProxy.address);
 

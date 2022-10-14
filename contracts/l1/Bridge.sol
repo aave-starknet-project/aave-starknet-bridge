@@ -9,13 +9,13 @@ import {ILendingPool} from "./interfaces/ILendingPool.sol";
 import {IBridge} from "./interfaces/IBridge.sol";
 import {IERC20} from "@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IScaledBalanceToken} from "@aave/core-v3/contracts/interfaces/IScaledBalanceToken.sol";
-import {VersionedInitializable} from "@aave/core-v3/contracts/protocol/libraries/aave-upgradeability/VersionedInitializable.sol";
+import {Initializable} from "./dependencies/Initializable.sol";
 import {Cairo} from "./libraries/helpers/Cairo.sol";
 import {Errors} from "./libraries/helpers/Errors.sol";
 import {GPv2SafeERC20} from "@aave/core-v3/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol";
 import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
 
-contract Bridge is IBridge, VersionedInitializable {
+contract Bridge is IBridge, Initializable {
     using WadRayMath for uint256;
     using RayMathNoRounding for uint256;
     using GPv2SafeERC20 for IERC20;
@@ -243,7 +243,7 @@ contract Bridge is IBridge, VersionedInitializable {
         emit RewardsTransferred(l2sender, recipient, amount);
     }
 
-    function getRevision() internal pure virtual override returns (uint256) {
+    function getRevision() internal pure virtual returns (uint256) {
         return BRIDGE_REVISION;
     }
 

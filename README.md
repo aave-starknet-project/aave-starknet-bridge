@@ -4,7 +4,7 @@
 [![Check](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/code-check.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/code-check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/blob/main/LICENSE.md)
 
-:warning: This codebase is still in an experimental phase, has not been audited, might contain bugs and should not be used in production.
+This codebase has been audited by three teams, whose reports are available in the repository: [Nethermind](audit/nethermind_audit.pdf), [Peckshield](audit/peckshield_audit.pdf) and [Certora](audit/certora_report.pdf).
 
 ## Table of contents
 

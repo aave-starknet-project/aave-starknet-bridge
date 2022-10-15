@@ -37,13 +37,9 @@ jobs:
         run: |
           python -m venv .venv
           source .venv/bin/activate
-          make
-
-      - name: Static analysis for Solidity
-        run: ./scripts/static_analysis_solidity.sh
-
-      # - name: Static analysis for Cairo
-      #   run: python scripts/static_analysis_cairo.py
+          yarn
+          pip install poetry
+          poetry install
 
       - name: Lint
         run: |

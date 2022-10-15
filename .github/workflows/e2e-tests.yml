@@ -58,7 +58,9 @@ jobs:
         run: |
           python3 -m venv .venv
           source .venv/bin/activate
-          make
+          yarn
+          pip install poetry
+          poetry install
 
       - name: Start the l2 & l1 test networks
         run: |

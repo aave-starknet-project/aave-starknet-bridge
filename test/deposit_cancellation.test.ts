@@ -5,7 +5,7 @@ import {
   LENDING_POOL,
   DAI_WHALE,
   EMISSION_MANAGER,
-} from "../constants/addresses";
+} from "../scripts/addresses";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai, { expect } from "chai";
 import { Contract, ContractFactory, providers, BigNumber } from "ethers";

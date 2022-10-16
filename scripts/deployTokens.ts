@@ -6,7 +6,12 @@ import {
 } from "hardhat/types";
 import fs from "fs";
 import { encodeShortString } from "../test/utils";
-import { L2_REWAAVE_MAINNET } from "../constants/addresses";
+import { L2_REWAAVE_MAINNET } from "./addresses";
+import { config as dotenvConfig } from "dotenv";
+import { resolve } from "path";
+dotenvConfig({ path: resolve(__dirname, "./.env") });
+
+const { STARKNET_DEPLOYMENT_TOKEN } = process.env;
 
 /**
  * deploys and initializes static_a_token on L2
@@ -14,14 +19,14 @@ import { L2_REWAAVE_MAINNET } from "../constants/addresses";
  * @param name token's name
  * @param symbol token's symbol
  * @param decimals  token's symbol
- * @param initial_supply oken's initial supply
+ * @param initialSupply token's initial supply
  */
 export async function deployStaticAToken(
   deployer: Account,
   name: string,
   symbol: string,
   decimals: bigint,
-  initial_supply: { low: bigint; high: bigint },
+  initialSupply: { low: bigint; high: bigint },
   owner: bigint,
   l2Bridge: bigint,
   l2GovRelay: bigint,
@@ -86,7 +91,7 @@ export async function deployStaticAToken(
       name: encodeShortString(name),
       symbol: encodeShortString(symbol),
       decimals: decimals,
-      initial_supply: initial_supply,
+      initial_supply: initialSupply,
       recipient: BigInt(deployer.starknetContract.address),
       owner: owner,
       l2_bridge: l2Bridge,
@@ -99,57 +104,45 @@ export async function deployStaticAToken(
 
 export async function deployL2rewAAVE(
   deployer: Account,
-  name: string,
-  symbol: string,
-  decimals: bigint,
-  initial_supply: { low: bigint; high: bigint },
-  owner: bigint,
   l2GovRelay: bigint,
   maxFee: number
 ) {
-  let proxyFactory: StarknetContractFactory;
-  let rewAAVEFactory: StarknetContractFactory;
+  console.log("Deploying L2 rewAAVE token...");
 
   let rewAAVEImplHash: string;
   let rewAAVEProxy: StarknetContract;
   let rewAAVE: StarknetContract;
 
-  rewAAVEFactory = await starknet.getContractFactory("rewAAVE");
-  proxyFactory = await starknet.getContractFactory("proxy");
+  const rewAAVEFactory = await starknet.getContractFactory("rewAAVE");
+  const proxyFactory = await starknet.getContractFactory("proxy");
 
-  console.log("deploying rewAAVE token proxy ...");
   rewAAVEProxy = await proxyFactory.deploy({
-    proxy_admin: BigInt(deployer.starknetContract.address),
+    proxy_admin: BigInt(deployer.address),
   });
-  // rewAAVEProxy = proxyFactory.getContractAt(
-  //   L2_REWAAVE_MAINNET
-  // );
-  console.log("declaring rewAAVE token class hash ...");
+
   rewAAVEImplHash = await deployer.declare(rewAAVEFactory, {
     maxFee: maxFee,
-    token: process.env.STARKNET_DEPLOYMENT_TOKEN,
+    token: STARKNET_DEPLOYMENT_TOKEN,
   });
+  console.log("L2 rewAAVE class is declared at hash: ", rewAAVEImplHash);
 
   fs.writeFileSync(
-    `deployment/${name}.json`,
+    `deployment/rewAAVE.json`,
     JSON.stringify({
-      token: name,
+      token: "rewAAVE",
       proxy: rewAAVEProxy.address,
       implementation_hash: rewAAVEImplHash,
     })
   );
 
-  //console.log("initializing rewAAVE token proxy...");
   await deployer.invoke(
     rewAAVEProxy,
     "set_implementation",
     {
       implementation_hash: BigInt(rewAAVEImplHash),
     },
-    { maxFee: maxFee }
+    { maxFee }
   );
-
-  console.log("updating proxy admin to the l2 governance relay contract");
 
   await deployer.invoke(
     rewAAVEProxy,
@@ -157,23 +150,14 @@ export async function deployL2rewAAVE(
     {
       new_admin: l2GovRelay,
     },
-    { maxFee: maxFee }
+    { maxFee }
+  );
+
+  console.log(
+    "L2 rewAave token is deployed behind a proxy with l2 governance relay as proxy admin."
   );
 
   rewAAVE = rewAAVEFactory.getContractAt(rewAAVEProxy.address);
 
-  await deployer.invoke(
-    rewAAVE,
-    "initialize_rewAAVE",
-    {
-      name: encodeShortString(name),
-      symbol: encodeShortString(symbol),
-      decimals: decimals,
-      initial_supply: initial_supply,
-      recipient: BigInt(deployer.starknetContract.address),
-      owner: owner,
-    },
-    { maxFee: maxFee }
-  );
-  return rewAAVEProxy;
+  return rewAAVE;
 }

@@ -9,7 +9,7 @@ import {
   EMISSION_MANAGER,
   DAI,
   USDC,
-} from "./../constants/addresses";
+} from "../scripts/addresses";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai, { expect } from "chai";
 import { Contract, ContractFactory, providers, BigNumber } from "ethers";

@@ -8,5 +8,3 @@ authors = ["AAVE", "nethermind"]
 python = "3.9.0"
 cairo-lang = "0.10.0"
 starknet-devnet = "0.3.3"
-marshmallow-dataclass = "8.5.3" # to fix an error with cairo-compile
-slither-analyzer = "^0.8.3"

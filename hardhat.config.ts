@@ -1,6 +1,7 @@
 import { HardhatUserConfig } from "hardhat/types";
 import "@shardlabs/starknet-hardhat-plugin";
 import "@nomiclabs/hardhat-ethers";
+import "@nomiclabs/hardhat-etherscan";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import { config as dotenvConfig } from "dotenv";
@@ -10,15 +11,19 @@ dotenvConfig({ path: resolve(__dirname, "./.env") });
 
 chai.use(solidity);
 
-const { PRIVATE_KEY, ALCHEMY_KEY, HOSTNAME_L1, HOSTNAME_L2 } = process.env;
+const {
+  PRIVATE_KEY,
+  ALCHEMY_KEY,
+  HOSTNAME_L1,
+  HOSTNAME_L2,
+  ETHERSCAN_API_KEY,
+  L2_NETWORK,
+} = process.env;
 
-/* if (!PRIVATE_KEY) {
-  throw new Error("Please set your PRIVATE_KEY in your .env file");
-} */
+if (!PRIVATE_KEY || !ALCHEMY_KEY || !ETHERSCAN_API_KEY) {
+  throw new Error("Please set your private keys in your .env file");
+}
 
-/* if (!ALCHEMY_KEY) {
-  throw new Error("Please set your ALCHEMY_KEY in your .env file");
-} */
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
@@ -49,7 +54,7 @@ const config: HardhatUserConfig = {
   },
   starknet: {
     venv: ".venv",
-    network: "l2_testnet",
+    network: L2_NETWORK,
     wallets: {
       OpenZeppelin: {
         accountName: "OpenZeppelin",
@@ -59,6 +64,11 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  etherscan: {
+    apiKey: {
+      mainnet: ETHERSCAN_API_KEY,
+    },
+  },
   networks: {
     l2_testnet: {
       url: `http://${HOSTNAME_L2 || "localhost"}:5050`,
@@ -66,10 +76,15 @@ const config: HardhatUserConfig = {
     l1_testnet: {
       url: `http://${HOSTNAME_L1 || "localhost"}:8545`,
     },
-    /* mainnet: {
+    mainnet: {
       url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,
       accounts: [PRIVATE_KEY],
-    }, */
+      allowUnlimitedContractSize: true,
+    },
+    goerli: {
+      url: `https://eth-goerli.alchemyapi.io/v2/${ALCHEMY_KEY}`,
+      accounts: [PRIVATE_KEY],
+    },
   },
 };
 

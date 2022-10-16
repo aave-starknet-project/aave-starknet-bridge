@@ -17,6 +17,8 @@ This codebase has been audited by three teams, whose reports are available in th
     - [More about static_a_token on L2](#more-about-static_a_token-on-l2)
     - [Proxies](#proxies)
     - [Governance](#governance)
+      - [Control](#control)
+      - [Governance relayers](#governance-relayers)
   - [How it works](#how-it-works)
     - [Bridging aTokens from L1 to L2](#bridging-atokens-from-l1-to-l2)
     - [Synchronisation of rewards index on L1 and L2](#synchronisation-of-rewards-index-on-l1-and-l2)
@@ -41,8 +43,9 @@ The bridge is also shaped for liquidity providers who are able to assume the Eth
 We assume that L1 tokens approved by the bridge are pre-validated tokens, and that they are not deflationary.
 
 ## Architecture
+![aave_bridge](https://user-images.githubusercontent.com/37840702/194517164-1318dd83-8d7b-4dda-95da-4c6d802e0d0b.png)
 
-![aave_bridge](https://user-images.githubusercontent.com/37840702/167398308-3b7145f0-20e3-4f35-8b0b-17d52285595a.png)
+
 
 ## Contracts
 
@@ -80,8 +83,19 @@ Each of the following contracts is deployed behind a proxy:
 
 ### Governance
 
+<a name="control"></a>
+**Control**
+
 - `static_a_token` deployed contracts are controlled by L2 `bridge`.
-- `rewAAVE` token is owned by L2 `bridge`.
+- `rewAAVE` token is controlled by L2 `bridge`.
+
+<a name="governance-relayers"></a>
+**Governance relayers**
+
+- We rely on L1 -> L2 governance relayers to execute on L2 actions that have been decided on L1. In practice, we use two L1 contracts from Aave and one L2 contract from [StarkNet DAI Bridge](https://github.com/makerdao/starknet-dai-bridge):
+  - `contracts/l1/governance/Executor.sol`: It corresponds to [Aave Short Executor](https://docs.aave.com/developers/v/2.0/protocol-governance/governance#short-time-lock-executor) whose goal is to execute payload that have been previously accepted by the DAO after a vote. One first need to queue the transaction to execute, and execute it after waiting enough time. Its code has been taken from Etherscan: [link](https://etherscan.io/address/0xee56e2b3d491590b5b31738cc34d5232f378a8d5#code).
+  - `contracts/l1/governance/CrosschainForwarderStarknet.sol`: It contains a single function named `execute` that sends a message to execute a function `relay` of the contract `l2_governance_relay` with an input address. It has been adapted from [the one used for Polygon](https://github.com/bgd-labs/aave-v3-crosschain-listing-template/blob/master/src/contracts/polygon/CrosschainForwarderPolygon.sol).
+  - `contracts/l2/governance/l2_governance_relay.cairo`: It contains a single L1 handler named `relay` as well that takes an address as argument, checks the origin of the call and executes the function `delegate_execute` of the contract that correspond to the input address.
 
 ## How it works
 
@@ -165,13 +179,13 @@ nvm install 16
 nvm use 16
 ```
 
-**Install Python 3.7.13**
+**Install Python 3.9.0**
 
-Our codebase relies on Python 3.7.13. To install it, you can first install [pyenv](https://github.com/pyenv/pyenv) and then run the following commands:
+Our codebase relies on Python 3.9.0. To install it, you can first install [pyenv](https://github.com/pyenv/pyenv) and then run the following commands:
 
 ```bash
-pyenv install 3.7.13
-pyenv local 3.7.13
+pyenv install 3.9.0
+pyenv local 3.9.0
 ```
 
 **Install GMP (needed for Cairo)**

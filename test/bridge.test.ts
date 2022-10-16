@@ -2,14 +2,14 @@ import {
   A_DAI,
   A_USDC,
   STKAAVE_WHALE,
-  INCENTIVES_CONTROLLER,
+  INCENTIVES_CONTROLLER_MAINNET,
   LENDING_POOL,
   DAI_WHALE,
   USDC_WHALE,
   EMISSION_MANAGER,
   DAI,
   USDC,
-} from "./../constants/addresses";
+} from "../scripts/addresses";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai, { expect } from "chai";
 import { Contract, ContractFactory, providers, BigNumber } from "ethers";
@@ -131,7 +131,7 @@ describe("Bridge", async function () {
     l2user = await starknet.deployAccount("OpenZeppelin");
 
     l2BridgeFactory = await starknet.getContractFactory("bridge");
-    l2BridgeImplHash = await l2BridgeFactory.declare();
+    l2BridgeImplHash = await l2user.declare(l2BridgeFactory);
 
     l2ProxyFactory = await starknet.getContractFactory("l2/lib/proxy");
     l2BridgeProxy = await l2ProxyFactory.deploy({
@@ -147,7 +147,7 @@ describe("Bridge", async function () {
     const rewAaveContractFactory = await starknet.getContractFactory(
       "l2/tokens/rewAAVE"
     );
-    l2rewAAVEImplHash = await rewAaveContractFactory.declare();
+    l2rewAAVEImplHash = await l2user.declare(rewAaveContractFactory);
     l2rewAAVEProxy = await l2ProxyFactory.deploy({
       proxy_admin: BigInt(l2owner.starknetContract.address),
     });
@@ -167,8 +167,8 @@ describe("Bridge", async function () {
     });
 
     l2TokenFactory = await starknet.getContractFactory("static_a_token");
-    l2StaticADaiImplHash = await l2TokenFactory.declare();
-    l2StaticAUsdcImplHash = await l2TokenFactory.declare();
+    l2StaticADaiImplHash = await l2user.declare(l2TokenFactory);
+    l2StaticAUsdcImplHash = await l2user.declare(l2TokenFactory);
 
     // L1 deployments
 
@@ -177,7 +177,7 @@ describe("Bridge", async function () {
     pool = await ethers.getContractAt("LendingPool", LENDING_POOL);
     incentives = await ethers.getContractAt(
       "IncentivesControllerMock",
-      INCENTIVES_CONTROLLER
+      INCENTIVES_CONTROLLER_MAINNET
     );
 
     aDai = await ethers.getContractAt("AToken", A_DAI);
@@ -333,7 +333,7 @@ describe("Bridge", async function () {
     let encodedInitializedParams = iface.encodeFunctionData("initialize", [
       l2BridgeProxy.address,
       mockStarknetMessagingAddress,
-      INCENTIVES_CONTROLLER,
+      INCENTIVES_CONTROLLER_MAINNET,
       [aDai.address, aUsdc.address],
       [l2StaticADai.address, l2StaticAUsdc.address],
       [MAX_UINT256, MAX_UINT256],

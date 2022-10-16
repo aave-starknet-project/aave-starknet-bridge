@@ -1,3 +1,4 @@
+import { TRANSPARENT_PROXY_FACTORY_MAINNET } from "./addresses";
 import {
   StarknetContract,
   StarknetContractFactory,
@@ -5,49 +6,88 @@ import {
 } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import fs from "fs";
-import { Contract, ContractFactory } from "ethers";
+import { Contract, ContractFactory, Signer } from "ethers";
 import { starknet, ethers } from "hardhat";
+import { getEventTopic } from "../test/utils";
+import { config as dotenvConfig } from "dotenv";
+import { resolve } from "path";
+dotenvConfig({ path: resolve(__dirname, "./.env") });
+
+const { STARKNET_DEPLOYMENT_TOKEN } = process.env;
 
 /**
  * deploys and initializes static_a_token on L2
  * @param deployer the deployer starknet account
- * @param proxy_admin address of the proxy owner
+ * @param proxyAdmin address of the proxy owner
+ * @param l2GovRelay address of L2 governance relayer
+ * @param maxFee maximal fee
  */
-export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
-  let proxiedBridge: StarknetContract;
-  let bridgeImplHash: string;
-  let proxyFactoryL2: StarknetContractFactory;
-  let proxyBridge: StarknetContract;
+export async function deployL2Bridge(
+  deployer: Account,
+  proxyAdmin: bigint,
+  l2GovRelay: bigint,
+  maxFee: number
+) {
+  console.log("Deploying L2 bridge...");
+
+  let bridge: StarknetContract;
+  let bridgeProxy: StarknetContract;
 
   const L2BridgeFactory = await starknet.getContractFactory("bridge");
-  proxyFactoryL2 = await starknet.getContractFactory("proxy");
+  const L2ProxyFactory = await starknet.getContractFactory("proxy");
 
-  console.log("deploying L2 proxy bridge...");
-  proxyBridge = await proxyFactoryL2.deploy({
-    proxy_admin: proxy_admin,
+  bridgeProxy = await L2ProxyFactory.deploy(
+    {
+      proxy_admin: proxyAdmin,
+    },
+    {
+      token: STARKNET_DEPLOYMENT_TOKEN,
+    }
+  );
+  console.log(
+    "L2 proxy (for bridge) is deployed at address: ",
+    bridgeProxy.address
+  );
+
+  const bridgeImplHash = await deployer.declare(L2BridgeFactory, {
+    maxFee,
+    token: STARKNET_DEPLOYMENT_TOKEN,
   });
-
-  bridgeImplHash = await L2BridgeFactory.declare();
-
-  await deployer.invoke(proxyBridge, "set_implementation", {
-    implementation_hash: BigInt(bridgeImplHash),
-  });
+  console.log("L2 bridge class is declared at hash: ", bridgeImplHash);
 
   fs.writeFileSync(
     `deployment/L2Bridge.json`,
     JSON.stringify({
-      proxy: proxyBridge.address,
+      proxy: bridgeProxy.address,
       implementation_hash: bridgeImplHash,
     })
   );
-  proxiedBridge = L2BridgeFactory.getContractAt(proxyBridge.address);
 
-  console.log("initializing L2 bridge...");
-  await deployer.invoke(proxiedBridge, "initialize_bridge", {
-    governor_address: proxy_admin,
-  });
+  await deployer.invoke(
+    bridgeProxy,
+    "set_implementation",
+    {
+      implementation_hash: BigInt(bridgeImplHash),
+    },
+    { maxFee }
+  );
 
-  return proxiedBridge;
+  await deployer.invoke(
+    bridgeProxy,
+    "change_proxy_admin",
+    {
+      new_admin: l2GovRelay,
+    },
+    { maxFee }
+  );
+
+  console.log(
+    "L2 bridge is deployed behind a proxy with l2 governance relay as proxy admin."
+  );
+
+  bridge = L2BridgeFactory.getContractAt(bridgeProxy.address);
+
+  return bridge;
 }
 
 /**
@@ -58,6 +98,8 @@ export async function deployL2Bridge(deployer: Account, proxy_admin: bigint) {
  * @param proxyAdmin
  * @param l1Tokens array of aTokens to be approved on l1
  * @param l2Tokens array of static_a_tokens to be approved on l1
+ * @param ceilings array of ceilings for each pair (l1token, l2token)
+ * @param proxyFactoryAddress address of factory to deploy proxies
  */
 export async function deployL1Bridge(
   signer: SignerWithAddress,
@@ -67,54 +109,73 @@ export async function deployL1Bridge(
   proxyAdmin: string,
   l1Tokens: string[],
   l2Tokens: BigInt[],
-  ceilings: BigInt[]
+  ceilings: BigInt[],
+  proxyFactoryAddress: string
 ) {
   let bridgeFactory: ContractFactory;
   let bridgeImpl: Contract;
-  let bridgeProxy: Contract;
-  let proxyFactory: ContractFactory;
   let bridge: Contract;
 
   try {
+    console.log("Deploying L1 bridge...");
+
     bridgeFactory = await ethers.getContractFactory("Bridge", signer);
-
-    proxyFactory = await ethers.getContractFactory(
-      "InitializableAdminUpgradeabilityProxy",
-      signer
-    );
-    bridgeProxy = await proxyFactory.deploy();
-    await bridgeProxy.deployed();
-
     bridgeImpl = await bridgeFactory.deploy();
     await bridgeImpl.deployed();
 
-    let ABI = [
-      "function initialize(uint256 l2Bridge, address messagingContract, address incentivesController, address[] calldata l1Tokens, uint256[] calldata l2Tokens, uint256 calldata ceilings) ",
-    ];
-    let iface = new ethers.utils.Interface(ABI);
+    console.log(
+      "L1 bridge implementation contract is deployed at address: ",
+      bridgeImpl.address
+    );
+    console.log(
+      "To verify L1 bridge implementation contract: npx hardhat verify --network mainnet ",
+      bridgeImpl.address
+    );
 
-    let encodedInitializedParams = iface.encodeFunctionData("initialize", [
-      l2BridgeAddress,
-      starknetMessagingAddress,
-      incentivesController,
-      l1Tokens,
-      l2Tokens,
-      ceilings,
-    ]);
+    // let ABI = [
+    //   "function initialize(uint256 l2Bridge, address messagingContract, address incentivesController, address[] calldata l1Tokens, uint256[] calldata l2Tokens, uint256 calldata ceilings) ",
+    // ];
+    // let iface = new ethers.utils.Interface(ABI);
+    // let encodedInitializedParams = iface.encodeFunctionData("initialize", [
+    //   BigInt(l2BridgeAddress),
+    //   starknetMessagingAddress,
+    //   incentivesController,
+    //   l1Tokens,
+    //   l2Tokens,
+    //   ceilings,
+    // ]);
+    let encodedInitializedParams = [] as any;
 
-    await bridgeProxy["initialize(address,address,bytes)"](
+    const proxyFactory = await ethers.getContractAt(
+      "ITransparentProxyFactory",
+      proxyFactoryAddress,
+      signer
+    );
+
+    const tx = await proxyFactory.create(
       bridgeImpl.address,
       proxyAdmin,
       encodedInitializedParams
     );
 
-    bridge = await ethers.getContractAt("Bridge", bridgeProxy.address, signer);
+    const receipt = await tx.wait();
+    const proxyAddress = getEventTopic(receipt, "ProxyCreated", 0);
+
+    console.log(
+      "L1 proxy contract in front of L1 bridge is deployed at address: ",
+      proxyAddress
+    );
+    console.log(
+      "To verify proxy contract: npx hardhat verify --network mainnet",
+      proxyAddress
+    );
+    bridge = await ethers.getContractAt("Bridge", proxyAddress, signer);
 
     fs.writeFileSync(
       "deployment/L1Bridge.json",
       JSON.stringify({
         implementation: bridgeImpl.address,
-        proxy: bridgeProxy.address,
+        proxy: proxyAddress,
         starknetMessagingAddress: starknetMessagingAddress,
         l2Bridge: l2BridgeAddress,
       })
@@ -124,4 +185,108 @@ export async function deployL1Bridge(
   } catch (error) {
     console.log(error);
   }
+}
+
+/**
+ * deploys and initializes the l2 governance relay
+ * @param l1GovRelay address
+ */
+export async function deployL2GovernanceRelay(l1GovRelay: string) {
+  console.log("Deploying L2 governance relay...");
+
+  let l2GovRelayFactory: StarknetContractFactory;
+  let l2GovRelay: StarknetContract;
+
+  l2GovRelayFactory = await starknet.getContractFactory("l2_governance_relay");
+
+  l2GovRelay = await l2GovRelayFactory.deploy(
+    {
+      l1_governance_relay: BigInt(l1GovRelay),
+    },
+    {
+      token: STARKNET_DEPLOYMENT_TOKEN,
+    }
+  );
+
+  fs.writeFileSync(
+    "deployment/L2GovRelay.json",
+    JSON.stringify({
+      l2GovRelay: l2GovRelay.address,
+    })
+  );
+
+  console.log(
+    "L2 governance relay is deployed at address: ",
+    l2GovRelay.address
+  );
+
+  return l2GovRelay;
+}
+
+/**
+ * deploys and initializes the L1 Forwarder Starknet
+ * @param signer
+ * @param starknetMessagingContract address
+ * @param l2GovRelay address
+ */
+export async function deployL1ForwarderStarknet(
+  signer: SignerWithAddress,
+  starknetMessagingContract: string,
+  l2GovRelay: string
+) {
+  console.log("Deploying L1 forwarder starknet...");
+
+  let l1ForwarderStarknetFactory: ContractFactory;
+  let l1ForwarderStarknet: Contract;
+
+  l1ForwarderStarknetFactory = await ethers.getContractFactory(
+    "CrosschainForwarderStarknet",
+    signer
+  );
+
+  l1ForwarderStarknet = await l1ForwarderStarknetFactory.deploy(
+    starknetMessagingContract,
+    l2GovRelay
+  );
+
+  fs.writeFileSync(
+    "deployment/L1ForwarderStarknet.json",
+    JSON.stringify({
+      l1ForwarderStarknet: l1ForwarderStarknet.address,
+    })
+  );
+
+  console.log(
+    "L1 forwarder starknet is deployed at address: ",
+    l1ForwarderStarknet.address
+  );
+  console.log(
+    "To verify L1 forwarder starknet contract: npx hardhat verify --network mainnet ",
+    l1ForwarderStarknet.address
+  );
+
+  return l1ForwarderStarknet;
+}
+
+/**
+ * deploys a given spell contract
+ */
+export async function deploySpellContract(path: string) {
+  let spell: StarknetContract;
+  let spellFactory: StarknetContractFactory;
+
+  spellFactory = await starknet.getContractFactory(path);
+
+  spell = await spellFactory.deploy(undefined, {
+    token: STARKNET_DEPLOYMENT_TOKEN,
+  });
+
+  fs.writeFileSync(
+    `deployment/spells/${path}.json`,
+    JSON.stringify({
+      spellContract: spell.address,
+    })
+  );
+
+  return spell;
 }

@@ -1,6 +1,11 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
+from starkware.cairo.common.bool import FALSE
+from starkware.starknet.common.syscalls import deploy
+from starkware.cairo.common.uint256 import Uint256
+
+from contracts.l2.interfaces.Istatic_a_token import Istatic_a_token
 
 @contract_interface
 namespace IBridge {
@@ -12,32 +17,73 @@ namespace IBridge {
     }
 }
 
+@contract_interface
+namespace IProxy {
+    func set_implementation(implementation_hash: felt) {
+    }
+}
+
+@event
+func proxy_deployed(proxy_address: felt) {
+}
+
 @external
 func delegate_execute{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+    // addresses to be set
+    const l2_governance_relay = 0;
+    const l2_bridge_address = 0;
+    const l1_bridge_address = 0;
+    const reward_token_address = 0;
+    const proxy_class_hash = 0;
+    const static_a_token_class_hash = 0;
+    const aUSDC = 0;
+    const aDAI = 0;
+
     // set reward token address on bridge
-    IBridge.set_reward_token(
-        616038737919804257622296331779828103514405540562094387886677307231715823174,
-        36229391819238658882307452945781703754148534690914245953925729426,
+    IBridge.set_reward_token(l2_bridge_address, reward_token_address);
+
+    // set l1 bridge address
+    IBridge.set_l1_bridge(l2_bridge_address, l1_bridge_address);
+
+    // deploy static_a_dai proxy
+    let (static_a_dai_proxy_address) = deploy(
+        class_hash=proxy_class_hash,
+        contract_address_salt=1,
+        constructor_calldata_size=1,
+        constructor_calldata=cast(new (l2_governance_relay,), felt*),
+        deploy_from_zero=FALSE,
+    );
+    proxy_deployed.emit(static_a_dai_proxy_address);
+
+    // deploy static_a_usdc proxy
+    let (static_a_usdc_proxy_address) = deploy(
+        class_hash=proxy_class_hash,
+        contract_address_salt=2,
+        constructor_calldata_size=1,
+        constructor_calldata=cast(new (l2_governance_relay,), felt*),
+        deploy_from_zero=FALSE,
     );
 
-   // set l1 bridge address
-    IBridge.set_l1_bridge(
-        616038737919804257622296331779828103514405540562094387886677307231715823174,
-        09622939181934005888230745294578333754148534690914245953925099449,
+    proxy_deployed.emit(static_a_usdc_proxy_address);
+
+    // set implementations on proxies
+    IProxy.set_implementation(static_a_dai_proxy_address, static_a_token_class_hash);
+    IProxy.set_implementation(static_a_usdc_proxy_address, static_a_token_class_hash);
+
+    // initalize static_a_tokens
+    Istatic_a_token.initialize_static_a_token(
+        static_a_dai_proxy_address, 0, 0, 0, Uint256(0, 0), 0, 0
     );
+
+    Istatic_a_token.initialize_static_a_token(
+        static_a_usdc_proxy_address, 0, 0, 0, Uint256(0, 0), 0, 0
+    );
+
     // approve aDai<->staticADai bridge
-    IBridge.approve_bridge(
-        61603873791980425762229633177982810351440554056209438788667730723171582317,
-        14304685556238090176394662515936233272922302627,
-        2658704988991781250618286712237552592655967747819241385029297739981252131713,
-    );
+    IBridge.approve_bridge(l2_bridge_address, aDAI, static_a_dai_proxy_address);
 
     // approve aUSDC<->staticAUsdc bridge
-    IBridge.approve_bridge(
-        616038737919804257622296331779828103514405540562094387886677307231715823174,
-        45304685556238090176394662515936233272990302633,
-        235870498899178125061828671223755259265596900781924138502929773998125213200,
-    );
+    IBridge.approve_bridge(l2_bridge_address, aUSDC, static_a_usdc_proxy_address);
 
     return ();
 }

@@ -72,6 +72,21 @@ export async function deployL2Bridge(
     { maxFee }
   );
 
+  console.log(
+    "L2 bridge is deployed behind a proxy with l2 governance relay as proxy admin."
+  );
+
+  bridge = L2BridgeFactory.getContractAt(bridgeProxy.address);
+
+  await deployer.invoke(
+    bridge,
+    "initialize_bridge",
+    {
+      governor_address: l2GovRelay,
+    },
+    { maxFee }
+  );
+
   await deployer.invoke(
     bridgeProxy,
     "change_proxy_admin",
@@ -80,12 +95,6 @@ export async function deployL2Bridge(
     },
     { maxFee }
   );
-
-  console.log(
-    "L2 bridge is deployed behind a proxy with l2 governance relay as proxy admin."
-  );
-
-  bridge = L2BridgeFactory.getContractAt(bridgeProxy.address);
 
   return bridge;
 }

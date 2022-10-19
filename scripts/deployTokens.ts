@@ -105,6 +105,7 @@ export async function deployStaticAToken(
 export async function deployL2rewAAVE(
   deployer: Account,
   l2GovRelay: bigint,
+  l2Bridge: bigint,
   maxFee: number
 ) {
   console.log("Deploying L2 rewAAVE token...");
@@ -116,9 +117,14 @@ export async function deployL2rewAAVE(
   const rewAAVEFactory = await starknet.getContractFactory("rewAAVE");
   const proxyFactory = await starknet.getContractFactory("proxy");
 
-  rewAAVEProxy = await proxyFactory.deploy({
-    proxy_admin: BigInt(deployer.address),
-  });
+  rewAAVEProxy = await proxyFactory.deploy(
+    {
+      proxy_admin: BigInt(deployer.address),
+    },
+    {
+      token: STARKNET_DEPLOYMENT_TOKEN,
+    }
+  );
 
   rewAAVEImplHash = await deployer.declare(rewAAVEFactory, {
     maxFee: maxFee,
@@ -140,6 +146,27 @@ export async function deployL2rewAAVE(
     "set_implementation",
     {
       implementation_hash: BigInt(rewAAVEImplHash),
+      // implementation_hash: BigInt("0x04c2879de40a4af38083026ebf92c40dc674d7148b2369f2adb1ca155b995c30")
+    },
+    { maxFee }
+  );
+
+  console.log(
+    "L2 rewAave token is deployed behind a proxy with l2 governance relay as proxy admin."
+  );
+
+  rewAAVE = rewAAVEFactory.getContractAt(rewAAVEProxy.address);
+
+  await deployer.invoke(
+    rewAAVE,
+    "initialize_rewAAVE",
+    {
+      name: encodeShortString("rewAAVE Token"),
+      symbol: encodeShortString("rewAAVE"),
+      decimals: 18n,
+      initial_supply: { high: 0n, low: 0n },
+      recipient: BigInt(deployer.address),
+      owner: l2Bridge,
     },
     { maxFee }
   );
@@ -152,12 +179,6 @@ export async function deployL2rewAAVE(
     },
     { maxFee }
   );
-
-  console.log(
-    "L2 rewAave token is deployed behind a proxy with l2 governance relay as proxy admin."
-  );
-
-  rewAAVE = rewAAVEFactory.getContractAt(rewAAVEProxy.address);
 
   return rewAAVE;
 }

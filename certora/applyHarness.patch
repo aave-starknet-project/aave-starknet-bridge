@@ -1,0 +1,63 @@
+diff -ruN .gitignore .gitignore
+--- .gitignore	1970-01-01 02:00:00.000000000 +0200
++++ .gitignore	2022-10-18 13:26:08.000000000 +0300
+@@ -0,0 +1,2 @@
++*
++!.gitignore
+diff -ruN l1/Bridge.sol l1/Bridge.sol
+--- l1/Bridge.sol	2022-10-18 13:25:04.000000000 +0300
++++ l1/Bridge.sol	2022-10-18 13:49:15.000000000 +0300
+@@ -313,7 +313,7 @@
+         uint256 amount,
+         uint256 blockNumber,
+         uint256 currentRewardsIndex
+-    ) internal {
++    ) internal virtual {
+         uint256[] memory payload = new uint256[](9);
+         payload[0] = uint256(uint160(from));
+         payload[1] = l2Recipient;
+@@ -334,7 +334,7 @@
+         address from,
+         uint256 blockNumber,
+         uint256 currentRewardsIndex
+-    ) internal {
++    ) internal virtual {
+         uint256[] memory payload = new uint256[](6);
+         payload[0] = uint256(uint160(from));
+         payload[1] = _aTokenData[l1Token].l2TokenAddress;
+@@ -355,7 +355,7 @@
+         uint256 amount,
+         uint256 l2RewardsIndex,
+         uint256 toUnderlyingAsset
+-    ) internal {
++    ) internal virtual {
+         uint256[] memory payload = new uint256[](9);
+         payload[0] = Cairo.WITHDRAW_MESSAGE;
+         payload[1] = uint256(uint160(l1Token));
+@@ -435,7 +435,7 @@
+         uint256 l2sender,
+         address recipient,
+         uint256 amount
+-    ) internal {
++    ) internal virtual {
+         uint256[] memory payload = new uint256[](5);
+         payload[0] = Cairo.BRIDGE_REWARD_MESSAGE;
+         payload[1] = l2sender;
+@@ -478,7 +478,7 @@
+         uint256 rewardsIndex,
+         uint256 blockNumber,
+         uint256 nonce
+-    ) external onlyValidL2Address(l2Recipient) {
++    ) external virtual onlyValidL2Address(l2Recipient) {
+         uint256[] memory payload = new uint256[](9);
+         payload[0] = uint256(uint160(msg.sender));
+         payload[1] = l2Recipient;
+@@ -509,7 +509,7 @@
+         uint256 rewardsIndex,
+         uint256 blockNumber,
+         uint256 nonce
+-    ) external onlyValidL2Address(l2Recipient) {
++    ) external virtual onlyValidL2Address(l2Recipient) {
+         uint256[] memory payload = new uint256[](9);
+         payload[0] = uint256(uint160(msg.sender));
+         payload[1] = l2Recipient;

@@ -1,0 +1,7 @@
+
+#certora
+.certora*
+.certora*.json
+**.last_conf*
+certora-logs
+resource_errors.json

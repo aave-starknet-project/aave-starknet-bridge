@@ -41,7 +41,7 @@ describe("Governance", async function () {
   let l2user: Account;
 
   let l2GovRelay: StarknetContract;
-  let l2Spell: StarknetContract;
+  let l2SpellHash: string;
   let l1Executor: Contract;
   let l1ForwarderStarknet: Contract;
 
@@ -145,7 +145,7 @@ describe("Governance", async function () {
     );
 
     l2SpellFactory = await starknet.getContractFactory("l2/mocks/mock_spell");
-    l2Spell = await l2SpellFactory.deploy();
+    l2SpellHash = await l2user.declare(l2SpellFactory);
   });
 
   it("Check that initial balance of user is zero and owner is zero", async () => {
@@ -171,7 +171,7 @@ describe("Governance", async function () {
     // build calldata
     let ABI = ["function execute(uint256 spell)"];
     let iface = new ethers.utils.Interface(ABI);
-    const calldata = iface.encodeFunctionData("execute", [l2Spell.address]);
+    const calldata = iface.encodeFunctionData("execute", [BigInt(l2SpellHash)]);
 
     await l1Executor.queueTransaction(
       l1ForwarderStarknet.address,

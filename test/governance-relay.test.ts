@@ -21,6 +21,8 @@ import {
 
 chai.use(solidity);
 
+const l1BridgeMockAddress = "999999";
+
 describe("Governance", async function () {
   this.timeout(TIMEOUT);
 
@@ -37,15 +39,14 @@ describe("Governance", async function () {
   let l1ForwarderStarknetFactory: ContractFactory;
 
   let l1deployer: SignerWithAddress;
-  let l2owner: Account;
   let l2user: Account;
 
   let l2GovRelay: StarknetContract;
-  let l2Spell: StarknetContract;
+  let l2SpellHash: string;
   let l1Executor: Contract;
   let l1ForwarderStarknet: Contract;
 
-  let l2rewAAVE: StarknetContract;
+  let l2Bridge: StarknetContract;
 
   let spellBytecodePath =
     "starknet-artifacts/contracts/l2/mocks/mock_spell.cairo/mock_spell.json";
@@ -53,9 +54,9 @@ describe("Governance", async function () {
   let spellBytecode = JSON.parse(rawSpellBytecode.toString());
   let originalBytecode = JSON.stringify(spellBytecode, null, 2);
 
-  let userBalance: any;
-  let tokenOwner: any;
+  let l1BridgeAddress: any;
   let provider: any;
+  let currentBridgeGovernor: any;
 
   before(async function () {
     // load L1 <--> L2 messaging contract
@@ -68,7 +69,6 @@ describe("Governance", async function () {
 
     // accounts
     [l1deployer] = await ethers.getSigners();
-    l2owner = await starknet.deployAccount("OpenZeppelin");
     l2user = await starknet.deployAccount("OpenZeppelin");
 
     // L2 deployments
@@ -82,10 +82,10 @@ describe("Governance", async function () {
     l2GovRelay = await l2GovRelayFactory.deploy({
       l1_governance_relay: futurel1ExecutorAddress,
     });
-    const l2rewAaveContractFactory = await starknet.getContractFactory(
-      "l2/tokens/rewAAVE"
+    const l2BridgeContractFactory = await starknet.getContractFactory(
+      "l2/bridge"
     );
-    l2rewAAVE = await l2rewAaveContractFactory.deploy();
+    l2Bridge = await l2BridgeContractFactory.deploy();
 
     // L1 deployments
 
@@ -118,19 +118,16 @@ describe("Governance", async function () {
   });
 
   it("Deploy Spell contract with updated parameters", async () => {
-    let currentToken = adaptAddress("123456789");
-    let currentRecipient = adaptAddress("987654321");
-    let currentOwner = adaptAddress("999999999");
+    let currentL2Bridge = adaptAddress("12345");
+    let currentL1Bridge = adaptAddress("67890");
 
     let spellBytecode = JSON.parse(rawSpellBytecode.toString());
     let currentData = spellBytecode["program"]["data"];
     let newData = currentData.map((item: string) => {
-      if (item == currentToken) {
-        return adaptAddress(l2rewAAVE.address);
-      } else if (item == currentRecipient) {
-        return adaptAddress(l2user.address);
-      } else if (item == currentOwner) {
-        return adaptAddress(l2owner.address);
+      if (item == currentL2Bridge) {
+        return adaptAddress(l2Bridge.address);
+      } else if (item == currentL1Bridge) {
+        return adaptAddress(l1BridgeMockAddress);
       } else {
         return item;
       }
@@ -145,23 +142,24 @@ describe("Governance", async function () {
     );
 
     l2SpellFactory = await starknet.getContractFactory("l2/mocks/mock_spell");
-    l2Spell = await l2SpellFactory.deploy();
+    l2SpellHash = await l2user.declare(l2SpellFactory);
   });
 
-  it("Check that initial balance of user is zero and owner is zero", async () => {
-    userBalance = await l2rewAAVE.call("balanceOf", {
-      account: BigInt(l2user.address),
-    });
-    expect(userBalance).to.deep.equal({
-      balance: {
-        low: 0n,
-        high: 0n,
-      },
+  it("Set l2 bridge governor to gov relay contract ", async () => {
+    await l2user.invoke(l2Bridge, "initialize_bridge", {
+      governor_address: BigInt(l2GovRelay.address),
     });
 
-    tokenOwner = await l2rewAAVE.call("owner", {});
-    expect(tokenOwner).to.deep.equal({
-      owner: 0n,
+    currentBridgeGovernor = await l2Bridge.call("get_governor", {});
+    expect(currentBridgeGovernor).to.deep.equal({
+      res: BigInt(l2GovRelay.address),
+    });
+  });
+
+  it("Check that l1 bridge address is not intialized and equal to zero ", async () => {
+    l1BridgeAddress = await l2Bridge.call("get_l1_bridge", {});
+    expect(l1BridgeAddress).to.deep.equal({
+      res: 0n,
     });
   });
 
@@ -171,7 +169,7 @@ describe("Governance", async function () {
     // build calldata
     let ABI = ["function execute(uint256 spell)"];
     let iface = new ethers.utils.Interface(ABI);
-    const calldata = iface.encodeFunctionData("execute", [l2Spell.address]);
+    const calldata = iface.encodeFunctionData("execute", [BigInt(l2SpellHash)]);
 
     await l1Executor.queueTransaction(
       l1ForwarderStarknet.address,
@@ -209,19 +207,9 @@ describe("Governance", async function () {
   });
 
   it("Check that spell was executed correctly", async () => {
-    userBalance = await l2rewAAVE.call("balanceOf", {
-      account: BigInt(l2user.address),
-    });
-    expect(userBalance).to.deep.equal({
-      balance: {
-        low: 10000n,
-        high: 0n,
-      },
-    });
-
-    tokenOwner = await l2rewAAVE.call("owner", {});
-    expect(tokenOwner).to.deep.equal({
-      owner: BigInt(l2owner.address),
+    l1BridgeAddress = await l2Bridge.call("get_l1_bridge", {});
+    expect(l1BridgeAddress).to.deep.equal({
+      res: BigInt(l1BridgeMockAddress),
     });
   });
 });

@@ -6,7 +6,6 @@ import {
 } from "hardhat/types";
 import fs from "fs";
 import { encodeShortString } from "../test/utils";
-import { L2_REWAAVE_MAINNET } from "./addresses";
 import { config as dotenvConfig } from "dotenv";
 import { resolve } from "path";
 dotenvConfig({ path: resolve(__dirname, "./.env") });
@@ -27,7 +26,6 @@ export async function deployStaticAToken(
   symbol: string,
   decimals: bigint,
   initialSupply: { low: bigint; high: bigint },
-  owner: bigint,
   l2Bridge: bigint,
   l2GovRelay: bigint,
   maxFee: number
@@ -44,14 +42,20 @@ export async function deployStaticAToken(
   );
   proxyFactory = await starknet.getContractFactory("proxy");
 
-  staticATokenProxy = await proxyFactory.deploy({
-    proxy_admin: BigInt(deployer.starknetContract.address),
-  });
+  staticATokenProxy = await proxyFactory.deploy(
+    {
+      proxy_admin: BigInt(deployer.starknetContract.address),
+    },
+    {
+      token: STARKNET_DEPLOYMENT_TOKEN,
+    }
+  );
 
   console.log("declaring", name, " class hash");
 
   staticATokenImplHash = await deployer.declare(staticATokenFactory, {
     maxFee: maxFee,
+    token: STARKNET_DEPLOYMENT_TOKEN,
   });
 
   await deployer.invoke(
@@ -62,6 +66,7 @@ export async function deployStaticAToken(
     },
     { maxFee: maxFee }
   );
+  console.log("class hash", staticATokenImplHash);
   console.log("updating proxy admin to the l2 governance relay contract");
 
   await deployer.invoke(
@@ -83,6 +88,7 @@ export async function deployStaticAToken(
   );
 
   staticAToken = staticATokenFactory.getContractAt(staticATokenProxy.address);
+  console.log("proxy address", staticATokenProxy.address);
 
   await deployer.invoke(
     staticAToken,
@@ -93,7 +99,7 @@ export async function deployStaticAToken(
       decimals: decimals,
       initial_supply: initialSupply,
       recipient: BigInt(deployer.starknetContract.address),
-      owner: owner,
+      owner: l2GovRelay,
       l2_bridge: l2Bridge,
     },
     { maxFee: maxFee }

@@ -122,9 +122,14 @@ export async function deployL2rewAAVE(
   const rewAAVEFactory = await starknet.getContractFactory("rewAAVE");
   const proxyFactory = await starknet.getContractFactory("proxy");
 
-  rewAAVEProxy = await proxyFactory.deploy({
-    proxy_admin: BigInt(deployer.address),
-  });
+  rewAAVEProxy = await proxyFactory.deploy(
+    {
+      proxy_admin: BigInt(deployer.address),
+    },
+    {
+      token: STARKNET_DEPLOYMENT_TOKEN,
+    }
+  );
 
   rewAAVEImplHash = await deployer.declare(rewAAVEFactory, {
     maxFee: maxFee,
@@ -164,6 +169,7 @@ export async function deployL2rewAAVE(
   );
 
   rewAAVE = rewAAVEFactory.getContractAt(rewAAVEProxy.address);
+  console.log("L2 rewaave token address is ", rewAAVE.address);
 
   return rewAAVE;
 }

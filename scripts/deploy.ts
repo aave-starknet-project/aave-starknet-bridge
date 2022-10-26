@@ -70,7 +70,6 @@ async function deployAll() {
     /////////////////////////
 
     l2GovRelay = await deployL2GovernanceRelay(AAVE_SHORT_EXECUTOR_MAINNET);
-    console.log(l2GovRelay.address);
 
     ///////////////////////////
     // L1 Forwarder Starknet //
@@ -80,10 +79,6 @@ async function deployAll() {
       l1deployer,
       STARKNET_MESSAGING_CONTRACT_MAINNET,
       l2GovRelay.address
-    );
-    console.log(
-      "To verify L1 ForwarderStarknet contract: npx hardhat verify --network mainnet ",
-      l1ForwarderStarknet.address
     );
 
     ///////////////

@@ -69,7 +69,11 @@ async function deployAll() {
     // L2 Governance Relay //
     /////////////////////////
 
-    l2GovRelay = await deployL2GovernanceRelay(AAVE_SHORT_EXECUTOR_MAINNET);
+    l2GovRelay = await deployL2GovernanceRelay(
+      AAVE_SHORT_EXECUTOR_MAINNET,
+      l2deployer,
+      maxFee
+    );
 
     ///////////////////////////
     // L1 Forwarder Starknet //

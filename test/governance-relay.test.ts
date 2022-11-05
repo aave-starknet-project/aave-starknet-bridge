@@ -34,6 +34,7 @@ describe("Governance", async function () {
   let futurel1ExecutorAddress: string;
 
   let l2GovRelayFactory: StarknetContractFactory;
+  let l2ProxyFactory: StarknetContractFactory;
   let l2SpellFactory: StarknetContractFactory;
   let l1ExecutorFactory: ContractFactory;
   let l1ForwarderStarknetFactory: ContractFactory;
@@ -42,6 +43,8 @@ describe("Governance", async function () {
   let l2user: Account;
 
   let l2GovRelay: StarknetContract;
+  let l2GovRelayProxy: StarknetContract;
+  let l2GovRelayHash: string;
   let l2SpellHash: string;
   let l1Executor: Contract;
   let l1ForwarderStarknet: Contract;
@@ -73,15 +76,29 @@ describe("Governance", async function () {
 
     // L2 deployments
 
+    l2ProxyFactory = await starknet.getContractFactory("l2/lib/proxy");
     l2GovRelayFactory = await starknet.getContractFactory(
       "l2/governance/l2_governance_relay"
     );
     futurel1ExecutorAddress = await getAddressOfNextDeployedContract(
       l1deployer
     );
-    l2GovRelay = await l2GovRelayFactory.deploy({
+
+    l2GovRelayProxy = await l2ProxyFactory.deploy({
+      proxy_admin: BigInt(l2user.address),
+    });
+    l2GovRelayHash = await l2user.declare(l2GovRelayFactory);
+
+    await l2user.invoke(l2GovRelayProxy, "set_implementation", {
+      implementation_hash: BigInt(l2GovRelayHash),
+    });
+
+    l2GovRelay = l2GovRelayFactory.getContractAt(l2GovRelayProxy.address);
+
+    await l2user.invoke(l2GovRelay, "initialize_governance_relay", {
       l1_governance_relay: futurel1ExecutorAddress,
     });
+
     const l2BridgeContractFactory = await starknet.getContractFactory(
       "l2/bridge"
     );
@@ -120,6 +137,7 @@ describe("Governance", async function () {
   it("Deploy Spell contract with updated parameters", async () => {
     let currentL2Bridge = adaptAddress("12345");
     let currentL1Bridge = adaptAddress("67890");
+    let currentL2GovRelay = adaptAddress("54321");
 
     let spellBytecode = JSON.parse(rawSpellBytecode.toString());
     let currentData = spellBytecode["program"]["data"];
@@ -128,6 +146,8 @@ describe("Governance", async function () {
         return adaptAddress(l2Bridge.address);
       } else if (item == currentL1Bridge) {
         return adaptAddress(l1BridgeMockAddress);
+      } else if (item == currentL2GovRelay) {
+        return adaptAddress(l2GovRelay.address);
       } else {
         return item;
       }
@@ -163,6 +183,12 @@ describe("Governance", async function () {
     });
   });
 
+  it("Change l2GovRelay proxy admin to l2GovRelay", async () => {
+    await l2user.invoke(l2GovRelayProxy, "change_proxy_admin", {
+      new_admin: BigInt(l2GovRelay.address),
+    });
+  });
+
   it("Send message from L1 to execute the spell", async () => {
     const executionTime = (await provider.getBlock()).timestamp + 15_000;
 
@@ -191,7 +217,6 @@ describe("Governance", async function () {
       executionTime,
       true
     );
-
     const flushL1Response = await starknet.devnet.flush();
     const flushL1Messages = flushL1Response.consumed_messages.from_l1;
     expect(flushL1Response.consumed_messages.from_l2).to.be.empty;
@@ -207,9 +232,15 @@ describe("Governance", async function () {
   });
 
   it("Check that spell was executed correctly", async () => {
+    //check that the l1 bridge was set correctly on bridge
     l1BridgeAddress = await l2Bridge.call("get_l1_bridge", {});
     expect(l1BridgeAddress).to.deep.equal({
       res: BigInt(l1BridgeMockAddress),
+    });
+
+    //check that the implementation was updated to mock address
+    expect(await l2GovRelayProxy.call("get_implementation", {})).to.deep.equal({
+      implementation: 5n,
     });
   });
 });

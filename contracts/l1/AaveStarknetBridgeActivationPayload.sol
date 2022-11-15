@@ -36,6 +36,8 @@ contract AaveStarknetBridgeActivationPayload {
             uint256[] memory ceilings
         ) = getTokensData();
 
+        /// @dev Using createDeterministic() because the spell on L2 side needs to know in advance the address
+        /// of the proxy to be deployed
         PROXY_FACTORY.createDeterministic(
             address(L1_BRIDGE_IMPLEMENTATION),
             AaveGovernanceV2.SHORT_EXECUTOR,
@@ -51,6 +53,7 @@ contract AaveStarknetBridgeActivationPayload {
             keccak256(abi.encode(ID_L1_BRIDGE))
         );
 
+        // Send message to activate the L2 side of the system, by nested delegatecall to the forwarder
         (bool success, ) = address(CROSSCHAIN_FORWARDER_STARKNET).delegatecall(
             abi.encodeWithSelector(
                 CROSSCHAIN_FORWARDER_STARKNET.execute.selector,

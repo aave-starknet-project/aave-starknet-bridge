@@ -52,6 +52,25 @@ interface IBridge {
     );
 
     /**
+     * @notice Initializes the Bridge
+     * @dev Function is invoked by the proxy contract when the bridge contract is added
+     * @param l2Bridge L2 bridge address
+     * @param messagingContract Starknet messaging contract address
+     * @param incentivesController Address of Aave IncentivesController
+     * @param l1Tokens Array of l1 tokens
+     * @param l2Tokens Array of l2 tokens
+     * @param ceilings Array of max amount that can be bridged for each aToken without taking into account the interest growth
+     **/
+    function initialize(
+        uint256 l2Bridge,
+        address messagingContract,
+        address incentivesController,
+        address[] calldata l1Tokens,
+        uint256[] calldata l2Tokens,
+        uint256[] calldata ceilings
+    ) external;
+
+    /**
      * @notice allows deposits of aTokens or their underlying assets on L2
      * @param l1AToken aToken address
      * @param l2Recipient recipient address

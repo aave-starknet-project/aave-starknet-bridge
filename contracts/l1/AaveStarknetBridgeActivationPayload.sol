@@ -69,8 +69,33 @@ contract AaveStarknetBridgeActivationPayload {
         require(success, "CROSSCHAIN_FORWARDER_STARKNET_execute()");
     }
 
+    function predictProxyAddress() public view returns (address) {
+        (
+            address[] memory l1Tokens,
+            uint256[] memory l2Tokens,
+            uint256[] memory ceilings
+        ) = getTokensData();
+
+        return
+            PROXY_FACTORY.predictCreateDeterministic(
+                address(L1_BRIDGE_IMPLEMENTATION),
+                AaveGovernanceV2.SHORT_EXECUTOR,
+                abi.encodeWithSelector(
+                    L1_BRIDGE_IMPLEMENTATION.initialize.selector,
+                    L2_BRIDGE,
+                    STARKNET_MESSAGING_CORE,
+                    INCENTIVES_CONTROLLER,
+                    l1Tokens,
+                    l2Tokens,
+                    ceilings
+                ),
+                keccak256(abi.encode(ID_L1_BRIDGE))
+            );
+    }
+
     function getTokensData()
         public
+        pure
         returns (
             address[] memory,
             uint256[] memory,

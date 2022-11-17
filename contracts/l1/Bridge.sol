@@ -49,16 +49,7 @@ contract Bridge is IBridge, Initializable {
         return claimable + claimed;
     }
 
-    /**
-     * @notice Initializes the Bridge
-     * @dev Function is invoked by the proxy contract when the bridge contract is added
-     * @param l2Bridge L2 bridge address
-     * @param messagingContract Starknet messaging contract address
-     * @param incentivesController Address of Aave IncentivesController
-     * @param l1Tokens Array of l1 tokens
-     * @param l2Tokens Array of l2 tokens
-     * @param ceilings Array of max amount that can be bridged for each aToken without taking into account the interest growth
-     **/
+    /// @inheritdoc IBridge
     function initialize(
         uint256 l2Bridge,
         address messagingContract,
@@ -470,6 +461,7 @@ contract Bridge is IBridge, Initializable {
         revert(Errors.B_NOT_ENOUGH_REWARDS);
     }
 
+    /// @inheritdoc IBridge
     function startDepositCancellation(
         address l1Token,
         uint256 amount,
@@ -501,6 +493,7 @@ contract Bridge is IBridge, Initializable {
         );
     }
 
+    /// @inheritdoc IBridge
     function cancelDeposit(
         address l1AToken,
         uint256 amount,

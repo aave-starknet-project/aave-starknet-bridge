@@ -88,8 +88,7 @@ contract Bridge is IBridge, Initializable {
         bool fromUnderlyingAsset
     ) external override onlyValidL2Address(l2Recipient) returns (uint256) {
         require(
-            IScaledBalanceToken(l1AToken).scaledBalanceOf(address(this)) +
-                amount <=
+            IERC20(l1AToken).balanceOf(address(this)) + amount <=
                 _aTokenData[l1AToken].ceiling,
             Errors.B_ABOVE_CEILING
         );

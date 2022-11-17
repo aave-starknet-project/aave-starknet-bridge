@@ -8,17 +8,17 @@ import {IATokenWithPool} from "./interfaces/IATokenWithPool.sol";
 import {ILendingPool} from "./interfaces/ILendingPool.sol";
 import {IBridge} from "./interfaces/IBridge.sol";
 import {IERC20} from "@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {SafeERC20} from "./dependencies/SafeERC20.sol";
 import {IScaledBalanceToken} from "@aave/core-v3/contracts/interfaces/IScaledBalanceToken.sol";
 import {Initializable} from "./dependencies/Initializable.sol";
 import {Cairo} from "./libraries/helpers/Cairo.sol";
 import {Errors} from "./libraries/helpers/Errors.sol";
-import {GPv2SafeERC20} from "@aave/core-v3/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol";
 import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
 
 contract Bridge is IBridge, Initializable {
     using WadRayMath for uint256;
     using RayMathNoRounding for uint256;
-    using GPv2SafeERC20 for IERC20;
+    using SafeERC20 for IERC20;
 
     IStarknetMessaging public _messagingContract;
     uint256 public _l2Bridge;
@@ -294,7 +294,7 @@ contract Bridge is IBridge, Initializable {
             IATokenWithPool(l1AToken).UNDERLYING_ASSET_ADDRESS()
         );
         ILendingPool lendingPool = IATokenWithPool(l1AToken).POOL();
-        underlyingAsset.approve(address(lendingPool), type(uint256).max);
+        underlyingAsset.safeApprove(address(lendingPool), type(uint256).max);
 
         _aTokenData[l1AToken] = ATokenData(
             l2Token,

@@ -191,27 +191,61 @@ export async function deployL1Bridge(
  * deploys and initializes the l2 governance relay
  * @param l1GovRelay address
  */
-export async function deployL2GovernanceRelay(l1GovRelay: string) {
+export async function deployL2GovernanceRelay(
+  l1GovRelay: string,
+  deployer: Account,
+  maxFee: number
+) {
   console.log("Deploying L2 governance relay...");
 
   let l2GovRelayFactory: StarknetContractFactory;
   let l2GovRelay: StarknetContract;
 
-  l2GovRelayFactory = await starknet.getContractFactory("l2_governance_relay");
+  let l2GovRelayProxy: StarknetContract;
 
-  l2GovRelay = await l2GovRelayFactory.deploy(
+  const l2ProxyFactory = await starknet.getContractFactory("proxy");
+
+  l2GovRelayProxy = await l2ProxyFactory.deploy(
     {
-      l1_governance_relay: BigInt(l1GovRelay),
+      proxy_admin: BigInt(deployer.starknetContract.address),
     },
     {
       token: STARKNET_DEPLOYMENT_TOKEN,
     }
   );
 
+  l2GovRelayFactory = await starknet.getContractFactory("l2_governance_relay");
+
+  const l2GovImplHash = await deployer.declare(l2GovRelayFactory, {
+    maxFee,
+    token: STARKNET_DEPLOYMENT_TOKEN,
+  });
+
+  console.log("L2 governance relay class hash declared at: ", l2GovImplHash);
+
+  await deployer.invoke(l2GovRelayProxy, "set_implementation", {
+    implementation_hash: BigInt(l2GovImplHash),
+  });
+
+  l2GovRelay = l2GovRelayFactory.getContractAt(l2GovRelayProxy.address);
+
+  await deployer.invoke(l2GovRelay, "initialize_governance_relay", {
+    l1_governance_relay: BigInt(l1GovRelay),
+  });
+
+  await deployer.invoke(
+    l2GovRelayProxy,
+    "change_proxy_admin",
+    {
+      new_admin: BigInt(l2GovRelay.address),
+    },
+    { maxFee }
+  );
+
   fs.writeFileSync(
     "deployment/L2GovRelay.json",
     JSON.stringify({
-      l2GovRelay: l2GovRelay.address,
+      l2GovRelayProxy: l2GovRelay.address,
     })
   );
 

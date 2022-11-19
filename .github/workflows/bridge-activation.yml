@@ -1,4 +1,4 @@
-name: Test bridge activation
+name: Bridge activation on forked mainnet
 
 on:
   push:
@@ -21,11 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tests: ["bridge_activation.test.ts"]
+        tests:
+          [
+      
+            "bridge_activation_on_forked_mainnet.test.ts",
+          ]
         python-version: ["3.9.0"] # Cairo was tested with this version
         node-version: ["16"]
     env:
-      L2_NETWORK: "l2_testnet"
+      L2_NETWORK: "l2_alpha_mainnet"
     steps:
       - uses: actions/checkout@v3
 
@@ -52,14 +56,18 @@ jobs:
           source .venv/bin/activate
           yarn
           pip install poetry
+          poetry lock
           poetry install
+
       - name: Start the l2 & l1 test networks
         run: |
-          yarn testnet:l2 &
+          yarn testnet:l2-mainnet-fork &
           yarn testnet:l1 &
+
       - name: Compile Cairo
         run: |
           yarn compile:l2
+
       - name: Run tests
         run: |
           yarn test test/${{ matrix.tests }}

@@ -1,0 +1,169 @@
+import {
+  AAVE_SHORT_EXECUTOR_MAINNET,
+  A_DAI,
+  A_USDC,
+  A_USDT,
+  INCENTIVES_CONTROLLER_MAINNET,
+} from "../scripts/addresses";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import chai, { expect } from "chai";
+import { Contract, ContractFactory } from "ethers";
+import { starknet, ethers } from "hardhat";
+import {
+  StarknetContractFactory,
+  StarknetContract,
+  HardhatUserConfig,
+} from "hardhat/types";
+import { solidity } from "ethereum-waffle";
+import config from "../hardhat.config";
+import { TIMEOUT } from "./constants";
+
+import { expectAddressEquality } from "./utils";
+
+chai.use(solidity);
+
+const L2_BRIDGE =
+  "0x0434ab0e4f2a743f871e4d57a16aef3df84c1a29b61565e016da91c1f824b021";
+const L2_GOV_RELAYER =
+  "0x07bbb769e53d886f77792d59b9cd65a2eb14a84c49a0942ba9577e291deefcec";
+const DETERMINISTIC_PROXY = "0xA552f4afD504B7f8Dca253eE9b431f29C49A0ECC";
+
+describe("Bridge activation", async function () {
+  this.timeout(TIMEOUT);
+
+  const networkUrl =
+    (config as HardhatUserConfig).networks?.l1_testnet?.url ||
+    "http://localhost:8545";
+
+  let starknetMessagingAddress: string;
+  let l2GovRelayFactory: StarknetContractFactory;
+  let AaveStarknetBridgeActivationPayloadFactory: ContractFactory;
+
+  let l1deployer: SignerWithAddress;
+
+  let l2GovRelay: StarknetContract;
+  let l1Executor: Contract;
+  let AaveStarknetBridgeActivationPayload: Contract;
+  let incentives: Contract;
+  let l1BridgeImpl: Contract;
+  let l2Bridge: StarknetContract;
+  let l1BridgeAddress: any;
+  let provider: any;
+  let currentBridgeGovernor: any;
+
+  before(async function () {
+    // load L1 <--> L2 messaging contract
+
+    starknetMessagingAddress = (
+      await starknet.devnet.loadL1MessagingContract(networkUrl)
+    ).address;
+
+    provider = new ethers.providers.JsonRpcProvider(networkUrl);
+
+    // accounts
+    [l1deployer] = await ethers.getSigners();
+
+    incentives = await ethers.getContractAt(
+      "IncentivesControllerMock",
+      INCENTIVES_CONTROLLER_MAINNET
+    );
+
+    l2GovRelayFactory = await starknet.getContractFactory(
+      "l2/governance/l2_governance_relay"
+    );
+    l2GovRelay = l2GovRelayFactory.getContractAt(
+      L2_GOV_RELAYER //GOV RELAYER ON STARKNET
+    );
+    const l2BridgeContractFactory = await starknet.getContractFactory(
+      "l2/bridge"
+    );
+    l2Bridge = l2BridgeContractFactory.getContractAt(L2_BRIDGE);
+
+    AaveStarknetBridgeActivationPayloadFactory =
+      await ethers.getContractFactory(
+        "AaveStarknetBridgeActivationPayload",
+        l1deployer
+      );
+    AaveStarknetBridgeActivationPayload =
+      await AaveStarknetBridgeActivationPayloadFactory.deploy();
+
+    expect(DETERMINISTIC_PROXY).to.equal(
+      await AaveStarknetBridgeActivationPayload.callStatic.predictProxyAddress()
+    );
+  });
+
+  it("check that l2 bridge governor is set to relayer contract", async () => {
+    currentBridgeGovernor = await l2Bridge.call("get_governor", {});
+    expect(currentBridgeGovernor).to.deep.equal({
+      res: BigInt(l2GovRelay.address),
+    });
+  });
+
+  it("Check that l1 bridge address is not intialized and equal to zero", async () => {
+    l1BridgeAddress = await l2Bridge.call("get_l1_bridge", {});
+    expect(l1BridgeAddress).to.deep.equal({
+      res: 0n,
+    });
+  });
+
+  it("Send message from L1 to execute the spell", async () => {
+    //MOCK PAYLOAD EXECUTION BY AAVE SHORT EXECUTOR
+    await AaveStarknetBridgeActivationPayload.connect(
+      AAVE_SHORT_EXECUTOR_MAINNET
+    ).execute();
+
+    const flushL1Response = await starknet.devnet.flush();
+    const flushL1Messages = flushL1Response.consumed_messages.from_l1;
+    expect(flushL1Response.consumed_messages.from_l2).to.be.empty;
+    expect(flushL1Messages).to.have.a.lengthOf(1);
+    expectAddressEquality(
+      flushL1Messages[0].args.from_address,
+      AAVE_SHORT_EXECUTOR_MAINNET
+    );
+    expectAddressEquality(
+      flushL1Messages[0].args.to_address,
+      l2GovRelay.address
+    );
+  });
+
+  it("Check that l1 bridge was deployed and initialized correctly", async () => {
+    const l1Bridge = await ethers.getContractAt("Bridge", DETERMINISTIC_PROXY);
+    const l1BridgeProxy = await ethers.getContractAt(
+      "InitializableAdminUpgradeabilityProxy",
+      DETERMINISTIC_PROXY
+    );
+
+    //mock msg sender since only admin can call implementation
+    expect(
+      await l1BridgeProxy
+        .connect(AAVE_SHORT_EXECUTOR_MAINNET)
+        .callStatic.implementation()
+    ).to.eq(l1BridgeImpl.address);
+    expect(
+      await l1BridgeProxy
+        .connect(AAVE_SHORT_EXECUTOR_MAINNET)
+        .callStatic.admin()
+    ).to.eq(l1Executor.address);
+
+    expect(await l1Bridge._messagingContract()).to.eq(starknetMessagingAddress);
+    expect(await l1Bridge._rewardToken()).to.eq(
+      await incentives.REWARD_TOKEN()
+    );
+    expect(await l1Bridge._incentivesController()).to.eq(
+      INCENTIVES_CONTROLLER_MAINNET
+    );
+
+    //check approved tokens
+    expect(await l1Bridge._approvedL1Tokens(0)).to.eq(A_USDC);
+    expect(await l1Bridge._approvedL1Tokens(1)).to.eq(A_USDT);
+    expect(await l1Bridge._approvedL1Tokens(2)).to.eq(A_DAI);
+  });
+
+  it("Check that spell was executed correctly", async () => {
+    //check that the l1 bridge was set correctly on bridge
+    l1BridgeAddress = await l2Bridge.call("get_l1_bridge", {});
+    expect(l1BridgeAddress).to.deep.equal({
+      res: BigInt(DETERMINISTIC_PROXY),
+    });
+  });
+});

@@ -6,5 +6,5 @@ authors = ["AAVE", "nethermind"]
 
 [tool.poetry.dependencies]
 python = "3.9.0"
-cairo-lang = "0.10.0"
-starknet-devnet = "0.3.3"
+cairo-lang = "0.10.1"
+starknet-devnet = "0.4.0"

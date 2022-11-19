@@ -73,6 +73,9 @@ const config: HardhatUserConfig = {
     l2_testnet: {
       url: `http://${HOSTNAME_L2 || "localhost"}:5050`,
     },
+    l2_alpha_mainnet: {
+      url: `http://${HOSTNAME_L2 || "localhost"}:5055`,
+    },
     l1_testnet: {
       url: `http://${HOSTNAME_L1 || "localhost"}:8545`,
     },

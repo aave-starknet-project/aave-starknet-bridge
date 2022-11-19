@@ -6,6 +6,7 @@
   "scripts": {
     "test": "hardhat --network l1_testnet test",
     "testnet:l2": ".venv/bin/starknet-devnet --host 0.0.0.0 --lite-mode",
+    "testnet:l2-mainnet-fork": ".venv/bin/starknet-devnet --fork-network alpha-mainnet --port 5055",
     "testnet:l1": "if test -f .env; then export $(cat .env | xargs);fi; yarn ganache --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_KEY@$BLOCK_NUMBER --gasPrice 2000000000000 -u $DAI_WHALE -u $USDC_WHALE -u $STKAAVE_WHALE -u $EMISSION_MANAGER",
     "testnet:l1:docker": "if test -f .env; then export $(cat .env | xargs);fi; yarn ganache --host 0.0.0.0 --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_KEY@$BLOCK_NUMBER --gasPrice 2000000000000 -u $DAI_WHALE -u $USDC_WHALE -u $STKAAVE_WHALE -u $EMISSION_MANAGER",
     "lint:check": "npx prettier --check . && find contracts/ -iname '*.cairo' -exec .venv/bin/cairo-format -c {} +",

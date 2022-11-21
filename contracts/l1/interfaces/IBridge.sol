@@ -52,6 +52,25 @@ interface IBridge {
     );
 
     /**
+     * @notice Initializes the Bridge
+     * @dev Function is invoked by the proxy contract when the bridge contract is added
+     * @param l2Bridge L2 bridge address
+     * @param messagingContract Starknet messaging contract address
+     * @param incentivesController Address of Aave IncentivesController
+     * @param l1Tokens Array of l1 tokens
+     * @param l2Tokens Array of l2 tokens
+     * @param ceilings Array of max amount that can be bridged for each aToken without taking into account the interest growth
+     **/
+    function initialize(
+        uint256 l2Bridge,
+        address messagingContract,
+        address incentivesController,
+        address[] calldata l1Tokens,
+        uint256[] calldata l2Tokens,
+        uint256[] calldata ceilings
+    ) external;
+
+    /**
      * @notice allows deposits of aTokens or their underlying assets on L2
      * @param l1AToken aToken address
      * @param l2Recipient recipient address
@@ -108,4 +127,40 @@ interface IBridge {
      * @param l1AToken aToken address
      **/
     function updateL2State(address l1AToken) external;
+
+    /**
+     * @notice starts AToken deposit cancellation if unsuccessful
+     * @param AToken address
+     * @param amount deposit amount
+     * @param l2Recipient l2 recipient
+     * @param rewardsIndex at the moment of deposit
+     * @param blockNumber at the moment of deposit
+     * @param nonce msg nonce to be retrieved from the deposit event
+     **/
+    function startDepositCancellation(
+        address AToken,
+        uint256 amount,
+        uint256 l2Recipient,
+        uint256 rewardsIndex,
+        uint256 blockNumber,
+        uint256 nonce
+    ) external;
+
+    /**
+     *@notice After the messageCancellationDelay period has passed, the user can finalize the aTokens deposit cancellation by calling cancelDeposit
+     * @param AToken address
+     * @param amount deposit amount
+     * @param l2Recipient l2 recipient
+     * @param rewardsIndex at the moment of deposit
+     * @param blockNumber at the moment of deposit
+     * @param nonce msg nonce to be retrieved from the deposit event
+     **/
+    function cancelDeposit(
+        address AToken,
+        uint256 amount,
+        uint256 l2Recipient,
+        uint256 rewardsIndex,
+        uint256 blockNumber,
+        uint256 nonce
+    ) external;
 }

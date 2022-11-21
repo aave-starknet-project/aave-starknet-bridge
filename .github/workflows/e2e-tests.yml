@@ -29,6 +29,7 @@ jobs:
             "wad_ray_math.test.ts",
             "deposit_cancellation.test.ts",
             "governance-relay.test.ts",
+            "deposit_ceiling.test.ts",
           ]
         python-version: ["3.9.0"] # Cairo was tested with this version
         node-version: ["16"]

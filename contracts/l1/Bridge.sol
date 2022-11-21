@@ -8,17 +8,17 @@ import {IATokenWithPool} from "./interfaces/IATokenWithPool.sol";
 import {ILendingPool} from "./interfaces/ILendingPool.sol";
 import {IBridge} from "./interfaces/IBridge.sol";
 import {IERC20} from "@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {SafeERC20} from "./dependencies/SafeERC20.sol";
 import {IScaledBalanceToken} from "@aave/core-v3/contracts/interfaces/IScaledBalanceToken.sol";
 import {Initializable} from "./dependencies/Initializable.sol";
 import {Cairo} from "./libraries/helpers/Cairo.sol";
 import {Errors} from "./libraries/helpers/Errors.sol";
-import {GPv2SafeERC20} from "@aave/core-v3/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol";
 import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
 
 contract Bridge is IBridge, Initializable {
     using WadRayMath for uint256;
     using RayMathNoRounding for uint256;
-    using GPv2SafeERC20 for IERC20;
+    using SafeERC20 for IERC20;
 
     IStarknetMessaging public _messagingContract;
     uint256 public _l2Bridge;
@@ -49,16 +49,7 @@ contract Bridge is IBridge, Initializable {
         return claimable + claimed;
     }
 
-    /**
-     * @notice Initializes the Bridge
-     * @dev Function is invoked by the proxy contract when the bridge contract is added
-     * @param l2Bridge L2 bridge address
-     * @param messagingContract Starknet messaging contract address
-     * @param incentivesController Address of Aave IncentivesController
-     * @param l1Tokens Array of l1 tokens
-     * @param l2Tokens Array of l2 tokens
-     * @param ceilings Array of max amount that can be bridged for each aToken without taking into account the interest growth
-     **/
+    /// @inheritdoc IBridge
     function initialize(
         uint256 l2Bridge,
         address messagingContract,
@@ -88,8 +79,7 @@ contract Bridge is IBridge, Initializable {
         bool fromUnderlyingAsset
     ) external override onlyValidL2Address(l2Recipient) returns (uint256) {
         require(
-            IScaledBalanceToken(l1AToken).scaledBalanceOf(address(this)) +
-                amount <=
+            IERC20(l1AToken).balanceOf(address(this)) + amount <=
                 _aTokenData[l1AToken].ceiling,
             Errors.B_ABOVE_CEILING
         );
@@ -294,7 +284,7 @@ contract Bridge is IBridge, Initializable {
             IATokenWithPool(l1AToken).UNDERLYING_ASSET_ADDRESS()
         );
         ILendingPool lendingPool = IATokenWithPool(l1AToken).POOL();
-        underlyingAsset.approve(address(lendingPool), type(uint256).max);
+        underlyingAsset.safeApprove(address(lendingPool), type(uint256).max);
 
         _aTokenData[l1AToken] = ATokenData(
             l2Token,
@@ -471,6 +461,7 @@ contract Bridge is IBridge, Initializable {
         revert(Errors.B_NOT_ENOUGH_REWARDS);
     }
 
+    /// @inheritdoc IBridge
     function startDepositCancellation(
         address l1Token,
         uint256 amount,
@@ -502,6 +493,7 @@ contract Bridge is IBridge, Initializable {
         );
     }
 
+    /// @inheritdoc IBridge
     function cancelDeposit(
         address l1AToken,
         uint256 amount,

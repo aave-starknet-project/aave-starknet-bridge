@@ -26,8 +26,9 @@ contract AaveStarknetBridgeActivationPayload {
         ITransparentProxyFactory(0xC354ce29aa85e864e55277eF47Fc6a92532Dd6Ca);
     string public constant ID_L1_BRIDGE = "aave_v2_ethereum.starknet_bridge";
 
-    IBridge public constant L1_BRIDGE_IMPLEMENTATION = IBridge(address(0)); // TODO
-    uint256 public constant L2_INIT_SPELL = 0; // TODO add
+    IBridge public constant L1_BRIDGE_IMPLEMENTATION =
+        IBridge(0x69F4057cC8A32bdE63c2d62724CE14Ed1aD4B93A);
+    uint256 public constant L2_INIT_SPELL = 0;
 
     function execute() external {
         (

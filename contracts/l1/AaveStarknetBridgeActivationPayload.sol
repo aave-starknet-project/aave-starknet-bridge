@@ -28,7 +28,8 @@ contract AaveStarknetBridgeActivationPayload {
 
     IBridge public constant L1_BRIDGE_IMPLEMENTATION =
         IBridge(0x69F4057cC8A32bdE63c2d62724CE14Ed1aD4B93A);
-    uint256 public constant L2_INIT_SPELL = 0;
+    uint256 public constant L2_INIT_SPELL =
+        0x00be3e7fe64939ef463bc80b76703b93c10a61944de34df5bb2dbc7b734e3159;
 
     function execute() external {
         (

@@ -21,6 +21,7 @@ This codebase has been audited by three teams, whose reports are available in th
       - [Governance relayers](#governance-relayers)
   - [Deployed Contracts](#deployed-contracts)
     - [Mainnet](#mainnet)
+    - [Goerli](#goerli)
   - [How it works](#how-it-works)
     - [Bridging aTokens from L1 to L2](#bridging-atokens-from-l1-to-l2)
     - [Synchronisation of rewards index on L1 and L2](#synchronisation-of-rewards-index-on-l1-and-l2)
@@ -104,29 +105,45 @@ Each of the following contracts is deployed behind a proxy:
 
 **Ethereum**
 
-- Bridge (proxy): [0x25c0667E46a704AfCF5305B0A586CC24c171E94D](https://etherscan.io/address/0x69F4057cC8A32bdE63c2d62724CE14Ed1aD4B93A)
+- Bridge: [proxy](https://etherscan.io/address/0x25c0667E46a704AfCF5305B0A586CC24c171E94D) and [implementation](https://etherscan.io/address/0x69F4057cC8A32bdE63c2d62724CE14Ed1aD4B93A)
 
-- Bridge (implementation): [0x69F4057cC8A32bdE63c2d62724CE14Ed1aD4B93A](https://etherscan.io/address/0x69F4057cC8A32bdE63c2d62724CE14Ed1aD4B93A)
+- CrosschainForwarderStarknet: [implementation](https://etherscan.io/address/0x8c598667A5a6A14F04172326e62CE143BF8edaAB)
 
-- CrosschainForwarderStarknet: [0x8c598667A5a6A14F04172326e62CE143BF8edaAB](https://etherscan.io/address/0x8c598667A5a6A14F04172326e62CE143BF8edaAB)
-
-- AIP payload: [0x4919E176f02142C20727da215e8dc1b3d046D026](https://etherscan.io/address/0x4919E176f02142C20727da215e8dc1b3d046D026)
+- AIP payload: [implementation](https://etherscan.io/address/0x4919E176f02142C20727da215e8dc1b3d046D026)
 
 **Starknet**
 
-- bridge: [0x0434ab0e4f2a743f871e4d57a16aef3df84c1a29b61565e016da91c1f824b021](https://voyager.online/contract/0x0434ab0e4f2a743f871e4d57a16aef3df84c1a29b61565e016da91c1f824b021)
+- bridge: [proxy](https://voyager.online/contract/0x0434ab0e4f2a743f871e4d57a16aef3df84c1a29b61565e016da91c1f824b021) and [implementation class](https://voyager.online/class/0x77cb72a5e969d13753eb4f999219811cd96b703586d6d1de8af7b6679f82a96)
 
-- l2_governance_relay: [0x07bbb769e53d886f77792d59b9cd65a2eb14a84c49a0942ba9577e291deefcec](https://voyager.online/contract/0x07bbb769e53d886f77792d59b9cd65a2eb14a84c49a0942ba9577e291deefcec)
+- l2_governance_relay: [proxy](https://voyager.online/contract/0x07bbb769e53d886f77792d59b9cd65a2eb14a84c49a0942ba9577e291deefcec) and [implementation class](https://voyager.online/class/0x0431f8e4ac4298966bdf1d99ea273d9f22e72005874d76498bd630fcb806f605)
 
-- static Aave v2 Ethereum aDAI: [0x04212f12efcfc9e847bd98e58daff7dc588c4896f6cd320b74023ad5606f02fd](https://voyager.online/contract/0x04212f12efcfc9e847bd98e58daff7dc588c4896f6cd320b74023ad5606f02fd)
+- static Aave v2 Ethereum aDAI: [proxy](https://voyager.online/contract/0x04212f12efcfc9e847bd98e58daff7dc588c4896f6cd320b74023ad5606f02fd) and [implementation class](https://voyager.online/class/0x60f3a90b235b6bed4cd55c36a0b48b8e6d075425bfa50105afca6ff1f45a09f)
 
-- static Aave v2 Ethereum aUSDC: [0x014cdaa224881ea760b055a50b7b8e65447d9310f5c637294e08a0fc0d04c0ce](https://voyager.online/contract/0x014cdaa224881ea760b055a50b7b8e65447d9310f5c637294e08a0fc0d04c0ce)
+- static Aave v2 Ethereum aUSDC: [proxy](https://voyager.online/contract/0x014cdaa224881ea760b055a50b7b8e65447d9310f5c637294e08a0fc0d04c0ce) and [implementation class](https://voyager.online/class/0x60f3a90b235b6bed4cd55c36a0b48b8e6d075425bfa50105afca6ff1f45a09f)
 
-- static Aave v2 Ethereum aUSDT: [0x02e905e3d2fcf4e5813fef9bfe528a304e8e5adc8cbdc247b3980d7a96a01b90](https://voyager.online/contract/0x02e905e3d2fcf4e5813fef9bfe528a304e8e5adc8cbdc247b3980d7a96a01b90)
+- static Aave v2 Ethereum aUSDT: [proxy](https://voyager.online/contract/0x02e905e3d2fcf4e5813fef9bfe528a304e8e5adc8cbdc247b3980d7a96a01b90) and [implementation class](https://voyager.online/class/0x60f3a90b235b6bed4cd55c36a0b48b8e6d075425bfa50105afca6ff1f45a09f)
 
-- rewAAVE: [0x047cd265d4ebf1daacd1cca98c0ecb018c3da5cec73a8638bd94d5acfdd78ec1](https://voyager.online/contract/0x047cd265d4ebf1daacd1cca98c0ecb018c3da5cec73a8638bd94d5acfdd78ec1)
+- rewAAVE: [proxy](https://voyager.online/contract/0x047cd265d4ebf1daacd1cca98c0ecb018c3da5cec73a8638bd94d5acfdd78ec1) and [implementation class](https://voyager.online/class/0x22196a57f69dc51dc5087cb6c288db442a6bc45804502181f1e43da2c92679a)
 
-- activate_bridge spell (contract class): [0x00be3e7fe64939ef463bc80b76703b93c10a61944de34df5bb2dbc7b734e3159](https://voyager.online/class/0x00be3e7fe64939ef463bc80b76703b93c10a61944de34df5bb2dbc7b734e3159)
+- activate_bridge spell: [implementation class](https://voyager.online/class/0x00be3e7fe64939ef463bc80b76703b93c10a61944de34df5bb2dbc7b734e3159)
+
+### Goerli
+
+**Ethereum**
+
+- Bridge: [proxy](https://goerli.etherscan.io/address/0xF36d7E4192d626b7Ffdc939FAC4B5ec1F3EFb0aF) and [implementation](https://goerli.etherscan.io/address/0xF4B237ebD51260791009AE6A0b8018E4781a6b33)
+
+**Starknet**
+
+- bridge: [proxy](https://goerli.voyager.online/contract/0x0668856a2132c68506fbdfaa3847c79b715f8e555cd23963c300fcc83c6c49f6) and [implementation class](https://goerli.voyager.online/class/0x5644c303c5baba1f1aecb96e4d8681f3ae336788a8988a811af25c1302af1b2)
+
+- static Aave v2 Ethereum aDAI: [proxy](https://goerli.voyager.online/contract/0x0073def9d19e7a9f89013f19d1610242bf33cee4d2eca36d41eb0c72ab99971d) and [implementation class](https://goerli.voyager.online/class/0x428766ff5ac3e42577f92b9bb868b645884e2c8727f5e1baa5c3bcec6bc66cb)
+
+- static Aave v2 Ethereum aUSDC: [proxy](https://goerli.voyager.online/contract/0x04746d8e8742fea6276da0907d4987720726dfe8829826bba548d025806ecf92) and [implementation class](https://goerli.voyager.online/class/0x428766ff5ac3e42577f92b9bb868b645884e2c8727f5e1baa5c3bcec6bc66cb)
+
+- static Aave v2 Ethereum aUSDT: [proxy](https://goerli.voyager.online/contract/0x07df5d9550b03b5b6e4c2b9b72739b251d10f5936ad0676bca0ada158aefe311) and [implementation class](https://goerli.voyager.online/class/0x428766ff5ac3e42577f92b9bb868b645884e2c8727f5e1baa5c3bcec6bc66cb)
+
+- rewAAVE: [proxy](https://goerli.voyager.online/contract/0x01aa0b38b7dba062fcb6e66f6a4836690dc7b9e10488fe6ca9647123fc4f175c) and [implementation class](https://goerli.voyager.online/class/0x179db93ec338fcb39d7f14337176ba21b11b6ff5a44615856fdb4a48c5f33f6)
 
 ## How it works
 

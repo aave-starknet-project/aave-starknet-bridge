@@ -176,12 +176,16 @@ Users can either deposit their `aTokens` (let's say aDai) or deposit the corresp
 <a name="transfer-from-l2-to-l1"></a>
 **Transfer from L2 to L1**
 
-To bridge their `static_a_tokens` back to L1, users should initiate a withdrawal on the L2 bridge. Calling `initiate_withdraw` results in the following:
+To bridge their `static_a_tokens` back to L1, users should first initiate a withdrawal on the L2 bridge. Calling `initiate_withdraw` results in the following:
 
 1. The amount of `static_a_tokens` to withdraw will be burned by L2 bridge.
 2. A message will be sent to L1 with L1 aToken address, L1 recipient, L2 rewards index and the amount.
-3. L1 bridge will then transfer `aTokens` to the L1 recipient.
-4. L1 bridge will also check for any difference in the L1/L2 rewards index and transfer any unclaimed rewards to L1 recipient.
+
+Once the withdrawal is initiated on the L2 bridge, one can call the function `withdraw` on L1 bridge. Calling this function results in the following:
+
+1. The message previously sent will be consumed: if function parameters and parameters sent in the message are not the same, the withdrawal fails, otherwise the rest follows.
+2. L1 bridge will then transfer `aTokens` to the L1 recipient.
+3. L1 bridge will also check for any difference in the L1/L2 rewards index and transfer any unclaimed rewards to L1 recipient.
 
 ### Synchronisation of rewards index on L1 and L2
 

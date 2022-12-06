@@ -1,4 +1,4 @@
-# Aave Starknet Bridge
+# Aave StarkNet Bridge
 
 [![Tests](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/e2e-tests.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/e2e-tests.yml)
 [![Check](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/code-check.yml/badge.svg)](https://github.com/aave-starknet-project/aave-starknet-bridge/actions/workflows/code-check.yml)
@@ -32,7 +32,7 @@ This codebase has been audited by three teams, whose reports are available in th
   - [Get tokens' balance](#2-get-tokens-balance)
   - [Let the bridge transfer your tokens](#3-let-the-bridge-transfer-your-tokens)
   - [Deposit your tokens to the bridge](#4-deposit-your-tokens-to-the-bridge)
-  - [Imports token on your Starknet wallet](#5-imports-token-on-your-starknet-wallet)
+  - [Import token on your StarkNet wallet](#5-imports-token-on-your-starknet-wallet)
 - [Installation](#installation)
   - [Environment](#environment)
   - [Build Cairo files](#build-cairo-files)
@@ -43,11 +43,11 @@ This codebase has been audited by three teams, whose reports are available in th
 
 ## Introduction
 
-This bridge project is the first step of Aave in Starknet ecosystem. The bridge allows users to deposit or withdraw their [aTokens](https://docs.aave.com/developers/tokens/atoken), and only `aTokens`, on Ethereum side, then mints or burns them wrapped aTokens named `static_a_tokens` on Starknet side. `static_a_tokens` are equivalent to `aTokens` except that the former grow in value when the latter grow in balance.
+This bridge project is the first step of Aave in StarkNet ecosystem. The bridge allows users to deposit or withdraw their [aTokens](https://docs.aave.com/developers/tokens/atoken), and only `aTokens`, on Ethereum side, then mints or burns them wrapped aTokens named `static_a_tokens` on StarkNet side. `static_a_tokens` are equivalent to `aTokens` except that the former grow in value when the latter grow in balance.
 
 Holding L1 aTokens lets you earn more tokens via two different mechanisms: (i) the amount of aTokens you hold increases over time and (ii) holding aTokens allows you to claim an accruing amount of Aave reward tokens. This bridge offers both mechanisms thanks to `static_a_tokens` on L2, and the equivalent of L1 Aave reward token on L2.
 
-The bridge is also shaped for liquidity providers who are able to assume the Ethereum gas cost of deposits and withdrawals as they transact large enough amounts. They will deposit on Aave Ethereum, bridge the `static_a_tokens` to Starknet and make them available for users there to buy and hold, thus accruing yield from L1.
+The bridge is also shaped for liquidity providers who are able to assume the Ethereum gas cost of deposits and withdrawals as they transact large enough amounts. They will deposit on Aave Ethereum, bridge the `static_a_tokens` to StarkNet and make them available for users there to buy and hold, thus accruing yield from L1.
 
 We assume that L1 tokens approved by the bridge are pre-validated tokens, and that they are not deflationary.
 
@@ -117,7 +117,7 @@ Each of the following contracts is deployed behind a proxy:
 
 - AIP payload: [implementation](https://etherscan.io/address/0x4919E176f02142C20727da215e8dc1b3d046D026)
 
-**Starknet**
+**StarkNet**
 
 - bridge: [proxy](https://voyager.online/contract/0x0434ab0e4f2a743f871e4d57a16aef3df84c1a29b61565e016da91c1f824b021) and [implementation class](https://voyager.online/class/0x77cb72a5e969d13753eb4f999219811cd96b703586d6d1de8af7b6679f82a96)
 
@@ -139,7 +139,7 @@ Each of the following contracts is deployed behind a proxy:
 
 - Bridge: [proxy](https://goerli.etherscan.io/address/0xF36d7E4192d626b7Ffdc939FAC4B5ec1F3EFb0aF) and [implementation](https://goerli.etherscan.io/address/0xF4B237ebD51260791009AE6A0b8018E4781a6b33)
 
-**Starknet**
+**StarkNet**
 
 - bridge: [proxy](https://goerli.voyager.online/contract/0x0668856a2132c68506fbdfaa3847c79b715f8e555cd23963c300fcc83c6c49f6) and [implementation class](https://goerli.voyager.online/class/0x5644c303c5baba1f1aecb96e4d8681f3ae336788a8988a811af25c1302af1b2)
 
@@ -195,7 +195,7 @@ Once the withdrawal is initiated on the L2 bridge, one can call the function `wi
 
 ### Synchronisation of rewards index on L1 and L2
 
-Starknet users will keep enjoying the same rewards as on L1 after bridging their assets. To do so, L1 rewards index is stored in the state of `static_a_tokens`. The index is updated every time a user deposits or withdraw the corresponding `aToken`, and can also be updated in a permissionless manner by calling the function `updateL2State` in L1 bridge. Rewards on L1 are sent to L1 recipient either when withdrawing `static_a_tokens` from L2 or when calling and then bridging rewards on L2 as described below.
+StarkNet users will keep enjoying the same rewards as on L1 after bridging their assets. To do so, L1 rewards index is stored in the state of `static_a_tokens`. The index is updated every time a user deposits or withdraw the corresponding `aToken`, and can also be updated in a permissionless manner by calling the function `updateL2State` in L1 bridge. Rewards on L1 are sent to L1 recipient either when withdrawing `static_a_tokens` from L2 or when calling and then bridging rewards on L2 as described below.
 
 ### Claiming rewards on L2
 
@@ -226,37 +226,37 @@ The amount of bridged aTokens is restricted to a certain amount set at the momen
 
 ## How to bridge without coding
 
-This section explains how to bridge Ethereum aTokens to Starknet staticATokens using Etherscan UI and wallets on both networks.
+This section explains how to bridge Ethereum aTokens to StarkNet staticATokens using Etherscan UI and wallets on both networks.
 
 ### 1. Hold tokens that can be bridged
 
-First step is to have a Ethereum-compatible wallet funded with one of the six following tokens: [DAI](https://etherscan.io/address/0x6B175474E89094C44Da98b954EedeAC495271d0F#code), [aDAI](https://etherscan.io/address/0x028171bca77440897b824ca71d1c56cac55b68a3#code), [USDC](https://etherscan.io/address/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48#code), [aUSDC](https://etherscan.io/address/0xbcca60bb61934080951369a648fb03df4f96263c#code), [USDT](https://etherscan.io/address/0xdAC17F958D2ee523a2206206994597C13D831ec7#code) or [aUSDT](https://etherscan.io/address/0x3Ed3B47Dd13EC9a98b44e6204A523E766B225811#code).
+The first step is to have an Ethereum-compatible wallet funded with one of the six following tokens: [DAI](https://etherscan.io/address/0x6B175474E89094C44Da98b954EedeAC495271d0F#code), [aDAI](https://etherscan.io/address/0x028171bca77440897b824ca71d1c56cac55b68a3#code), [USDC](https://etherscan.io/address/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48#code), [aUSDC](https://etherscan.io/address/0xbcca60bb61934080951369a648fb03df4f96263c#code), [USDT](https://etherscan.io/address/0xdAC17F958D2ee523a2206206994597C13D831ec7#code) or [aUSDT](https://etherscan.io/address/0x3Ed3B47Dd13EC9a98b44e6204A523E766B225811#code).
 
 ### 2. Get tokens' balance
 
-Then, you should select the amount you'd like to bridge. Note that tokens above do not have the same number of decimals. For this, go on the Etherscan page corresponding to your tokens, say [DAI](https://etherscan.io/address/0x6B175474E89094C44Da98b954EedeAC495271d0F#code) for instance, click on the tab "Read as Proxy" and call the function `balanceOf` with your wallet address.
+You should now select the amount you would like to bridge. Note that the tokens above do not have the same number of decimals. For this, go on the Etherscan page corresponding to your tokens, say [DAI](https://etherscan.io/address/0x6B175474E89094C44Da98b954EedeAC495271d0F#code) for instance, click on the tab "Read Contract" or "Read as Proxy" and call the function `balanceOf` with your wallet address.
 
-If you hold $50 of DAI / aDAI, the output of `balanceOf` should be approximately `50000000000000000000`, and if you hold $50 of USDC / aUSDC / USDT / aUSDT, it should be approximately `50000000`.
+If you hold $50 of DAI / aDAI, the output of `balanceOf` should be approximately `50000000000000000000`, and if you hold $50 of USDC / aUSDC / USDT / aUSDT, it should be about `50000000`.
 
 ### 3. Let the bridge transfer your tokens
 
-Before depositing your tokens to the bridge, you should approve the bridge to spend your tokens. To do so, go on the Etherscan page, click on the tab "Write Contract" or "Write as Proxy", and then on "Connect to Web3" to connect your Ethereum wallet to Etherscan. Then, click on the function `approve`, and fill Bridge's address (`0x25c0667E46a704AfCF5305B0A586CC24c171E94D`) as `spender` and the amount you'd like to bridge as `amount`. Finally, click on "Write" and accept the transaction on your wallet.
+Before depositing your tokens to the bridge, you should approve the bridge to spend your tokens. To do so, go on the token's Etherscan page, click on the tab "Write Contract" or "Write as Proxy", and then on "Connect to Web3" to connect your Ethereum wallet to Etherscan. Now, click on the function `approve`, and fill in the bridge's address (`0x25c0667E46a704AfCF5305B0A586CC24c171E94D`) as `spender` and the amount you would like to bridge as `amount`. Finally, click "Write" and accept the transaction on your wallet.
 
 
 ### 4. Deposit your tokens to the bridge
 
-Last step is to actually deposit tokens on Bridge contract. For that, go on Bridge contract Etherscan page [here](https://etherscan.io/address/0x25c0667E46a704AfCF5305B0A586CC24c171E94D#writeProxyContract). If your wallet is disconnected, click again on "Connect to Web3", or click directly on `deposit` function to display its arguments. You should then enter the following inputs:
-- `l1AToken`: Fill with the address of tokens you would like to bridge, for DAI, write `0x6B175474E89094C44Da98b954EedeAC495271d0F`.
-- `l2Recipient`: Fill with your Starknet wallet address, converted to BigInt. For instance, if Starknet wallet address is `0x01270059Ea5843794F1130830800EcEF60B7D1AFd195f1847a884223a5B94f4A`, you should write `521222308224262530654458833061745344984501837223744122628617462097842360138`.
-- `amount`: Fill with the amount you'd like to write, this amount should be lower or equal to the amount you have approved at the previous step.
-- `referralCode`: Simply fill `0`. This argument is meant to identify future integrators.
-- `fromUnderlyingAsset`: Fill with `false` if tokens you bridge are aTokens (aDAI, aUSDC, aUSDT), otherwise fill with `true`.
+The last step is actually to deposit tokens on the bridge contract. For that, go on the bridge contract Etherscan page [here](https://etherscan.io/address/0x25c0667E46a704AfCF5305B0A586CC24c171E94D#writeProxyContract). If your wallet is disconnected, click on "Connect to Web3" again, and click on the `deposit` function to display its arguments. You should then enter the following inputs:
+- `l1AToken`: Fill in the address of the token you would like to bridge. For DAI, write `0x6B175474E89094C44Da98b954EedeAC495271d0F`.
+- `l2Recipient`: Fill in your StarkNet wallet address, converted to decimal. For that, you can use [this website](https://www.rapidtables.com/convert/number/hex-to-decimal.html), or use `BigInt` function in JavaScript. For instance, if the StarkNet wallet address is `0x01270059Ea5843794F1130830800EcEF60B7D1AFd195f1847a884223a5B94f4A`, you should fill in `521222308224262530654458833061745344984501837223744122628617462097842360138`.
+- `amount`: Fill in the amount you would like to bridge. This amount should be lower or equal to the amount you have approved in the previous step.
+- `referralCode`: Fill in `0`. This argument is proper to identify future integrators.
+- `fromUnderlyingAsset`: Fill in `false` if the token you bridge is an aToken (aDAI, aUSDC, aUSDT); otherwise, fill in `true`.
 
-Finally, click on "Write", accept the transaction and wait for Ethereum and Starknet transactions to finish.
+Finally, click on "Write", accept the transaction and wait for Ethereum and StarkNet transactions to finish.
 
-### 5. Imports token on your Starknet wallet
+### 5. Import token on your StarkNet wallet
 
- On your Starknet wallet, click on "+ New token" for Argent X or "+ Add token" for Braavos, and fill staticAToken's address that corresponds to tokens deposited on the Etherum side - see [this section](https://github.com/aave-starknet-project/aave-starknet-bridge#deployed-contracts) for deployed contracts' addresses.
+On your StarkNet wallet, click on "+ New token" for Argent X or "+ Add token" for Braavos, and fill in staticAToken's address that corresponds to tokens you have deposited on the Ethereum side - see [this section](https://github.com/aave-starknet-project/aave-starknet-bridge#deployed-contracts) for deployed contracts' addresses.
 
 ## Installation
 

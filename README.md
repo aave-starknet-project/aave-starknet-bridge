@@ -32,7 +32,7 @@ This codebase has been audited by three teams, whose reports are available in th
   - [Get tokens' balance](#2-get-tokens-balance)
   - [Let the bridge transfer your tokens](#3-let-the-bridge-transfer-your-tokens)
   - [Deposit your tokens to the bridge](#4-deposit-your-tokens-to-the-bridge)
-  - [Import token on your StarkNet wallet](#5-imports-token-on-your-starknet-wallet)
+  - [Import token to your StarkNet wallet](#5-imports-token-on-your-starknet-wallet)
 - [Installation](#installation)
   - [Environment](#environment)
   - [Build Cairo files](#build-cairo-files)
@@ -240,12 +240,12 @@ If you hold $50 of DAI / aDAI, the output of `balanceOf` should be approximately
 
 ### 3. Let the bridge transfer your tokens
 
-Before depositing your tokens to the bridge, you should approve the bridge to spend your tokens. To do so, go on the token's Etherscan page, click on the tab "Write Contract" or "Write as Proxy", and then on "Connect to Web3" to connect your Ethereum wallet to Etherscan. Now, click on the function `approve`, and fill in the bridge's address (`0x25c0667E46a704AfCF5305B0A586CC24c171E94D`) as `spender` and the amount you would like to bridge as `amount`. Finally, click "Write" and accept the transaction on your wallet.
+Before depositing your tokens to the bridge, you should allow the bridge to spend your tokens. To do so, go on the token's Etherscan page, click on the tab "Write Contract" or "Write as Proxy", and then on "Connect to Web3" to connect your Ethereum wallet to Etherscan. Now, click on the function `approve`, and fill in the bridge's address (`0x25c0667E46a704AfCF5305B0A586CC24c171E94D`) as `spender` and the amount you would like to bridge as `amount`. Finally, click "Write" and accept the transaction on your wallet.
 
 
 ### 4. Deposit your tokens to the bridge
 
-The last step is actually to deposit tokens on the bridge contract. For that, go on the bridge contract Etherscan page [here](https://etherscan.io/address/0x25c0667E46a704AfCF5305B0A586CC24c171E94D#writeProxyContract). If your wallet is disconnected, click on "Connect to Web3" again, and click on the `deposit` function to display its arguments. You should then enter the following inputs:
+To deposit tokens to the bridge, go on the bridge contract Etherscan page [here](https://etherscan.io/address/0x25c0667E46a704AfCF5305B0A586CC24c171E94D#writeProxyContract). If your wallet is disconnected, click on "Connect to Web3" again, and click on the `deposit` function to display its arguments. You should then enter the following inputs:
 - `l1AToken`: Fill in the address of the token you would like to bridge. For DAI, write `0x6B175474E89094C44Da98b954EedeAC495271d0F`.
 - `l2Recipient`: Fill in your StarkNet wallet address, converted to decimal. For that, you can use [this website](https://www.rapidtables.com/convert/number/hex-to-decimal.html), or use `BigInt` function in JavaScript. For instance, if the StarkNet wallet address is `0x01270059Ea5843794F1130830800EcEF60B7D1AFd195f1847a884223a5B94f4A`, you should fill in `521222308224262530654458833061745344984501837223744122628617462097842360138`.
 - `amount`: Fill in the amount you would like to bridge. This amount should be lower or equal to the amount you have approved in the previous step.
@@ -254,7 +254,7 @@ The last step is actually to deposit tokens on the bridge contract. For that, go
 
 Finally, click on "Write", accept the transaction and wait for Ethereum and StarkNet transactions to finish.
 
-### 5. Import token on your StarkNet wallet
+### 5. Import token to your StarkNet wallet
 
 On your StarkNet wallet, click on "+ New token" for Argent X or "+ Add token" for Braavos, and fill in staticAToken's address that corresponds to tokens you have deposited on the Ethereum side - see [this section](https://github.com/aave-starknet-project/aave-starknet-bridge#deployed-contracts) for deployed contracts' addresses.
 

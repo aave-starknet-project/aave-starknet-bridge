@@ -32,7 +32,7 @@ This codebase has been audited by three teams, whose reports are available in th
   - [Get tokens' balance](#2-get-tokens-balance)
   - [Let the bridge transfer your tokens](#3-let-the-bridge-transfer-your-tokens)
   - [Deposit your tokens to the bridge](#4-deposit-your-tokens-to-the-bridge)
-  - [Import token to your StarkNet wallet](#5-imports-token-on-your-starknet-wallet)
+  - [Import token to your StarkNet wallet](#5-imports-token-to-your-starknet-wallet)
 - [Installation](#installation)
   - [Environment](#environment)
   - [Build Cairo files](#build-cairo-files)

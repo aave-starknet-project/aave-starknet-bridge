@@ -40,7 +40,7 @@ contract CrosschainForwarderStarknet {
         l2GovernanceRelay = _l2GovernanceRelay;
     }
 
-    function execute(uint256 spell) public payable {
+    function execute(uint256 spell) external payable {
         uint256[] memory payload = new uint256[](1);
         payload[0] = spell;
         StarkNetLike(starkNet).sendMessageToL2{value: msg.value}(

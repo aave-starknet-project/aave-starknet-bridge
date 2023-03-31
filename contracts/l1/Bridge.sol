@@ -123,8 +123,7 @@ contract Bridge is IBridge, Initializable {
             address(underlyingAsset),
             lendingPool
         );
-        uint256 l2MsgNonce = _messagingContract.l1ToL2MessageNonce();
-        _sendDepositMessage(
+        uint256 l2MsgNonce = _sendDepositMessage(
             l1AToken,
             msg.sender,
             l2Recipient,
@@ -154,7 +153,7 @@ contract Bridge is IBridge, Initializable {
         uint256 staticAmount,
         uint256 l2RewardsIndex,
         bool toUnderlyingAsset
-    ) external override {
+    ) external payable override {
         require(recipient != address(0), Errors.B_INVALID_ADDRESS);
         require(staticAmount > 0, Errors.B_INSUFFICIENT_AMOUNT);
 
@@ -313,7 +312,7 @@ contract Bridge is IBridge, Initializable {
         uint256 blockNumber,
         uint256 currentRewardsIndex,
         uint256 fee
-    ) internal {
+    ) internal returns (uint256) {
         uint256[] memory payload = new uint256[](9);
         payload[0] = uint256(uint160(from));
         payload[1] = l2Recipient;
@@ -322,11 +321,13 @@ contract Bridge is IBridge, Initializable {
         (payload[5], payload[6]) = Cairo.toSplitUint(blockNumber);
         (payload[7], payload[8]) = Cairo.toSplitUint(currentRewardsIndex);
 
-        _messagingContract.sendMessageToL2{value: fee}(
+        uint256 nonce;
+        (, nonce) = _messagingContract.sendMessageToL2{value: fee}(
             _l2Bridge,
             Cairo.DEPOSIT_HANDLER,
             payload
         );
+        return nonce;
     }
 
     function _sendIndexUpdateMessage(

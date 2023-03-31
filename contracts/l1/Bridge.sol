@@ -77,7 +77,13 @@ contract Bridge is IBridge, Initializable {
         uint256 amount,
         uint16 referralCode,
         bool fromUnderlyingAsset
-    ) external override onlyValidL2Address(l2Recipient) returns (uint256) {
+    )
+        external
+        payable
+        override
+        onlyValidL2Address(l2Recipient)
+        returns (uint256)
+    {
         require(
             IERC20(l1AToken).balanceOf(address(this)) + amount <=
                 _aTokenData[l1AToken].ceiling,
@@ -124,7 +130,8 @@ contract Bridge is IBridge, Initializable {
             l2Recipient,
             staticAmount,
             block.number,
-            rewardsIndex
+            rewardsIndex,
+            msg.value
         );
         emit Deposit(
             msg.sender,
@@ -186,7 +193,8 @@ contract Bridge is IBridge, Initializable {
             l1AToken,
             msg.sender,
             block.number,
-            l1CurrentRewardsIndex
+            l1CurrentRewardsIndex,
+            msg.value
         );
 
         emit L2StateUpdated(l1AToken, l1CurrentRewardsIndex);
@@ -205,14 +213,15 @@ contract Bridge is IBridge, Initializable {
     }
 
     /// @inheritdoc IBridge
-    function updateL2State(address l1AToken) external override {
+    function updateL2State(address l1AToken) external payable override {
         uint256 rewardsIndex = _getCurrentRewardsIndex(l1AToken);
 
         _sendIndexUpdateMessage(
             l1AToken,
             msg.sender,
             block.number,
-            rewardsIndex
+            rewardsIndex,
+            msg.value
         );
 
         emit L2StateUpdated(l1AToken, rewardsIndex);
@@ -302,7 +311,8 @@ contract Bridge is IBridge, Initializable {
         uint256 l2Recipient,
         uint256 amount,
         uint256 blockNumber,
-        uint256 currentRewardsIndex
+        uint256 currentRewardsIndex,
+        uint256 fee
     ) internal {
         uint256[] memory payload = new uint256[](9);
         payload[0] = uint256(uint160(from));
@@ -312,7 +322,7 @@ contract Bridge is IBridge, Initializable {
         (payload[5], payload[6]) = Cairo.toSplitUint(blockNumber);
         (payload[7], payload[8]) = Cairo.toSplitUint(currentRewardsIndex);
 
-        _messagingContract.sendMessageToL2(
+        _messagingContract.sendMessageToL2{value: fee}(
             _l2Bridge,
             Cairo.DEPOSIT_HANDLER,
             payload
@@ -323,7 +333,8 @@ contract Bridge is IBridge, Initializable {
         address l1Token,
         address from,
         uint256 blockNumber,
-        uint256 currentRewardsIndex
+        uint256 currentRewardsIndex,
+        uint256 fee
     ) internal {
         uint256[] memory payload = new uint256[](6);
         payload[0] = uint256(uint160(from));
@@ -331,7 +342,7 @@ contract Bridge is IBridge, Initializable {
         (payload[2], payload[3]) = Cairo.toSplitUint(blockNumber);
         (payload[4], payload[5]) = Cairo.toSplitUint(currentRewardsIndex);
 
-        _messagingContract.sendMessageToL2(
+        _messagingContract.sendMessageToL2{value: fee}(
             _l2Bridge,
             Cairo.INDEX_UPDATE_HANDLER,
             payload
@@ -380,11 +391,9 @@ contract Bridge is IBridge, Initializable {
      * @notice gets the latest rewards index of the given aToken on L1.
      **/
 
-    function _getCurrentRewardsIndex(address l1AToken)
-        internal
-        view
-        returns (uint256)
-    {
+    function _getCurrentRewardsIndex(
+        address l1AToken
+    ) internal view returns (uint256) {
         (
             uint256 index,
             uint256 emissionPerSecond,
@@ -407,7 +416,7 @@ contract Bridge is IBridge, Initializable {
             : block.timestamp;
         uint256 timeDelta = currentTimestamp - lastUpdateTimestamp;
         return
-            (emissionPerSecond * timeDelta * 10**uint256(18)) /
+            (emissionPerSecond * timeDelta * 10 ** uint256(18)) /
             totalSupply +
             index;
     }
@@ -440,9 +449,10 @@ contract Bridge is IBridge, Initializable {
      * @param recipient of rewards tokens
      * @param rewardsAmount to be transferred to recipient
      **/
-    function _transferRewards(address recipient, uint256 rewardsAmount)
-        internal
-    {
+    function _transferRewards(
+        address recipient,
+        uint256 rewardsAmount
+    ) internal {
         address self = address(this);
         uint256 rewardBalance = _rewardToken.balanceOf(self);
 

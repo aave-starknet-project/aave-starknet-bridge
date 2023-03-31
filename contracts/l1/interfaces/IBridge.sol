@@ -84,7 +84,7 @@ interface IBridge {
         uint256 amount,
         uint16 referralCode,
         bool fromUnderlyingAsset
-    ) external returns (uint256);
+    ) external payable returns (uint256);
 
     /**
      * @notice allows withdraw of aTokens or their underlying assets from L2
@@ -101,7 +101,7 @@ interface IBridge {
         uint256 staticAmount,
         uint256 l2RewardsIndex,
         bool toUnderlyingAsset
-    ) external;
+    ) external payable;
 
     /**
      * @notice Returns bridge's available rewards
@@ -126,7 +126,7 @@ interface IBridge {
      * @notice updates the rewards index of tokens on l2
      * @param l1AToken aToken address
      **/
-    function updateL2State(address l1AToken) external;
+    function updateL2State(address l1AToken) external payable;
 
     /**
      * @notice starts AToken deposit cancellation if unsuccessful

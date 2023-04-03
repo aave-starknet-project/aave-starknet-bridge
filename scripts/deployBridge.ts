@@ -187,6 +187,40 @@ export async function deployL1Bridge(
   }
 }
 
+export async function deployL1BridgeImplementation(signer: SignerWithAddress) {
+  let bridgeFactory: ContractFactory;
+  let bridgeImpl: Contract;
+
+  try {
+    console.log("Deploying L1 bridge implementation...");
+
+    bridgeFactory = await ethers.getContractFactory("Bridge", signer);
+    bridgeImpl = await bridgeFactory.deploy();
+    await bridgeImpl.deployed();
+
+    console.log(
+      "L1 bridge implementation contract is deployed at address: ",
+      bridgeImpl.address
+    );
+
+    console.log(
+      "To verify L1 bridge implementation contract: npx hardhat verify --network mainnet ",
+      bridgeImpl.address
+    );
+
+    fs.writeFileSync(
+      "deployment/L1BridgeImplementation.json",
+      JSON.stringify({
+        implementation: bridgeImpl.address,
+      })
+    );
+
+    return bridgeImpl.address;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 /**
  * deploys and initializes the l2 governance relay
  * @param l1GovRelay address

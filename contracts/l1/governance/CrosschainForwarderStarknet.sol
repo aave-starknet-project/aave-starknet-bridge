@@ -6,11 +6,12 @@ interface StarkNetLike {
         uint256 to,
         uint256 selector,
         uint256[] calldata payload
-    ) external returns (bytes32);
+    ) external payable returns (bytes32, uint256);
 
-    function consumeMessageFromL2(uint256 from, uint256[] calldata payload)
-        external
-        returns (bytes32);
+    function consumeMessageFromL2(
+        uint256 from,
+        uint256[] calldata payload
+    ) external returns (bytes32);
 
     function startL1ToL2MessageCancellation(
         uint256 toAddress,
@@ -39,10 +40,10 @@ contract CrosschainForwarderStarknet {
         l2GovernanceRelay = _l2GovernanceRelay;
     }
 
-    function execute(uint256 spell) public {
+    function execute(uint256 spell) external payable {
         uint256[] memory payload = new uint256[](1);
         payload[0] = spell;
-        StarkNetLike(starkNet).sendMessageToL2(
+        StarkNetLike(starkNet).sendMessageToL2{value: msg.value}(
             l2GovernanceRelay,
             RELAY_SELECTOR,
             payload

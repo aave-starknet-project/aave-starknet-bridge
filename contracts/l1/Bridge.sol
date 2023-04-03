@@ -26,7 +26,7 @@ contract Bridge is IBridge, Initializable {
     IERC20 public _rewardToken;
     IAaveIncentivesController public _incentivesController;
     mapping(address => ATokenData) public _aTokenData;
-    uint256 public constant BRIDGE_REVISION = 0x1;
+    uint256 public constant BRIDGE_REVISION = 0x2;
 
     /**
      * @dev Only valid l2 token addresses will can be approved if the function is marked by this modifier.
@@ -50,25 +50,7 @@ contract Bridge is IBridge, Initializable {
     }
 
     /// @inheritdoc IBridge
-    function initialize(
-        uint256 l2Bridge,
-        address messagingContract,
-        address incentivesController,
-        address[] calldata l1Tokens,
-        uint256[] calldata l2Tokens,
-        uint256[] calldata ceilings
-    ) external virtual onlyValidL2Address(l2Bridge) initializer {
-        require(
-            address(incentivesController) != address(0),
-            Errors.B_INVALID_INCENTIVES_CONTROLLER_ADDRESS
-        );
-        _messagingContract = IStarknetMessaging(messagingContract);
-        _l2Bridge = l2Bridge;
-        _incentivesController = IAaveIncentivesController(incentivesController);
-        _rewardToken = IERC20(_incentivesController.REWARD_TOKEN());
-
-        _approveBridgeTokens(l1Tokens, l2Tokens, ceilings);
-    }
+    function initialize() external virtual initializer {}
 
     /// @inheritdoc IBridge
     function deposit(
@@ -77,7 +59,13 @@ contract Bridge is IBridge, Initializable {
         uint256 amount,
         uint16 referralCode,
         bool fromUnderlyingAsset
-    ) external override onlyValidL2Address(l2Recipient) returns (uint256) {
+    )
+        external
+        payable
+        override
+        onlyValidL2Address(l2Recipient)
+        returns (uint256)
+    {
         require(
             IERC20(l1AToken).balanceOf(address(this)) + amount <=
                 _aTokenData[l1AToken].ceiling,
@@ -117,14 +105,14 @@ contract Bridge is IBridge, Initializable {
             address(underlyingAsset),
             lendingPool
         );
-        uint256 l2MsgNonce = _messagingContract.l1ToL2MessageNonce();
-        _sendDepositMessage(
+        uint256 l2MsgNonce = _sendDepositMessage(
             l1AToken,
             msg.sender,
             l2Recipient,
             staticAmount,
             block.number,
-            rewardsIndex
+            rewardsIndex,
+            msg.value
         );
         emit Deposit(
             msg.sender,
@@ -147,7 +135,7 @@ contract Bridge is IBridge, Initializable {
         uint256 staticAmount,
         uint256 l2RewardsIndex,
         bool toUnderlyingAsset
-    ) external override {
+    ) external payable override {
         require(recipient != address(0), Errors.B_INVALID_ADDRESS);
         require(staticAmount > 0, Errors.B_INSUFFICIENT_AMOUNT);
 
@@ -186,7 +174,8 @@ contract Bridge is IBridge, Initializable {
             l1AToken,
             msg.sender,
             block.number,
-            l1CurrentRewardsIndex
+            l1CurrentRewardsIndex,
+            msg.value
         );
 
         emit L2StateUpdated(l1AToken, l1CurrentRewardsIndex);
@@ -205,14 +194,15 @@ contract Bridge is IBridge, Initializable {
     }
 
     /// @inheritdoc IBridge
-    function updateL2State(address l1AToken) external override {
+    function updateL2State(address l1AToken) external payable override {
         uint256 rewardsIndex = _getCurrentRewardsIndex(l1AToken);
 
         _sendIndexUpdateMessage(
             l1AToken,
             msg.sender,
             block.number,
-            rewardsIndex
+            rewardsIndex,
+            msg.value
         );
 
         emit L2StateUpdated(l1AToken, rewardsIndex);
@@ -302,8 +292,9 @@ contract Bridge is IBridge, Initializable {
         uint256 l2Recipient,
         uint256 amount,
         uint256 blockNumber,
-        uint256 currentRewardsIndex
-    ) internal {
+        uint256 currentRewardsIndex,
+        uint256 fee
+    ) internal returns (uint256) {
         uint256[] memory payload = new uint256[](9);
         payload[0] = uint256(uint160(from));
         payload[1] = l2Recipient;
@@ -312,18 +303,22 @@ contract Bridge is IBridge, Initializable {
         (payload[5], payload[6]) = Cairo.toSplitUint(blockNumber);
         (payload[7], payload[8]) = Cairo.toSplitUint(currentRewardsIndex);
 
-        _messagingContract.sendMessageToL2(
+        uint256 nonce;
+        (, nonce) = _safeSendMessageToL2(
             _l2Bridge,
             Cairo.DEPOSIT_HANDLER,
-            payload
+            payload,
+            fee
         );
+        return nonce;
     }
 
     function _sendIndexUpdateMessage(
         address l1Token,
         address from,
         uint256 blockNumber,
-        uint256 currentRewardsIndex
+        uint256 currentRewardsIndex,
+        uint256 fee
     ) internal {
         uint256[] memory payload = new uint256[](6);
         payload[0] = uint256(uint160(from));
@@ -331,11 +326,30 @@ contract Bridge is IBridge, Initializable {
         (payload[2], payload[3]) = Cairo.toSplitUint(blockNumber);
         (payload[4], payload[5]) = Cairo.toSplitUint(currentRewardsIndex);
 
-        _messagingContract.sendMessageToL2(
+        _safeSendMessageToL2(
             _l2Bridge,
             Cairo.INDEX_UPDATE_HANDLER,
-            payload
+            payload,
+            fee
         );
+    }
+
+    function _safeSendMessageToL2(
+        uint256 to,
+        uint256 selector,
+        uint256[] memory payload,
+        uint256 fee
+    ) internal returns (bytes32, uint256) {
+        require(
+            fee < 0.1 ether,
+            "Fee to send a message to Starknet can not be higher than 0.1 ETH."
+        );
+        return
+            _messagingContract.sendMessageToL2{value: fee}(
+                to,
+                selector,
+                payload
+            );
     }
 
     function _consumeMessage(

@@ -26,7 +26,7 @@ contract Bridge is IBridge, Initializable {
     IERC20 public _rewardToken;
     IAaveIncentivesController public _incentivesController;
     mapping(address => ATokenData) public _aTokenData;
-    uint256 public constant BRIDGE_REVISION = 0x1;
+    uint256 public constant BRIDGE_REVISION = 0x2;
 
     /**
      * @dev Only valid l2 token addresses will can be approved if the function is marked by this modifier.
@@ -50,25 +50,7 @@ contract Bridge is IBridge, Initializable {
     }
 
     /// @inheritdoc IBridge
-    function initialize(
-        uint256 l2Bridge,
-        address messagingContract,
-        address incentivesController,
-        address[] calldata l1Tokens,
-        uint256[] calldata l2Tokens,
-        uint256[] calldata ceilings
-    ) external virtual onlyValidL2Address(l2Bridge) initializer {
-        require(
-            address(incentivesController) != address(0),
-            Errors.B_INVALID_INCENTIVES_CONTROLLER_ADDRESS
-        );
-        _messagingContract = IStarknetMessaging(messagingContract);
-        _l2Bridge = l2Bridge;
-        _incentivesController = IAaveIncentivesController(incentivesController);
-        _rewardToken = IERC20(_incentivesController.REWARD_TOKEN());
-
-        _approveBridgeTokens(l1Tokens, l2Tokens, ceilings);
-    }
+    function initialize() external virtual initializer {}
 
     /// @inheritdoc IBridge
     function deposit(
@@ -322,10 +304,11 @@ contract Bridge is IBridge, Initializable {
         (payload[7], payload[8]) = Cairo.toSplitUint(currentRewardsIndex);
 
         uint256 nonce;
-        (, nonce) = _messagingContract.sendMessageToL2{value: fee}(
+        (, nonce) = _safeSendMessageToL2(
             _l2Bridge,
             Cairo.DEPOSIT_HANDLER,
-            payload
+            payload,
+            fee
         );
         return nonce;
     }
@@ -343,11 +326,30 @@ contract Bridge is IBridge, Initializable {
         (payload[2], payload[3]) = Cairo.toSplitUint(blockNumber);
         (payload[4], payload[5]) = Cairo.toSplitUint(currentRewardsIndex);
 
-        _messagingContract.sendMessageToL2{value: fee}(
+        _safeSendMessageToL2(
             _l2Bridge,
             Cairo.INDEX_UPDATE_HANDLER,
-            payload
+            payload,
+            fee
         );
+    }
+
+    function _safeSendMessageToL2(
+        uint256 to,
+        uint256 selector,
+        uint256[] memory payload,
+        uint256 fee
+    ) internal returns (bytes32, uint256) {
+        require(
+            fee < 0.1 ether,
+            "Fee to send a message to Starknet can not be higher than 0.1 ETH."
+        );
+        return
+            _messagingContract.sendMessageToL2{value: fee}(
+                to,
+                selector,
+                payload
+            );
     }
 
     function _consumeMessage(
@@ -392,9 +394,11 @@ contract Bridge is IBridge, Initializable {
      * @notice gets the latest rewards index of the given aToken on L1.
      **/
 
-    function _getCurrentRewardsIndex(
-        address l1AToken
-    ) internal view returns (uint256) {
+    function _getCurrentRewardsIndex(address l1AToken)
+        internal
+        view
+        returns (uint256)
+    {
         (
             uint256 index,
             uint256 emissionPerSecond,
@@ -417,7 +421,7 @@ contract Bridge is IBridge, Initializable {
             : block.timestamp;
         uint256 timeDelta = currentTimestamp - lastUpdateTimestamp;
         return
-            (emissionPerSecond * timeDelta * 10 ** uint256(18)) /
+            (emissionPerSecond * timeDelta * 10**uint256(18)) /
             totalSupply +
             index;
     }
@@ -450,10 +454,9 @@ contract Bridge is IBridge, Initializable {
      * @param recipient of rewards tokens
      * @param rewardsAmount to be transferred to recipient
      **/
-    function _transferRewards(
-        address recipient,
-        uint256 rewardsAmount
-    ) internal {
+    function _transferRewards(address recipient, uint256 rewardsAmount)
+        internal
+    {
         address self = address(this);
         uint256 rewardBalance = _rewardToken.balanceOf(self);
 
